@@ -2,6 +2,8 @@
 
 `join.haruharu.co.kr` 3기 자체 신청폼 + 관리 페이지(`/admin/`) + API(`functions/api`).
 
+**자세한 맥락(흐름, 요금제, 데이터, API, 로컬 실행, 진행 예정 작업)은 `CLAUDE.md`.**
+
 - Cloudflare Pages 프로젝트 `haruharu-apply` (이름 헷갈림 주의, 도메인은 join)
 - `main` 에 push 하면 CI 가 `./build.sh` 돌리고 `public/` 을 배포함
 - **모집 진행 중엔 main push = 라이브 신청폼 변경.** 브랜치 따서 PR 로 올리고 확인 받은 뒤 merge
