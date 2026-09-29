@@ -59,6 +59,13 @@ input:focus{border-color:#1a1a1a}
 .done{text-align:center;padding:80px 0}
 .done h2{font-size:24px;margin:0 0 12px}
 .foot{margin-top:60px;font-size:12px;color:#999;text-align:center}
+.app-guide{margin-bottom:14px}
+.app-guide-visual{position:relative;aspect-ratio:1080/1540;overflow:hidden}
+.app-guide-visual img{display:block;width:100%;height:auto}
+.app-guide-copy{padding:10px 7.8% 38px}
+.app-guide-copy h2{font-size:clamp(19px,4vw,27px);line-height:1.35;margin:0 0 28px;letter-spacing:-.03em}
+.app-guide-copy p{font-size:clamp(12px,2.8vw,16px);line-height:1.6;margin:0 0 22px}
+.app-guide-copy .app-guide-intro{color:#7c818c;font-weight:400}
 .offer-panel{padding:24px 16px;margin:24px 0;background:#fff7ed;border:1px solid #f4ceaa;border-radius:12px;text-align:center}
 .early-info .offer-badge{display:inline-block;padding:5px 11px;margin:0 0 12px;border-radius:5px;background:#ffe5d4;color:#b83828;font-size:13px;font-weight:700}
 .offer-price{display:flex;align-items:baseline;justify-content:center;gap:12px}
@@ -103,7 +110,16 @@ input:focus{border-color:#1a1a1a}
 <!-- 기수/지역 값이 박힌 이미지: P1(지역+기수), P4(일정+마감). 기수 바뀌면 build.sh 의 IMG_P1/IMG_P4 만 교체 -->
 <img class="img" data-img="P1" src="/img/P1_seoul_3gi.png" alt="솔로인 서울 대학생을 모집합니다. 지금까지 160명 참여, 27쌍 매칭">
 <img class="img" data-img="P2" src="/img/P2_approved_0910.png" alt="지난 기수 참가자 후기">
-<img class="img" data-img="P3" src="/img/P3_approved_0910.png" alt="셋로그로 못 했던 걸, 이번엔 더 많이 해보려고요. 앱에서는 이렇게 진행돼요">
+<section class="app-guide" aria-label="앱 진행 안내">
+<div class="app-guide-visual"><img data-img="P3" src="/img/P3_approved_0910.png" alt="셋로그로 못 했던 걸, 이번엔 더 많이 해보려고요. 하루 공유, 마지막 날 선택, 서로 선택한 상대와 대화하는 앱 화면"></div>
+<div class="app-guide-copy">
+<h2>앱에서는 이렇게 진행돼요</h2>
+<p class="app-guide-intro">신청하고 방이 열리면 6자리 초대 코드를 보내드려요.<br>앱에 코드를 넣으면 남녀 3:3 ~ 5:5 구성으로 한 방에 모여요.</p>
+<p><strong>Day 1 &nbsp; 같은 방에 모여 하루를 올려요<br>그날 찍은 영상에 자막 한 줄만 달아 올리면 끝이에요.</strong></p>
+<p><strong>Day 2 &nbsp; 진행 중 미션 카드가 와요<br>오늘의 나, 요즘 빠진 것 같은 짧은 주제로 와요.</strong></p>
+<p><strong>Day 3 &nbsp; 마지막 날 앱에서 서로를 골라요<br>둘 다 고른 경우에만 대화가 열려요.</strong></p>
+</div>
+</section>
 <img class="img" data-img="P4" src="/img/P4_seoul_3gi_regular_12900.png" alt="하루하루 앱 3기 모집 중. 신청 안내">
 
 <p class="sec">3일 동안 서로의 하루를 공유하고, 마지막 날 서로를 고르는 소개팅이에요. 지금까지 160명 참여, 27쌍 매칭 🎉</p>
