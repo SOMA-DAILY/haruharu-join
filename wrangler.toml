@@ -1,0 +1,13 @@
+name = "haruharu-apply"
+compatibility_date = "2026-09-01"
+pages_build_output_dir = "public"
+
+[[kv_namespaces]]
+binding = "APPLY_KV"
+id = "42783a6df6f745f4b439457c7b6316d9"
+
+# 방문/부분입력/링크(src) 관리 분석용. 제출 정본은 KV s: 그대로, D1 엔 사본
+[[d1_databases]]
+binding = "DB"
+database_name = "haruharu-apply-db"
+database_id = "ba65bf0f-83c0-4e6e-988e-b5c57730eafd"

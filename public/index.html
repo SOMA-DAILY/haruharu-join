@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>하루하루 소개팅 신청 💕</title>
+<meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지역을 골라 신청해 주세요.">
+<meta property="og:title" content="하루하루 소개팅 신청 💕">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 160명 참여, 27쌍 매칭 🎉">
+<meta name="robots" content="noindex">
+<script>var PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';</script>
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init',PIXEL_ID);fbq('track','PageView');
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mixpanel-browser@2/dist/mixpanel.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif;background:#fff;color:#1a1a1a;min-height:100svh;display:flex;justify-content:center;padding:56px 20px 40px;word-break:keep-all}
+.wrap{width:100%;max-width:460px;text-align:center}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
+.sub{font-size:17px;line-height:1.6;color:#5B5F68}
+.stat{display:inline-block;margin:16px 0 4px;font-size:13px;font-weight:700;color:#3F76C9;background:#EAF1FC;border-radius:999px;padding:7px 16px}
+.btns{margin:32px 0 0;display:flex;flex-direction:column;gap:12px}
+a.b{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #E4E6EB;border-radius:16px;padding:20px 22px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+a.b:active{transform:scale(.985)}
+a.b .t{text-align:left}a.b .t b{display:block;font-size:17px;font-weight:800}a.b .t span{display:block;margin-top:3px;font-size:13px;color:#7A7E88}
+a.b .ar{flex:none;font-size:17px;color:#B4B8C0}
+.mini{margin:26px 0 0}.mini a{font-size:13px;color:#7A7E88;text-decoration:none;border-bottom:1px solid #DEE1E6}
+.foot{margin:34px 0 0;font-size:13px;color:#A0A4AD;line-height:1.7}
+</style></head><body>
+<div class="wrap">
+<h1>하루하루 소개팅 신청 💕</h1>
+<p class="sub">3일 동안 서로의 하루를 보고<br>마지막 날 서로를 선택해요</p>
+<span class="stat">지금까지 160명 참여, 27쌍 매칭 🎉</span>
+<div class="btns">
+ <a class="b" href="/seoul/" data-city="seoul"><span class="t"><b>서울 소개팅 신청</b><span>서울, 경기 대학생</span></span><span class="ar">→</span></a>
+ <a class="b" href="/gwangju/" data-city="gwangju"><span class="t"><b>광주 소개팅 신청</b><span>광주, 전남 대학생</span></span><span class="ar">→</span></a>
+</div>
+<div class="mini"><a href="https://instagram.com/haruharu.ting">@haruharu.ting</a></div>
+<p class="foot">만 19세 이상 대학생 누구나 😍<br>보증금 5,000원, 끝까지 참여하고 최종 설문을 내면 전액 환불</p>
+</div>
+<script>
+(function(){
+ var Q=location.search; var q=new URLSearchParams(Q); var hidden={city:'select'}; ['src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'].forEach(function(k){ if(q.get(k)) hidden[k]=q.get(k); });
+ hidden.channel=hidden.utm_content||hidden.src||'direct';
+ var mp=null; try{ if(window.mixpanel && MIXPANEL_TOKEN.indexOf('__')!==0){ mixpanel.init(MIXPANEL_TOKEN,{record_sessions_percent:100,persistence:'localStorage',ignore_dnt:true}); mixpanel.register(Object.assign({form:'apply-select'},hidden)); mp=mixpanel; mp.track('page_view',{path:'/',referrer:document.referrer}); } }catch(e){}
+ // 지역 버튼: 쿼리(utm/src) 그대로 넘김
+ // 관리 페이지 지표: 방문, 체류시간, 스크롤, 어느 지역을 눌렀는지. 폼과 같은 sid 라 랜딩 → 폼 여정이 이어짐
+ var sid, returning=false; try{ sid=sessionStorage.getItem('hh_sid'); returning=!!localStorage.getItem('hh_seen'); localStorage.setItem('hh_seen','1'); if(!sid){ sid=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); sessionStorage.setItem('hh_sid',sid);} }catch(e){ sid=String(Date.now()); }
+ var actMs=0, actT=document.visibilityState==='visible'?Date.now():0, maxSc=0, clicked=null;
+ function active(){ return actMs+(actT?Date.now()-actT:0); }
+ addEventListener('scroll',function(){ var h=document.documentElement; maxSc=Math.max(maxSc,Math.min(100,Math.round((h.scrollTop+innerHeight)/h.scrollHeight*100))); },{passive:true});
+ function beat(beacon){ var s=JSON.stringify({sid:sid,path:'/',page:1,last_field:'',fields:{},hidden:hidden,ua:navigator.userAgent,ref:document.referrer,active_ms:active(),max_scroll:maxSc,returning:returning,next_click:clicked});
+  if(beacon&&navigator.sendBeacon){ try{ navigator.sendBeacon('/api/partial',new Blob([s],{type:'application/json'})); return; }catch(e){} }
+  fetch('/api/partial',{method:'POST',headers:{'content-type':'application/json'},body:s,keepalive:true}).catch(function(){}); }
+ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ if(!actT) actT=Date.now(); } else { if(actT){ actMs+=Date.now()-actT; actT=0; } beat(true); } });
+ addEventListener('pagehide',function(){ beat(true); });
+ setTimeout(function(){ var h=document.documentElement; maxSc=Math.min(100,Math.round(innerHeight/h.scrollHeight*100)); beat(false); },300);
+ document.querySelectorAll('a.b').forEach(function(a){ a.href=a.getAttribute('href')+Q; a.addEventListener('click',function(){ clicked=a.getAttribute('data-city'); beat(true); try{ if(mp) mp.track('city_select',{city:a.getAttribute('data-city')}); }catch(e){} }); });
+})();
+</script>
+</body></html>
