@@ -278,7 +278,7 @@ dd{margin:0;word-break:break-all}
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
       <div class="tbl-wrap"><table class="list">
-        <thead><tr><th>신청 시각</th><th>지역</th><th>이름</th><th>성별</th><th>출생</th><th>학교</th><th>전화번호</th><th>광고</th><th>상태 / 방</th></tr></thead>
+        <thead><tr><th>신청 시각</th><th>지역</th><th>이름</th><th>성별</th><th>출생</th><th>학교</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
         <tbody id="appRows"></tbody></table>
         <div class="empty hidden" id="appEmpty">아직 신청자가 없음</div></div>
     </div>
@@ -518,7 +518,7 @@ function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textC
   $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td><span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span></td>'+
     '<td><b>'+esc(r.name)+'</b>'+(r.plan==='early'?' <span class="badge amber">사전 4,900</span>':'')+buddyBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(r.school)+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
-    (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td></tr>'}).join('')}
+    (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
 function buddyOf(r){var d=String(r.buddy||'').replace(/\D/g,'');if(!/^01\d{8,9}$/.test(d))return null;return S.apps.filter(function(x){return x.phone_digits===d&&x.application_id!==r.application_id})[0]||null}
 function buddyText(r){if(!r.buddy)return '';var b=buddyOf(r);if(!b)return (/^01\d{8,9}$/.test(r.buddy)?fmtPhone(r.buddy):r.buddy)+' (미신청)';
@@ -534,7 +534,20 @@ function appById(id){return S.apps.filter(function(r){return r.application_id===
 function saveMark(r,status,memo,room,bd){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}return post('mark',body).then(function(d){if(d.ok){r.status=status;r.memo=memo;r.room=room;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨')}})}
 $('appRows').addEventListener('change',function(e){var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim())}
   var s=e.target.closest('select.stsel');if(!s)return;var r=appById(s.dataset.id);saveMark(r,s.value,r.memo).then(function(){if(s.value==='확정'){var i=document.querySelector('input.room[data-id="'+r.application_id+'"]');if(i)i.focus()}})});
-$('appRows').addEventListener('click',function(e){if(e.target.closest('select,input'))return;var tr=e.target.closest('tr');if(!tr)return;var r=appById(tr.dataset.id);delete S.newApps[r.application_id];updateNew();
+var deletingApp=false;
+function deleteApplicant(r,button){
+  if(!r || deletingApp) return;
+  if(!confirm((r.name||'이름 없음')+' / '+fmtPhone(r.phone_digits||r.phone)+'\n이 신청 건을 삭제할까요?\n신청 정보와 관련 방문 기록이 삭제되며 되돌릴 수 없습니다.')) return;
+  deletingApp=true;button.disabled=true;button.textContent='삭제 중…';
+  api('applicants',{method:'DELETE',body:JSON.stringify({id:r.application_id,confirm:r.application_id})}).then(function(d){
+    if(!d.ok) throw new Error(d.error||'삭제하지 못했습니다.');
+    S.apps=S.apps.filter(function(x){return x.application_id!==r.application_id});
+    delete S.newApps[r.application_id];updateNew();closeD();renderApps();
+    toast('신청자 한 명을 삭제했습니다');return loadAll(true);
+  }).catch(function(e){if(e.message!=='401')alert(e.message);})
+    .finally(function(){deletingApp=false;button.disabled=false;button.textContent='삭제';});
+}
+$('appRows').addEventListener('click',function(e){var del=e.target.closest('button.delete-app');if(del){deleteApplicant(appById(del.dataset.id),del);return;}if(e.target.closest('select,input,button'))return;var tr=e.target.closest('tr');if(!tr)return;var r=appById(tr.dataset.id);delete S.newApps[r.application_id];updateNew();
   var rows=[['지역',cityKo[r.city]||r.city],['성별',r.gender],['출생연도',r.birth_year],['학교',r.school],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['기기',r.device],['기대하는 것',(r.intent||'')+(r.intent_other?' ('+r.intent_other+')':'')],
     ['참가비',r.plan==='early'?'사전알림 4,900원':'일반 7,900원'],['친구',buddyText(r)||(r.buddy_room||'-')],['응답 유입경로',r.source],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['작성 시간',dur(r.active_ms)],['접속 기기',(r.ua_device||'')+(r.in_app?' / '+r.in_app:'')],['기수',r.cohort],['신청 ID',r.application_id]];
   $('panel').innerHTML='<h2>'+esc(r.name)+'</h2><div class="meta">'+esc(r.submitted_at)+' 신청'+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+rows.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+

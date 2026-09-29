@@ -330,6 +330,30 @@ async function admin(sub, request, env, kv, url) {
     const rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all();
     return json({ rows: rows.results, last_submit: Number(await kv.get('meta:last_submit')) || 0 });
   }
+  if (request.method === 'DELETE' && sub === '/applicants') {
+    if (request.headers.get('origin') !== url.origin) return json({ error: 'forbidden' }, 403);
+    const b = await readBody(request);
+    if (!b || typeof b.id !== 'string' || !/^[0-9a-z-]{8,64}$/i.test(b.id) || b.confirm !== b.id) {
+      return json({ error: '삭제할 신청자 한 명을 확인해 주세요.' }, 400);
+    }
+    const row = await DB.prepare('SELECT application_id, kv_key FROM submissions WHERE application_id = ?1').bind(b.id).first();
+    if (!row) return json({ error: '이미 삭제되었거나 없는 신청자입니다.' }, 404);
+    if (!row.kv_key || !row.kv_key.startsWith('s:')) return json({ error: '원본 정보를 확인할 수 없어 삭제하지 않았습니다.' }, 409);
+    try {
+      const original = await kv.get(row.kv_key, 'json');
+      if (original && (original.application_id || original.id) !== b.id) return json({ error: '원본 정보가 일치하지 않아 삭제하지 않았습니다.' }, 409);
+      // Keep the D1 row until KV cleanup succeeds so interrupted deletions can be retried.
+      await kv.delete(row.kv_key);
+      await kv.delete('m:' + b.id);
+      await DB.batch([
+        DB.prepare('DELETE FROM sessions WHERE application_id = ?1').bind(b.id),
+        DB.prepare('DELETE FROM submissions WHERE application_id = ?1').bind(b.id),
+      ]);
+      return json({ ok: true, deleted: b.id });
+    } catch (e) {
+      return json({ error: '삭제를 완료하지 못했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.' }, 500);
+    }
+  }
   if (request.method === 'POST' && sub === '/mark') {
     const b = await readBody(request);
     if (!b || typeof b.id !== 'string' || !/^[0-9a-z-]{8,64}$/i.test(b.id)) return json({ ok: false }, 400);
