@@ -7,16 +7,18 @@
 <meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 160명 참여, 27쌍 매칭 🎉">
 <meta name="robots" content="noindex">
 <script>
+var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
 var CITY='gwangju', CITY_KO='광주', COHORT='3', PLAN='regular', PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
 </script>
 <!-- Meta 픽셀 -->
 <script>
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init',PIXEL_ID);fbq('track','PageView');
+!function(f,b,e,v,n,t,s){if(LOCAL_PREVIEW)return;if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+if(!LOCAL_PREVIEW){fbq('init',PIXEL_ID);fbq('track','PageView');}
 </script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1586422299864867&ev=PageView&noscript=1"></noscript>
 <!-- Mixpanel (앱과 같은 프로젝트) -->
 <script src="https://cdn.jsdelivr.net/npm/mixpanel-browser@2/dist/mixpanel.umd.min.js"></script>
+<script src="/early-offer.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:#fff}
@@ -57,6 +59,39 @@ input:focus{border-color:#1a1a1a}
 .done{text-align:center;padding:80px 0}
 .done h2{font-size:24px;margin:0 0 12px}
 .foot{margin-top:60px;font-size:12px;color:#999;text-align:center}
+.offer-panel{padding:24px 16px;margin:24px 0;background:#fff7ed;border:1px solid #f4ceaa;border-radius:12px;text-align:center}
+.early-info .offer-badge{display:inline-block;padding:5px 11px;margin:0 0 12px;border-radius:5px;background:#ffe5d4;color:#b83828;font-size:13px;font-weight:700}
+.offer-price{display:flex;align-items:baseline;justify-content:center;gap:12px}
+.offer-price del{font-size:18px;color:#857972;font-weight:500}
+.offer-price strong{font-size:38px;line-height:1.2;letter-spacing:-1.5px;color:#df493c}
+.early-info .offer-message{font-size:15px;margin:12px 0 20px;font-weight:600;color:#65372b}
+.offer-price{margin-bottom:20px}
+.flip-clock{display:flex;align-items:flex-start;justify-content:center;gap:7px;margin:0 auto 18px;font-variant-numeric:tabular-nums}
+.flip-clock[hidden]{display:none}
+.flip-unit{display:flex;flex-direction:column;gap:7px}.flip-pair{display:flex;gap:3px}
+.flip-label{font-size:11px;color:#866b5a;font-weight:500}
+.flip-colon{font-size:26px;line-height:50px;color:#c44537;font-weight:800}
+.flip-digit{position:relative;width:34px;height:50px;border-radius:6px;background:#ed584c;box-shadow:0 3px 0 #be382f;perspective:220px;font-size:35px;line-height:50px;font-weight:800;color:#fff}
+.flip-half{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;transform-style:preserve-3d}
+.flip-half span{position:absolute;left:0;width:100%;height:50px;text-align:center;line-height:50px}
+.flip-top{top:0;background:#e95044;border-radius:6px 6px 0 0;transform-origin:bottom}.flip-top span{top:0}
+.flip-bottom{bottom:0;background:#f26154;border-radius:0 0 6px 6px;transform-origin:top}.flip-bottom span{bottom:0}
+.flip-digit:after{content:"";position:absolute;top:50%;left:0;width:100%;height:1px;background:#a7292940;z-index:5}
+.flip-old{z-index:3;animation:flip-away .28s ease-in both}
+.flip-new{z-index:4;animation:flip-in .28s .28s ease-out both}
+@keyframes flip-away{from{transform:rotateX(0)}to{transform:rotateX(-90deg)}}
+@keyframes flip-in{from{transform:rotateX(90deg)}to{transform:rotateX(0)}}
+.early-info .offer-deadline{font-size:13px;font-weight:700;color:#875b44;margin:0 0 6px}
+.early-info .offer-help{font-size:12px;color:#876e60;margin:0}
+.offer-panel[data-state="expired"] .offer-help,.offer-panel[data-state="expired"] .offer-deadline{display:none}
+@media(prefers-reduced-motion:reduce){.flip-old,.flip-new{animation:none;display:none}}
+@media(max-width:360px){.offer-panel{padding:20px 8px}.flip-digit{width:28px;height:44px;font-size:29px;line-height:44px}.flip-half span{height:44px;line-height:44px}.flip-colon{line-height:44px}.flip-clock{gap:5px}}
+.early-info{padding:30px 24px;margin:24px 0;background:#f3f2ef;border-radius:16px}
+.early-info h2{color:#e55743;font-size:24px;margin:0 0 20px}
+.early-info h3{font-size:20px;margin:24px 0 12px}
+.early-info dl{margin:0}.early-info dl>div{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid #ddd}
+.early-info dt{color:#666}.early-info dd{margin:0;font-weight:700}.early-info p{font-size:15px}
+.pay[aria-disabled="true"]{pointer-events:none;opacity:.5}
 @media (max-width:480px){.wrap{padding:24px 16px 100px}h1{font-size:23px}}
 </style></head><body>
 <div class="prog" id="prog"></div>
@@ -183,6 +218,7 @@ input:focus{border-color:#1a1a1a}
  var Q=new URLSearchParams(location.search);
  var HID=['src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'];
  var hidden={city:CITY,cohort:COHORT,plan:PLAN}; HID.forEach(function(k){ if(Q.get(k)) hidden[k]=Q.get(k); });
+ var offerControl = PLAN === 'early' ? window.setupEarlyOffer(hidden, goRegular) : null;
  // 경로 코드: utm_content(광고명) 이 있으면 그것, 없으면 src. 모든 리포트는 이 값으로 갈림
  hidden.channel = hidden.utm_content || hidden.src || 'direct';
  var T0=Date.now(), sid, returning=false;
@@ -193,7 +229,7 @@ input:focus{border-color:#1a1a1a}
  // ---------- Mixpanel ----------
  var mp=null;
  try{
-  if(window.mixpanel && MIXPANEL_TOKEN && MIXPANEL_TOKEN.indexOf('__')!==0){
+  if(!LOCAL_PREVIEW && window.mixpanel && MIXPANEL_TOKEN && MIXPANEL_TOKEN.indexOf('__')!==0){
    mixpanel.init(MIXPANEL_TOKEN,{ record_sessions_percent:100, record_mask_text_selector:'.mp-sensitive', record_block_selector:'', persistence:'localStorage', ignore_dnt:true });
    mixpanel.register(Object.assign({ application_session:sid, form:'apply-'+COHORT, in_app_browser:inApp, returning_visitor:returning }, hidden));
    mp=mixpanel;
@@ -234,6 +270,22 @@ input:focus{border-color:#1a1a1a}
   return fetch(API+path,{method:'POST',headers:{'content-type':'application/json'},body:s,keepalive:true}).catch(function(){});
  }
  function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),max_scroll:maxScroll(),returning:returning},beacon); }
+ function goRegular(){
+  var target='/'+CITY+'/';
+  var fields=data();
+  if(Object.keys(fields).length){
+   var draft=JSON.stringify({t:Date.now(),page:1,f:fields});
+   try{localStorage.setItem('hh_draft:'+target,draft);}catch(e){}
+   try{sessionStorage.setItem('hh_transfer:'+target,draft);}catch(e){}
+  }
+  var params=new URLSearchParams(location.search); params.set('early_expired','1');
+  location.replace(target+'?'+params.toString());
+ }
+ if(PLAN==='regular' && Q.get('early_expired')==='1'){
+  var notice=document.createElement('p'); notice.className='note'; notice.setAttribute('role','status');
+  notice.textContent='사전알림 특가가 종료됐어요. 일반 참가비와 송금 금액을 확인한 뒤 신청해 주세요. 이미 송금했다면 인스타그램 @haruharu.ting으로 문의해 주세요.';
+  form.parentNode.insertBefore(notice,form);
+ }
  var DKEY='hh_draft:'+location.pathname;
  function saveDraft(){ try{ localStorage.setItem(DKEY, JSON.stringify({t:Date.now(),page:curPage,f:data()})); }catch(e){} }
  function schedule(){ saveDraft(); clearTimeout(timer); timer=setTimeout(function(){partial(false)},900); }
@@ -298,27 +350,29 @@ input:focus{border-color:#1a1a1a}
  document.getElementById('pay').addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; saveDraft(); partial(false); });
 
  form.addEventListener('submit',function(e){
-  e.preventDefault(); if(!validate(2)) return;
-  clearTimeout(timer); submitted=true;
+  e.preventDefault(); if(offerControl && !offerControl.canSubmit()) return; if(!validate(2)) return;
+  clearTimeout(timer); submitted=true; form.dataset.submitting='true';
   var btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='제출 중…';
   var d=data();
   var payload={sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active()};
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
-   .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
      var appId=res.application_id||res.id;
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
      ev('submit',{ application_id:appId, total_seconds:Math.round((Date.now()-T0)/1000), gender:d.gender, source_self_report:d.source, device_answer:d.device, intent:d.intent });
      fb('Lead',{content_name:hidden.channel, content_category:hidden.utm_term||''},true);
-     show('done'); try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
+     show('done'); if(offerControl) document.getElementById('early-banner').hidden=true; try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
    })
-   .catch(function(err){ submitted=false; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert('제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
+   .catch(function(err){ if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '4,900원 할인이 종료됐어요. 참가비 7,900원과 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
  });
  function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll() }); partial(true); } }
  window.addEventListener('pagehide',leave);
  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') leave(); });
  // 보관된 작성 내용 복원 (6시간 이내)
- try{ var dr=JSON.parse(localStorage.getItem(DKEY)||'null');
+ try{ var transferred=sessionStorage.getItem('hh_transfer:'+location.pathname);
+  var dr=JSON.parse(transferred || localStorage.getItem(DKEY)||'null');
+  if(transferred) sessionStorage.removeItem('hh_transfer:'+location.pathname);
   if(dr && dr.f && Date.now()-dr.t<6*3600e3){
    Object.keys(dr.f).forEach(function(k){ var els=form.querySelectorAll('[name="'+k+'"]'); [].forEach.call(els,function(el){
     if(el.type==='radio'){ if(el.value===dr.f[k]){ el.checked=true; el.closest('.opt').classList.add('on'); if(el.getAttribute('data-other')){ var o=el.closest('.q').querySelector('.other'); if(o) o.classList.add('show'); } } }
