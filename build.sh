@@ -20,9 +20,19 @@ gen() { # city city_ko school_ex img_p1 schedule plan fee pay_url outdir fee_not
 import sys, re, os
 city,city_ko,school,p1,sched,plan,fee,pay,outdir,fee_note,cohort,mp=sys.argv[1:]
 p4=f'P4_{city}_3gi_{plan}_12900.png'
+if plan == 'early':
+    sched=sched.replace('- 신청 마감: 10월 5일(월)\\n', '').replace('- 최종 참가 안내 문자: 신청 마감일 밤', '- 인원이 구성되면 안내 문자를 보내드려요.')
 t=open('src/form.template.html',encoding='utf-8').read()
 for k,v in {'__CITY__':city,'__CITY_KO__':city_ko,'__SCHOOL_EX__':school,'__IMG_P1__':p1,'__IMG_P4__':p4,'__SCHEDULE__':sched.replace('\\n','\n'),'__COHORT__':cohort,'__PLAN__':plan,'__FEE_NOTE__':fee_note,'__PAY_URL__':pay,'__FEE__':fee,'__MP__':mp}.items():
     t=t.replace(k,v)
+if plan == 'early':
+    start=t.index('<div class="q" data-name="source">')
+    end=t.index('<div class="q" data-name="intent">', start)
+    t=t[:start]+t[end:]
+    card=open('src/early-info.html',encoding='utf-8').read().replace('__CITY_KO__',city_ko).replace('__COHORT__',cohort)
+    t=re.sub(r'<img class="img" data-img="P4"[^>]+>',card,t)
+    t=t.replace('id="pay" href="'+pay+'"', 'id="pay" aria-disabled="true"').replace('id="submit"', 'id="submit" disabled')
+    t=t.replace('방이 열리면 초대 코드를 문자로 보내드려요.', '인원이 구성되면 안내 문자와 초대 코드를 보내드려요.')
 left=re.findall(r'__[A-Z0-9_]+__',t)
 assert not left, 'placeholder 남음: '+str(left)
 assert os.path.exists('public/img/'+p4), 'P4 이미지 없음: '+p4
@@ -36,6 +46,7 @@ gen seoul   "서울" "서울대학교" "$IMG_P1_SEOUL"   "$SCHEDULE_SEOUL"   reg
 gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" regular "$FEE_REGULAR" "$PAY_REGULAR" "gwangju"            "$NOTE_REGULAR"
 gen seoul   "서울" "서울대학교" "$IMG_P1_SEOUL"   "$SCHEDULE_SEOUL"   early   "$FEE_EARLY"   "$PAY_EARLY"   "seoul/$EARLY_DIR"   "$NOTE_EARLY"
 gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" early   "$FEE_EARLY"   "$PAY_EARLY"   "gwangju/$EARLY_DIR" "$NOTE_EARLY"
+cp src/early-offer.js public/early-offer.js
 # 지역 선택 페이지 (루트)
 python3 - "$MP" <<'EOF2'
 import sys

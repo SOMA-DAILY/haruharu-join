@@ -1,3 +1,5 @@
+import { earlyOffer } from '../../shared/early-offer.mjs';
+
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
 // POST /api/submit   : 최종 제출. 정본 KV s: + D1 submissions 사본
@@ -75,6 +77,7 @@ async function trackSession(env, request, b) {
 export async function onRequest({ request, env, params }) {
   const url = new URL(request.url);
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
+  if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -87,13 +90,19 @@ export async function onRequest({ request, env, params }) {
   if (request.method === 'POST' && path === '/submit') {
     const b = await readBody(request); if (!b || !b.fields) return json({ ok: false, error: 'bad body' }, 400);
     const f = clean(b.fields);
-    const miss = ['gender', 'birth_year', 'school', 'source', 'device', 'phone', 'consent', 'name'].filter((k) => !f[k]);
+    const preRegistration = /^\/(seoul|gwangju)\/pre-4k9x\/?$/.test(b.path || '');
+    const required = ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    if (!preRegistration) required.push('source', 'device');
+    const miss = required.filter((k) => !f[k]);
     if (miss.length) return json({ ok: false, error: 'missing', miss }, 400);
     const now = Date.now();
     // 신청 ID = 세션 UUID (랜딩부터 앱까지 한 사람을 잇는 키). Mixpanel distinct_id, 초대 코드 옆에 저장, 앱 identify 에 씀
     const sidOk = typeof b.sid === 'string' && /^[0-9a-f-]{20,64}$/i.test(b.sid);
     const id = sidOk ? b.sid : (crypto.randomUUID ? crypto.randomUUID() : KST(now).replace(/[^0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 7));
     const h = cleanHidden(b.hidden);
+    if (h.plan === 'early' && !earlyOffer(now).active) {
+      return json({ ok: false, error: 'early_expired', offer: earlyOffer(now) }, 409);
+    }
     const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
