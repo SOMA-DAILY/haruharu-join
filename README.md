@@ -12,6 +12,7 @@
 - `src/form.template.html` → `build.sh` → `public/{seoul,gwangju}/` (7,900), `public/{seoul,gwangju}/pre-4k9x/` (4,900, 사전알림 전용 경로)
 - 참가비/일정/마감은 `build.sh` 상단 변수만 고침
 - `src/admin.html` → `public/admin/index.html`
+- `src/festival.template.html` → `public/jnu-festival/` (전남대 축제 이벤트 4,900, 링크로만, 10/3 15:00 KST 마감. 마감 시각은 `shared/jnu-festival.mjs`)
 - `functions/api/[[path]].js` → 제출/관리 API. 제출 정본 KV `APPLY_KV`, 분석 사본 D1 `haruharu-apply-db`
 - `migrations/` → D1 스키마. CI 는 안 돌림, 필요하면 수동 `npx wrangler d1 migrations apply haruharu-apply-db --remote`
 
@@ -21,4 +22,5 @@
 - 배포 루트는 반드시 `public`. 루트째 올리면 설정 파일이 같이 서빙됨
 - 신청자 데이터(백업 json 등) 레포에 넣지 말 것. `_archive/` `.secrets` `.dev.vars` 는 gitignore
 - 관리자 비번 등 시크릿은 Cloudflare 프로젝트 설정에 있음. 코드에 적지 말 것
+- 축제 폼 배포 전 원격 D1 에 `migrations/0007_jnu_festival.sql` 의 ALTER 3개를 먼저 적용 (명령은 CLAUDE.md 진행 예정 작업)
 - 롤백: 대시보드 `haruharu-apply` → Deployments → Rollback, 또는 `git revert` 후 push
