@@ -1,15 +1,21 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
+import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
-// POST /api/submit   : 최종 제출. 정본 KV s: + D1 submissions 사본
+// POST /api/submit   : 최종 제출. 정본 KV s: + D1 submissions 사본. 전남대 축제 폼은 학생 인증 캡처를 KV img:{신청ID} 에 따로 저장
+// GET  /api/festival : 전남대 축제 폼 마감 여부 (서버 시각 기준)
 // GET  /api/export?token=..&type=submissions|partials&format=csv|json
 // GET  /api/stats?token=..  : 단계별 도달 수 (도착 → 입력 시작 → 1페이지 완료 → 제출)
 // /api/admin/*       : 관리 페이지 (비밀번호 로그인 쿠키)
 
 const KST = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 19);
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
-const FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'name', 'buddy', 'buddy_room'];
+// /api/export CSV 는 시트 IMPORTDATA 가 열 위치로 읽을 수 있음 → BASE_FIELDS 순서와 기존 열 위치는 바꾸지 말고, 새 입력값은 FESTIVAL_FIELDS 로 CSV 맨 끝에만 붙임
+const BASE_FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'name', 'buddy', 'buddy_room'];
+const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
+// 캡처 이미지는 FIELDS 에 넣지 않음: /partial(D1 sessions.fields)로는 절대 안 들어가게 제출 본문의 capture 로만 받음
+const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS];
 const HIDDEN = ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto'];
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebot|meta-externalagent|preview|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
 
@@ -50,7 +56,7 @@ async function trackSession(env, request, b) {
   const kind = path === '/' ? 'landing' : 'form';
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO forms (path, name, kind, city, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
-      .bind(path, path === '/' ? '지역 선택 랜딩' : ((h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : '')), kind, h.city && h.city !== 'select' ? h.city : null, now),
+      .bind(path, path === '/' ? '지역 선택 랜딩' : isFestival(path, h.plan) ? '전남대 축제 신청폼' : ((h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : '')), kind, h.city && h.city !== 'select' ? h.city : null, now),
     env.DB.prepare(`INSERT INTO sessions (sid, path, city, src, channel, utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid,
         ref, ua, device, in_app, is_bot, is_return, first_ts, last_ts, active_ms, max_scroll, started, started_ts, max_page, last_field, fields, filled, next_click)
       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?18,?19,?20,?21,?22,?23,?24,?25,?26,?27)
@@ -78,6 +84,7 @@ export async function onRequest({ request, env, params }) {
   const url = new URL(request.url);
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
+  if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -90,20 +97,44 @@ export async function onRequest({ request, env, params }) {
   if (request.method === 'POST' && path === '/submit') {
     const b = await readBody(request); if (!b || !b.fields) return json({ ok: false, error: 'bad body' }, 400);
     const f = clean(b.fields);
-    const preRegistration = /^\/(seoul|gwangju)\/pre-4k9x\/?$/.test(b.path || '');
-    const required = ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
-    if (!preRegistration) required.push('source', 'device');
-    const miss = required.filter((k) => !f[k]);
-    if (miss.length) return json({ ok: false, error: 'missing', miss }, 400);
+    const h = cleanHidden(b.hidden);
     const now = Date.now();
+    // 전남대 축제 폼: 경로나 plan 중 하나라도 축제면 축제 신청으로 보고 마감 시각과 캡처를 서버에서 확인 (화면만 막으면 우회 가능)
+    const festival = isFestival(b.path, h.plan);
+    if (festival) {
+      h.plan = FESTIVAL_PLAN;
+      if (!festivalStatus(now, env).open) return json({ ok: false, error: 'festival_closed', ...festivalStatus(now, env) }, 409);
+    }
+    const preRegistration = /^\/(seoul|gwangju)\/pre-4k9x\/?$/.test(b.path || '');
+    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    if (!preRegistration && !festival) required.push('source', 'device');
+    const miss = required.filter((k) => !f[k]);
+    let capture = null;
+    if (festival) {
+      capture = decodeCapture(b.capture);
+      if (capture.error === 'capture_missing') miss.push('capture');
+    }
+    if (miss.length) return json({ ok: false, error: 'missing', miss }, 400);
+    if (capture && capture.error) return json({ ok: false, error: capture.error }, capture.error === 'capture_too_large' ? 413 : 400);
+    if (festival) f.avoid_same_major = AVOID_MAJOR_VALUES.includes(f.avoid_same_major) ? f.avoid_same_major : '';
     // 신청 ID = 세션 UUID (랜딩부터 앱까지 한 사람을 잇는 키). Mixpanel distinct_id, 초대 코드 옆에 저장, 앱 identify 에 씀
     const sidOk = typeof b.sid === 'string' && /^[0-9a-f-]{20,64}$/i.test(b.sid);
     const id = sidOk ? b.sid : (crypto.randomUUID ? crypto.randomUUID() : KST(now).replace(/[^0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 7));
-    const h = cleanHidden(b.hidden);
     if (h.plan === 'early' && !earlyOffer(now).active) {
       return json({ ok: false, error: 'early_expired', offer: earlyOffer(now) }, 409);
     }
+    // 학생 인증 캡처는 KV img:{신청ID} 에 바이너리로 (CAPTURE_DELETE_AT 에 만료). 저장이 실패해도 신청은 받고(송금했을 수 있음) 관리 페이지에 '캡처 없음'으로 보임
+    let cardKey = '';
+    if (capture && capture.bytes) {
+      try {
+        const opts = { metadata: { type: capture.type, size: capture.bytes.length, ts: now } };
+        opts.expiration = captureExpiration(now); // 행사 끝나면 자동 삭제 (늦게 들어오면 3일 뒤). 만료 없이 저장되는 경우 없음
+        await kv.put('img:' + id, capture.bytes, opts);
+        cardKey = 'img:' + id;
+      } catch (e) {}
+    }
     const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
+    if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
     let kvOk = true, dbOk = false;
@@ -130,6 +161,13 @@ export async function onRequest({ request, env, params }) {
         dbOk = true;
       }
     } catch (e) {}
+    // 축제 폼 전용 열(migrations/0007)은 위 batch 밖에서 따로 채움: 원격에 0007 이 빠져도 신청자 행은 남고 이 세 값만 빠짐 (정본 KV 에는 다 있음)
+    if (festival && dbOk) {
+      try {
+        await env.DB.prepare('UPDATE submissions SET major = ?2, avoid_same_major = ?3, student_card_key = ?4 WHERE application_id = ?1')
+          .bind(id, f.major || '', f.avoid_same_major || '', cardKey).run();
+      } catch (e) {}
+    }
     if (!kvOk && !dbOk) return json({ ok: false, error: 'store failed' }, 500);
     return json({ ok: true, id, application_id: id });
   }
@@ -140,6 +178,8 @@ export async function onRequest({ request, env, params }) {
     const okRead = (env.READ_TOKEN && token === env.READ_TOKEN) || (env.EXPORT_TOKEN && token === env.EXPORT_TOKEN);
     if (!okRead) return json({ error: 'unauthorized' }, 401);
     const esc = (v) => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    // 새 자유 입력 열(학과)은 시트가 수식으로 읽지 않게 = + - @ 로 시작하면 앞에 ' 를 붙임. 기존 열 값은 그대로 둠
+    const escFree = (v) => esc(v != null && /^[=+\-@\t\r]/.test(String(v)) ? "'" + v : v);
     const csv = (lines) => new Response('﻿' + lines.join('\n'), { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
 
     if (path === '/stats') {
@@ -154,11 +194,12 @@ export async function onRequest({ request, env, params }) {
     if (url.searchParams.get('type') === 'partials') {
       const rows = (await env.DB.prepare(`SELECT * FROM sessions WHERE is_bot = 0 AND path <> '/' ORDER BY first_ts`).all()).results;
       if (url.searchParams.get('format') === 'json') return json(rows);
-      const head = ['sid', 'status', 'first_at', 'last_at', 'page', 'last_field', ...FIELDS, 'src', 'channel', 'city', 'path', 'active_sec', 'device', 'in_app', 'ref'];
+      const head = ['sid', 'status', 'first_at', 'last_at', 'page', 'last_field', ...BASE_FIELDS, 'src', 'channel', 'city', 'path', 'active_sec', 'device', 'in_app', 'ref', ...FESTIVAL_FIELDS];
       const lines = [head.join(',')];
       for (const r of rows) {
         const f = r.fields ? JSON.parse(r.fields) : {};
-        lines.push([r.sid, r.submitted ? 'submitted' : r.started ? 'partial' : 'landed', KST(r.first_ts), KST(r.last_ts), r.max_page, r.last_field, ...FIELDS.map((k) => f[k]), r.src, r.channel, r.city, r.path, Math.round((r.active_ms || 0) / 1000), r.device, r.in_app, r.ref].map(esc).join(','));
+        lines.push([r.sid, r.submitted ? 'submitted' : r.started ? 'partial' : 'landed', KST(r.first_ts), KST(r.last_ts), r.max_page, r.last_field, ...BASE_FIELDS.map((k) => f[k]), r.src, r.channel, r.city, r.path, Math.round((r.active_ms || 0) / 1000), r.device, r.in_app, r.ref].map(esc)
+          .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).join(','));
       }
       return csv(lines);
     }
@@ -172,11 +213,12 @@ export async function onRequest({ request, env, params }) {
     } while (cursor);
     rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
     if (url.searchParams.get('format') === 'json') return json(rows);
-    const head = ['application_id', 'submitted_at', ...FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid'];
+    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS];
     const lines = [head.join(',')];
     for (const r of rows) {
       const f = r.fields || {}, h = r.hidden || {};
-      lines.push([r.application_id || r.id, r.submitted_at, ...FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN.map((k) => h[k]), r.ref, r.sid].map(esc).join(','));
+      lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN.map((k) => h[k]), r.ref, r.sid].map(esc)
+        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).join(','));
     }
     return csv(lines);
   }
@@ -187,13 +229,15 @@ export async function onRequest({ request, env, params }) {
     if (!env.EXPORT_TOKEN || token !== env.EXPORT_TOKEN) return json({ error: 'unauthorized' }, 401);
     const key = url.searchParams.get('key');
     if (key && /^s:/.test(key)) {
+      const orig = await kv.get(key, 'json').catch(() => null);
       await kv.delete(key);
+      if (orig && (orig.application_id || orig.id)) await kv.delete('img:' + (orig.application_id || orig.id));
       if (env.DB) await env.DB.prepare('DELETE FROM submissions WHERE kv_key = ?1').bind(key).run();
       return json({ ok: true, deleted: [key] });
     }
     if (url.searchParams.get('all') === '1' && url.searchParams.get('confirm') === 'YES') {
       const deleted = [];
-      for (const prefix of ['s:', 'p:', 'm:']) {
+      for (const prefix of ['s:', 'p:', 'm:', 'img:']) {
         let cursor;
         do {
           const l = await kv.list({ prefix, cursor, limit: 1000 });
@@ -279,6 +323,17 @@ async function admin(sub, request, env, kv, url) {
     return new Response('{"ok":true}', { headers: { 'content-type': 'application/json', 'set-cookie': `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` } });
   }
   if (!(await sessionOk(request, env))) return json({ error: 'unauthorized' }, 401);
+  // 학생 인증 캡처 보기 (관리자 로그인 쿠키가 있어야만). 신청ID 로 KV img:{신청ID} 를 그대로 내려줌
+  if (request.method === 'GET' && sub === '/capture') {
+    const id = url.searchParams.get('id') || '';
+    if (!/^[0-9a-z-]{8,64}$/i.test(id)) return json({ error: 'bad id' }, 400);
+    const got = await kv.getWithMetadata('img:' + id, 'arrayBuffer');
+    if (!got || !got.value) return json({ error: 'not found' }, 404);
+    const type = sniffImage(new Uint8Array(got.value));
+    if (!type) return json({ error: 'not an image' }, 415);
+    // 학생증 캡처라 브라우저 캐시에도 남기지 않음 (삭제, 로그아웃 뒤에 캐시로 다시 보이지 않게)
+    return new Response(got.value, { headers: { 'content-type': type, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-disposition': 'inline' } });
+  }
   const DB = env.DB;
   if (!DB) return json({ error: 'D1 binding missing' }, 500);
 
@@ -345,6 +400,7 @@ async function admin(sub, request, env, kv, url) {
       // Keep the D1 row until KV cleanup succeeds so interrupted deletions can be retried.
       await kv.delete(row.kv_key);
       await kv.delete('m:' + b.id);
+      await kv.delete('img:' + b.id); // 전남대 축제 학생 인증 캡처 (없으면 아무 일 없음)
       await DB.batch([
         DB.prepare('DELETE FROM sessions WHERE application_id = ?1').bind(b.id),
         DB.prepare('DELETE FROM submissions WHERE application_id = ?1').bind(b.id),

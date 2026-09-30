@@ -40,8 +40,8 @@ nav button.on{color:var(--ink);border-bottom-color:var(--ink)}
 nav button.main{font-size:15px;color:var(--ink)}
 nav button.sub{font-size:13px}
 .navsep{align-self:center;margin:0 4px 0 18px;padding-left:14px;border-left:1px solid var(--line);font-size:11px;color:var(--faint);font-weight:600;white-space:nowrap}
-.citytabs{display:flex;gap:6px;margin-bottom:14px}
-.citytabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 16px;cursor:pointer;font-weight:600;color:var(--sub)}
+.citytabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.citytabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 16px;cursor:pointer;font-weight:600;color:var(--sub);white-space:nowrap}
 .citytabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--sub)}
 .strip b{color:var(--ink)}
@@ -102,6 +102,12 @@ table.list tr.sub td{color:var(--faint)}
 .badge.seoul,.badge.blue{background:var(--blue-soft);color:var(--blue)}
 .badge.gwangju,.badge.green{background:var(--green-soft);color:var(--green)}
 .badge.amber{background:var(--amber-soft);color:var(--amber)}
+.badge.jnu{background:#fdeef3;color:#c2185b}
+button.badge.capbtn{border:0;cursor:pointer;font:inherit;font-size:12px;font-weight:600;background:#fdeef3;color:#c2185b}
+button.badge.capbtn:hover{background:#f9d9e4}
+.capthumb{display:block;max-width:100%;max-height:360px;border:1px solid var(--line);border-radius:10px;cursor:zoom-in;background:#fafbfc}
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:30;cursor:zoom-out;padding:16px}
+#lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
 .stsel{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;font-size:12px}
 .stsel[data-v="송금확인"]{color:var(--blue);border-color:#bcd3f7}
 .stsel[data-v="연락함"]{color:var(--amber);border-color:#f3d6a6}
@@ -260,7 +266,7 @@ dd{margin:0;word-break:break-all}
     </div>
 
     <div id="t-apps">
-      <div class="citytabs" id="aCityTabs"><button data-c="" class="on">전체</button><button data-c="seoul">서울</button><button data-c="gwangju">광주</button></div>
+      <div class="citytabs" id="aCityTabs"><button data-c="" class="on">전체</button><button data-c="seoul">서울</button><button data-c="gwangju">광주</button><button data-c="jnu_festival">전남대 축제</button></div>
       <div class="tiles">
         <div class="tile"><div class="k">총 신청</div><div class="v num" id="aTotal">-</div><div class="s" id="aTotalS"></div></div>
         <div class="tile"><div class="k">오늘 신청</div><div class="v num" id="aToday">-</div><div class="s" id="aTodayS"></div></div>
@@ -271,14 +277,14 @@ dd{margin:0;word-break:break-all}
         <table class="list" style="min-width:0"><thead><tr><th>광고</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
       <div class="strip" id="aStrip"></div>
       <div class="filters" style="margin-bottom:10px">
-        <input id="q" placeholder="이름, 전화번호, 학교 검색" style="min-width:220px">
+        <input id="q" placeholder="이름, 전화번호, 학교, 학과 검색" style="min-width:220px">
         <select id="aGender"><option value="">성별 전체</option><option>여성</option><option>남성</option></select>
         <select id="aStatus"><option value="">상태 전체</option><option value="-">미처리</option><option>송금확인</option><option>연락함</option><option>확정</option><option>보류</option><option>취소</option></select>
         <button class="btn ghost sm" id="csvBtn">CSV</button>
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
       <div class="tbl-wrap"><table class="list">
-        <thead><tr><th>신청 시각</th><th>지역</th><th>이름</th><th>성별</th><th>출생</th><th>학교</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
+        <thead><tr><th>신청 시각</th><th>지역</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 학과</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
         <tbody id="appRows"></tbody></table>
         <div class="empty hidden" id="appEmpty">아직 신청자가 없음</div></div>
     </div>
@@ -286,12 +292,13 @@ dd{margin:0;word-break:break-all}
 </section>
 
 <div id="drawer" class="hidden"><div class="panel" id="panel"></div></div>
+<div id="lightbox" class="hidden"><img id="lbImg" alt="학생 인증 캡처"></div>
 
 <script>
 (function(){
 var HOST='https://join.haruharu.co.kr';
 var STATUSES=['','송금확인','연락함','확정','보류','취소'];
-var FL={gender:'성별',birth_year:'출생연도',school:'학교',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼'};
+var FL={gender:'성별',birth_year:'출생연도',school:'학교',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
 var S={tab:'apps',acity:'',today:null,range:'7d',path:'',src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
 var $=function(id){return document.getElementById(id)};
@@ -302,6 +309,15 @@ var dur=function(ms){if(!ms)return '-';var s=Math.round(ms/1000);if(s<60)return 
 var kst=function(ts){return ts?new Date(ts+9*3600e3).toISOString().slice(5,16).replace('T',' '):'-'};
 var ago=function(ts){if(!ts)return '-';var s=(Date.now()-ts)/1000;if(s<60)return '방금';if(s<3600)return Math.floor(s/60)+'분 전';if(s<86400)return Math.floor(s/3600)+'시간 전';return kst(ts)};
 var cityKo={seoul:'서울',gwangju:'광주'};
+// 전남대 축제 신청(plan jnu_festival)은 city 가 gwangju 라도 광주 탭(3기)과 따로 봄
+var FEST='jnu_festival',FEST_PATH='/jnu-festival/',tabKo={seoul:'서울',gwangju:'광주',jnu_festival:'전남대 축제'};
+function isFest(r){return r.plan===FEST}
+function inTab(r,c){if(!c)return true;if(c===FEST)return isFest(r);return r.city===c&&!isFest(r)}
+function avoidBadge(r){return r.avoid_same_major==='같은 과 피하기'?' <span class="badge blue">같은 과 피하기</span>':''}
+function capCell(r){if(!isFest(r))return '';return r.student_card_key?' <button type="button" class="badge capbtn" data-cap="'+esc(r.application_id)+'">캡처</button>':' <span class="badge amber">캡처 없음</span>'}
+function capUrl(id){return '/api/admin/capture?id='+encodeURIComponent(id)}
+function openCap(id){var i=$('lbImg');i.onerror=function(){closeCap();toast('캡처가 없음 (행사 종료로 삭제됐거나 저장 안 됨)')};i.src=capUrl(id);$('lightbox').classList.remove('hidden')}
+function closeCap(){$('lightbox').classList.add('hidden');$('lbImg').removeAttribute('src')}
 function toast(t){var e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},1800)}
 function copy(t){navigator.clipboard.writeText(t).then(function(){toast('복사됨')})}
 function api(path,opt){return fetch('/api/admin/'+path,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},opt||{})).then(function(r){if(r.status===401){showLogin();throw new Error('401')}return r.json()})}
@@ -464,13 +480,14 @@ function srcName(s){if(!s)return '직접 들어옴';var l=linkOf(s);if(l&&l.labe
   if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return cityKo[m[1]]+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
   m=/^h3-early-(seoul|gwangju)$/.exec(s);if(m)return '사전알림 메시지 '+cityKo[m[1]];
   m=/^h3-(msg|rejoin)-(seoul|gwangju)$/.exec(s);if(m)return (m[1]==='msg'?'메시지 공유 ':'재참가 메시지 ')+cityKo[m[2]];
+  if(s==='jnu-fest-msg')return '전남대 축제 메시지 공유';
   return s}
 function srcCell(s){return '<span title="'+esc(s||'')+'">'+esc(srcName(s))+'</span>'}
 function stepsHtml(r,L){if(L)return r.next_click?'<span class="badge green">'+esc(cityKo[r.next_click]||r.next_click)+' 클릭</span>':'<span class="badge">클릭 없음</span>';
   var t=r.submitted?['제출','green']:r.max_page>=2?['2페이지에서 나감','amber']:r.started?['1페이지에서 나감','amber']:['입력 없이 나감',''];
   return '<span class="badge '+t[1]+'">'+t[0]+'</span>'}
 function filledSummary(r){if(!r.fields)return '<span class="muted">-</span>';var f=JSON.parse(r.fields),bits=[];
-  ['name','phone','gender','birth_year','school','source','intent','buddy_room','buddy'].forEach(function(k){if(f[k])bits.push(esc(k==='phone'||k==='buddy'?fmtPhone(f[k]):f[k]))});
+  ['name','phone','gender','birth_year','school','major','source','intent','buddy_room','buddy','avoid_same_major'].forEach(function(k){if(f[k])bits.push(esc(k==='phone'||k==='buddy'?fmtPhone(f[k]):f[k]))});
   return bits.length?bits.join(' / '):'<span class="muted">-</span>'}
 function renderVisits(){var rs=S.visits,out=[],g={};
   // 입력 없이 나간 방문은 같은 광고, 같은 10분이면 한 줄로 묶음 (광고 심사 방문이 한꺼번에 몰림)
@@ -490,16 +507,16 @@ $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr'
 document.getElementById('aCityTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});S.acity=b.dataset.c;renderApps()});
 ['q','aGender','aStatus'].forEach(function(id){$(id).addEventListener('input',renderApps)});
 function appsFiltered(){var q=$('q').value.trim().toLowerCase().replace(/-/g,''),c=S.acity,g=$('aGender').value,st=$('aStatus').value;
-  return S.apps.filter(function(r){if(c&&r.city!==c)return false;if(g&&r.gender!==g)return false;if(st==='-'&&r.status)return false;if(st&&st!=='-'&&r.status!==st)return false;
-    if(q&&((r.name||'')+' '+(r.phone_digits||'')+' '+(r.school||'')).toLowerCase().indexOf(q)<0)return false;return true})}
+  return S.apps.filter(function(r){if(!inTab(r,c))return false;if(g&&r.gender!==g)return false;if(st==='-'&&r.status)return false;if(st&&st!=='-'&&r.status!==st)return false;
+    if(q&&((r.name||'')+' '+(r.phone_digits||'')+' '+(r.school||'')+' '+(r.major||'')).toLowerCase().indexOf(q)<0)return false;return true})}
 function renderAppSummary(){
-  var all=S.apps.filter(function(r){return !S.acity||r.city===S.acity});
+  var all=S.apps.filter(function(r){return inTab(r,S.acity)});
   var dk=function(off){return new Date(dayStart(off)+9*3600e3).toISOString().slice(0,10)};
   var td=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(0)}).length,yd=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(-1)}).length;
   var f=all.filter(function(r){return r.gender==='여성'}).length,m=all.filter(function(r){return r.gender==='남성'}).length;
   var done=all.filter(function(r){return r.status}).length,conf=all.filter(function(r){return r.status==='확정'}).length;
-  var s=S.apps.filter(function(r){return r.city==='seoul'}).length,g=S.apps.filter(function(r){return r.city==='gwangju'}).length;
-  $('aTotal').textContent=all.length;$('aTotalS').textContent=S.acity?(cityKo[S.acity]+'만'):('서울 '+s+' / 광주 '+g);
+  var s=S.apps.filter(function(r){return inTab(r,'seoul')}).length,g=S.apps.filter(function(r){return inTab(r,'gwangju')}).length,fe=S.apps.filter(isFest).length;
+  $('aTotal').textContent=all.length;$('aTotalS').textContent=S.acity?(tabKo[S.acity]+'만'):('서울 '+s+' / 광주 '+g+(fe?' / 전남대 축제 '+fe:''));
   $('aToday').textContent=td;$('aTodayS').textContent='어제 '+yd;
   $('aGen').textContent=f+' : '+m;$('aGenS').textContent=all.length?('여성 '+pct(f,all.length)):'';
   var paid=all.filter(function(r){return r.status==='송금확인'||r.status==='연락함'||r.status==='확정'}).length;$('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 이상 '+paid+' / 확정 '+conf+' / 미처리 '+(all.length-done);
@@ -508,15 +525,15 @@ function renderAppSummary(){
   $('aBySrc').innerHTML=bl.length?bl.map(function(o){return '<tr><td>'+srcCell(o.k)+'</td><td class="r num"><b>'+o.n+'</b></td><td class="r num">'+o.f+'</td><td class="r num">'+o.m+'</td><td class="r num">'+o.t+'</td><td class="r num">'+o.p+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty" style="padding:18px">아직 신청이 없음</td></tr>';
   // 오늘 폼 퍼널 한 줄 (지역 탭 반영)
   var T=S.today;if(!T){$('aStrip').innerHTML='';return}
-  var rows=T.by_form.filter(function(r){var fo=(T.forms||[]).filter(function(x){return x.path===r.k})[0];var L=r.k==='/'||(fo&&fo.kind==='landing');if(L)return false;if(S.acity)return fo&&fo.city===S.acity;return true});
+  var rows=T.by_form.filter(function(r){var fo=(T.forms||[]).filter(function(x){return x.path===r.k})[0];var L=r.k==='/'||(fo&&fo.kind==='landing');if(L)return false;if(S.acity===FEST)return r.k===FEST_PATH;if(S.acity)return fo&&fo.city===S.acity&&r.k!==FEST_PATH;return true});
   var sm=function(k){return rows.reduce(function(a,r){return a+(r[k]||0)},0)};
   var v=sm('visits'),st=sm('starts'),sb=sm('submits'),pa=sm('partials');
-  $('aStrip').innerHTML='<span>오늘 '+(S.acity?cityKo[S.acity]+' ':'')+'폼</span><span>방문 <b>'+v+'</b></span><span>→ 입력 시작 <b>'+st+'</b></span><span>→ 제출 <b>'+sb+'</b></span><span>전환율 <b>'+pct(sb,v)+'</b></span><span>쓰다 나감 <b>'+pa+'</b></span><button class="go" id="goStats">지표 자세히 →</button>';
+  $('aStrip').innerHTML='<span>오늘 '+(S.acity?tabKo[S.acity]+' ':'')+'폼</span><span>방문 <b>'+v+'</b></span><span>→ 입력 시작 <b>'+st+'</b></span><span>→ 제출 <b>'+sb+'</b></span><span>전환율 <b>'+pct(sb,v)+'</b></span><span>쓰다 나감 <b>'+pa+'</b></span><button class="go" id="goStats">지표 자세히 →</button>';
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('appEmpty').classList.toggle('hidden',rs.length>0);
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td><span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span></td>'+
-    '<td><b>'+esc(r.name)+'</b>'+(r.plan==='early'?' <span class="badge amber">사전 4,900</span>':'')+buddyBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(r.school)+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+(isFest(r)?'<span class="badge jnu">전남대 축제</span>':'<span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span>')+'</td>'+
+    '<td><b>'+esc(r.name)+'</b>'+(r.plan==='early'?' <span class="badge amber">사전 4,900</span>':'')+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
@@ -527,7 +544,8 @@ function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자
   return ' <span class="badge amber">친구'+(m?' '+esc(m):'')+(t?': '+esc(t):'')+'</span>'}
 // 팀원이 메시지로 보낼 링크. 링크마다 src 가 달라 [광고별 신청] 표에 따로 잡힘
 var SHARE=[['서울 신청폼','일반 7,900원','/seoul/?src=h3-msg-seoul'],['광주 신청폼','일반 7,900원','/gwangju/?src=h3-msg-gwangju'],
-  ['서울 사전알림 신청자','4,900원','/seoul/pre-4k9x/?src=h3-early-seoul'],['광주 사전알림 신청자','4,900원','/gwangju/pre-4k9x/?src=h3-early-gwangju']];
+  ['서울 사전알림 신청자','4,900원','/seoul/pre-4k9x/?src=h3-early-seoul'],['광주 사전알림 신청자','4,900원','/gwangju/pre-4k9x/?src=h3-early-gwangju'],
+  ['전남대 축제 신청폼','4,900원, 10/3 15시 마감','/jnu-festival/?src=jnu-fest-msg']];
 $('shareLinks').innerHTML=SHARE.map(function(x){return '<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>'}).join('');
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
@@ -547,10 +565,12 @@ function deleteApplicant(r,button){
   }).catch(function(e){if(e.message!=='401')alert(e.message);})
     .finally(function(){deletingApp=false;button.disabled=false;button.textContent='삭제';});
 }
-$('appRows').addEventListener('click',function(e){var del=e.target.closest('button.delete-app');if(del){deleteApplicant(appById(del.dataset.id),del);return;}if(e.target.closest('select,input,button'))return;var tr=e.target.closest('tr');if(!tr)return;var r=appById(tr.dataset.id);delete S.newApps[r.application_id];updateNew();
-  var rows=[['지역',cityKo[r.city]||r.city],['성별',r.gender],['출생연도',r.birth_year],['학교',r.school],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['기기',r.device],['기대하는 것',(r.intent||'')+(r.intent_other?' ('+r.intent_other+')':'')],
-    ['참가비',r.plan==='early'?'사전알림 4,900원':'일반 7,900원'],['친구',buddyText(r)||(r.buddy_room||'-')],['응답 유입경로',r.source],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['작성 시간',dur(r.active_ms)],['접속 기기',(r.ua_device||'')+(r.in_app?' / '+r.in_app:'')],['기수',r.cohort],['신청 ID',r.application_id]];
-  $('panel').innerHTML='<h2>'+esc(r.name)+'</h2><div class="meta">'+esc(r.submitted_at)+' 신청'+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+rows.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+
+$('appRows').addEventListener('click',function(e){var del=e.target.closest('button.delete-app');if(del){deleteApplicant(appById(del.dataset.id),del);return;}var cp=e.target.closest('[data-cap]');if(cp){openCap(cp.dataset.cap);return;}if(e.target.closest('select,input,button'))return;var tr=e.target.closest('tr');if(!tr)return;var r=appById(tr.dataset.id);delete S.newApps[r.application_id];updateNew();
+  var F=isFest(r);
+  var rows=[[F?'폼':'지역',F?'전남대 축제 신청폼':(cityKo[r.city]||r.city)],['성별',r.gender],['출생연도',r.birth_year],F?['학과',r.major]:['학교',r.school],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['기기',r.device],F?null:['기대하는 것',(r.intent||'')+(r.intent_other?' ('+r.intent_other+')':'')],
+    ['참가비',F?'전남대 축제 4,900원':r.plan==='early'?'사전알림 4,900원':'일반 7,900원'],['친구',buddyText(r)||(r.buddy_room||'-')],F?['같은 과',r.avoid_same_major==='같은 과 피하기'?'같은 학과 사람과는 다른 방 원함':(r.avoid_same_major||'응답 없음')]:null,F?null:['응답 유입경로',r.source],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['작성 시간',dur(r.active_ms)],['접속 기기',(r.ua_device||'')+(r.in_app?' / '+r.in_app:'')],F?null:['기수',r.cohort],['신청 ID',r.application_id]].filter(Boolean);
+  var capHtml=F?'<h4>학생 인증 캡처</h4>'+(r.student_card_key?'<img class="capthumb" src="'+esc(capUrl(r.application_id))+'" alt="캡처 없음 (행사 종료로 삭제됐거나 저장 안 됨)" title="크게 보기" data-cap="'+esc(r.application_id)+'">':'<div class="muted">캡처 없음 (저장 실패 또는 D1 사본 누락, KV 원본 확인)</div>'):'';
+  $('panel').innerHTML='<h2>'+esc(r.name)+'</h2><div class="meta">'+esc(r.submitted_at)+' 신청'+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+rows.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+capHtml+
     '<h4>상태</h4><select class="stsel" id="dSt" style="padding:8px;width:100%">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     '<h4>방 (확정하면 기록)</h4><input id="dRoom" class="room" style="width:100%;margin:0;padding:8px" placeholder="서울방1" maxlength="40" value="'+esc(r.room||'')+'">'+
     '<h4>친구 (연락해서 확인한 내용)</h4><select id="dBr" class="stsel" style="padding:8px;width:100%">'+['','혼자','같은 방','다른 방','상관없음'].map(function(s){return '<option value="'+s+'"'+(s===(r.buddy_room||'')?' selected':'')+'>'+(s||'응답 없음')+'</option>'}).join('')+'</select><input id="dBuddy" class="room" style="width:100%;margin:6px 0 0;padding:8px" placeholder="친구 전화번호" maxlength="20" value="'+esc(/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):(r.buddy||''))+'">'+
@@ -559,14 +579,15 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
   $('drawer').classList.remove('hidden');renderApps();
   $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value,$('dRoom').value.trim(),{buddy:$('dBuddy').value.trim(),buddy_room:$('dBr').value}).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD});
 $('csvBtn').onclick=function(){var rs=appsFiltered();
-  var head=['신청시각','지역','이름','성별','출생연도','학교','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부'];
+  var head=['신청시각','지역','이름','성별','출생연도','학교','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처'];
   var c=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,r.plan==='early'?'사전알림 4900':'일반 7900',/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r)].map(c).join(',')}));
+  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,isFest(r)?'전남대 축제 4900':r.plan==='early'?'사전알림 4900':'일반 7900',/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r),(/^[=+\-@\t\r]/.test(r.major||'')?"'":'')+(r.major||''),r.avoid_same_major||'',isFest(r)?(r.student_card_key?'있음':'없음'):''].map(c).join(',')}));
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));a.download='하루하루_신청자_'+new Date(Date.now()+9*3600e3).toISOString().slice(0,10)+'.csv';a.click()};
 
 function closeD(){$('drawer').classList.add('hidden')}
-$('drawer').addEventListener('click',function(e){if(e.target.id==='drawer')closeD()});
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeD()});
+$('drawer').addEventListener('click',function(e){if(e.target.id==='drawer')return closeD();var cp=e.target.closest('[data-cap]');if(cp)openCap(cp.dataset.cap)});
+$('lightbox').addEventListener('click',closeCap);
+document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if(!$('lightbox').classList.contains('hidden'))return closeCap();closeD()});
 
 api('ping').then(function(){showApp();loadAll();start()}).catch(function(){});
 })();
