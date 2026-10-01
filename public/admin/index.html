@@ -98,6 +98,8 @@ table.list tr.click{cursor:pointer}
 table.list tbody tr.click:hover{background:#fafbfc}
 table.list tr.new{background:var(--new)}
 table.list tr.sub td{color:var(--faint)}
+table.list tr.excl td:not(.st){opacity:.45}
+.nw{white-space:nowrap}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f2f4;color:var(--sub)}
 .badge.seoul,.badge.blue{background:var(--blue-soft);color:var(--blue)}
 .badge.gwangju,.badge.green{background:var(--green-soft);color:var(--green)}
@@ -110,6 +112,7 @@ button.badge.capbtn:hover{background:#f9d9e4}
 #lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
 .stsel{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;font-size:12px}
 .stsel[data-v="송금확인"]{color:var(--blue);border-color:#bcd3f7}
+.stsel[data-v="송금확인 안됨"]{color:var(--red);border-color:#f5c2c2}
 .stsel[data-v="연락함"]{color:var(--amber);border-color:#f3d6a6}
 .room{border:1px solid #b7e4c7;border-radius:8px;padding:4px 6px;width:92px;font-size:12px;margin-left:6px;background:#fff}
 .stsel[data-v="확정"]{color:var(--green);border-color:#b7e4c7}
@@ -279,7 +282,7 @@ dd{margin:0;word-break:break-all}
       <div class="filters" style="margin-bottom:10px">
         <input id="q" placeholder="이름, 전화번호, 학교, 학과 검색" style="min-width:220px">
         <select id="aGender"><option value="">성별 전체</option><option>여성</option><option>남성</option></select>
-        <select id="aStatus"><option value="">상태 전체</option><option value="-">미처리</option><option>송금확인</option><option>연락함</option><option>확정</option><option>보류</option><option>취소</option></select>
+        <select id="aStatus"><option value="">상태 전체</option><option value="-">미처리</option><option>송금확인</option><option>송금확인 안됨</option><option>연락함</option><option>확정</option><option>보류</option><option>취소</option></select>
         <button class="btn ghost sm" id="csvBtn">CSV</button>
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
@@ -297,7 +300,10 @@ dd{margin:0;word-break:break-all}
 <script>
 (function(){
 var HOST='https://join.haruharu.co.kr';
-var STATUSES=['','송금확인','연락함','확정','보류','취소'];
+var STATUSES=['','송금확인','송금확인 안됨','연락함','확정','보류','취소'];
+// 송금확인 안됨: 목록엔 남기고 신청자 관리 화면 집계(총 신청, 오늘, 성비, 처리 현황, 광고별)에서만 뺌
+var UNPAID='송금확인 안됨';
+function counted(r){return r.status!==UNPAID}
 var FL={gender:'성별',birth_year:'출생연도',school:'학교',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
 var S={tab:'apps',acity:'',today:null,range:'7d',path:'',src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
@@ -510,13 +516,13 @@ function appsFiltered(){var q=$('q').value.trim().toLowerCase().replace(/-/g,'')
   return S.apps.filter(function(r){if(!inTab(r,c))return false;if(g&&r.gender!==g)return false;if(st==='-'&&r.status)return false;if(st&&st!=='-'&&r.status!==st)return false;
     if(q&&((r.name||'')+' '+(r.phone_digits||'')+' '+(r.school||'')+' '+(r.major||'')).toLowerCase().indexOf(q)<0)return false;return true})}
 function renderAppSummary(){
-  var all=S.apps.filter(function(r){return inTab(r,S.acity)});
+  var inTabAll=S.apps.filter(function(r){return inTab(r,S.acity)}),all=inTabAll.filter(counted),ex=inTabAll.length-all.length;
   var dk=function(off){return new Date(dayStart(off)+9*3600e3).toISOString().slice(0,10)};
   var td=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(0)}).length,yd=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(-1)}).length;
   var f=all.filter(function(r){return r.gender==='여성'}).length,m=all.filter(function(r){return r.gender==='남성'}).length;
   var done=all.filter(function(r){return r.status}).length,conf=all.filter(function(r){return r.status==='확정'}).length;
-  var s=S.apps.filter(function(r){return inTab(r,'seoul')}).length,g=S.apps.filter(function(r){return inTab(r,'gwangju')}).length,fe=S.apps.filter(isFest).length;
-  $('aTotal').textContent=all.length;$('aTotalS').textContent=S.acity?(tabKo[S.acity]+'만'):('서울 '+s+' / 광주 '+g+(fe?' / 전남대 축제 '+fe:''));
+  var ca=S.apps.filter(counted),s=ca.filter(function(r){return inTab(r,'seoul')}).length,g=ca.filter(function(r){return inTab(r,'gwangju')}).length,fe=ca.filter(isFest).length;
+  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(S.acity?(tabKo[S.acity]+'만'):('서울 '+s+' / 광주 '+g+(fe?' / 전남대 축제 '+fe:'')))+(ex?' <span class="nw">/ 송금확인 안됨 '+ex+'명 제외</span>':'');
   $('aToday').textContent=td;$('aTodayS').textContent='어제 '+yd;
   $('aGen').textContent=f+' : '+m;$('aGenS').textContent=all.length?('여성 '+pct(f,all.length)):'';
   var paid=all.filter(function(r){return r.status==='송금확인'||r.status==='연락함'||r.status==='확정'}).length;$('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 이상 '+paid+' / 확정 '+conf+' / 미처리 '+(all.length-done);
@@ -532,9 +538,9 @@ function renderAppSummary(){
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('appEmpty').classList.toggle('hidden',rs.length>0);
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+(isFest(r)?'<span class="badge jnu">전남대 축제</span>':'<span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span>')+'</td>'+
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+(isFest(r)?'<span class="badge jnu">전남대 축제</span>':'<span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span>')+'</td>'+
     '<td><b>'+esc(r.name)+'</b>'+(r.plan==='early'?' <span class="badge amber">사전 4,900</span>':'')+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
-    '<td><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
+    '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
 function buddyOf(r){var d=String(r.buddy||'').replace(/\D/g,'');if(!/^01\d{8,9}$/.test(d))return null;return S.apps.filter(function(x){return x.phone_digits===d&&x.application_id!==r.application_id})[0]||null}
