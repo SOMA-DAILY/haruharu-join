@@ -12,7 +12,7 @@
 - `src/form.template.html` → `build.sh` → `public/{seoul,gwangju}/` (7,900), `public/{seoul,gwangju}/pre-4k9x/` (4,900, 사전알림 전용 경로)
 - 참가비/일정/마감은 `build.sh` 상단 변수만 고침
 - `src/admin.html` → `public/admin/index.html`
-- `src/festival.template.html` → `public/jnu-festival/` (전남대 축제 이벤트 4,900, 링크로만, 10/3 15:00 KST 마감. 마감 시각은 `shared/jnu-festival.mjs`)
+- `src/festival.template.html` → `public/jnu-festival/` (전남대 축제 이벤트 4,900, 링크로만, 10/3 18:00 KST 마감. 마감 시각은 `shared/jnu-festival.mjs`)
 - `functions/api/[[path]].js` → 제출/관리 API. 제출 정본 KV `APPLY_KV`, 분석 사본 D1 `haruharu-apply-db`
 - `migrations/` → D1 스키마. CI 는 안 돌림, 필요하면 수동 `npx wrangler d1 migrations apply haruharu-apply-db --remote`
 

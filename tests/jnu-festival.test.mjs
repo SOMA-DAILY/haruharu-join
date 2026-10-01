@@ -25,8 +25,8 @@ const submit = (env, body) => onRequest({ request: new Request('http://localhost
 const festBody = (over = {}) => ({ sid: SID, path: '/jnu-festival/', fields: { ...fields }, hidden: { city: 'gwangju', plan: 'jnu_festival' }, capture: dataUrl(JPEG), ...over });
 async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { return await fn(); } finally { Date.now = o; } }
 
-test('deadline is 2026-10-03 15:00 KST and can be overridden by env for local tests', () => {
-  assert.equal(new Date(deadline).toISOString(), '2026-10-03T06:00:00.000Z');
+test('deadline is 2026-10-03 18:00 KST and can be overridden by env for local tests', () => {
+  assert.equal(new Date(deadline).toISOString(), '2026-10-03T09:00:00.000Z');
   assert.equal(festivalStatus(deadline - 1).open, true);
   assert.equal(festivalStatus(deadline).open, false);
   assert.equal(festivalStatus(deadline - 1, { JNU_FESTIVAL_DEADLINE: '2026-09-01T00:00:00+09:00' }).open, false);
