@@ -1,8 +1,8 @@
 // 전남대 축제 이벤트 신청폼 (/jnu-festival/). 서버(/api/submit, /api/festival)와 build.sh 가 같이 읽음
-// 마감: 2026-10-03(토) 18:00 KST. 로컬 시험은 환경값 JNU_FESTIVAL_DEADLINE(ISO 문자열 또는 ms)로 바꿈
+// 마감: 2026-10-02(금) 18:30 KST 조기 마감(원래 10-03 18:00). 로컬 시험은 환경값 JNU_FESTIVAL_DEADLINE(ISO 문자열 또는 ms)로 바꿈
 export const FESTIVAL_PLAN = 'jnu_festival';
 export const FESTIVAL_PATH = '/jnu-festival/';
-export const FESTIVAL_DEADLINE = '2026-10-03T18:00:00+09:00';
+export const FESTIVAL_DEADLINE = '2026-10-02T18:30:00+09:00';
 export const AVOID_MAJOR_VALUES = ['같은 과 피하기', '상관없음'];
 // 학생 인증 캡처(KV img:{신청ID})는 축제(10/7) 끝나면 KV 만료로 자동 삭제 (동의 문구: 확인 후 행사 종료 시 삭제)
 export const CAPTURE_DELETE_AT = '2026-10-08T00:00:00+09:00';
