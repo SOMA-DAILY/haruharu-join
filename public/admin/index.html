@@ -551,7 +551,7 @@ function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자
 // 팀원이 메시지로 보낼 링크. 링크마다 src 가 달라 [광고별 신청] 표에 따로 잡힘
 var SHARE=[['서울 신청폼','일반 7,900원','/seoul/?src=h3-msg-seoul'],['광주 신청폼','일반 7,900원','/gwangju/?src=h3-msg-gwangju'],
   ['서울 사전알림 신청자','4,900원','/seoul/pre-4k9x/?src=h3-early-seoul'],['광주 사전알림 신청자','4,900원','/gwangju/pre-4k9x/?src=h3-early-gwangju'],
-  ['전남대 축제 신청폼','4,900원, 10/3 18시 마감','/jnu-festival/?src=jnu-fest-msg']];
+  ['전남대 축제 신청폼','4,900원, 10/2 마감됨','/jnu-festival/?src=jnu-fest-msg']];
 $('shareLinks').innerHTML=SHARE.map(function(x){return '<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>'}).join('');
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}

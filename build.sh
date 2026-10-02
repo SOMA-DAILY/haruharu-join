@@ -49,7 +49,7 @@ gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" ear
 cp src/early-offer.js public/early-offer.js
 # 전남대 축제 이벤트 폼 (/jnu-festival/). 지역 선택(/)에는 안 걸고 링크로만 보냄. 마감 시각은 shared/jnu-festival.mjs 한 곳에서 읽음
 FEST_DIR="jnu-festival"; FEE_FEST="4,900"; FEE_FEST_ORIG="12,900"; PAY_FEST="https://haruharu-pay.pages.dev/f/"   # 축제 전용 셀(haruharu-pay /f/). /e/ 를 닫아도 영향 없음
-FEST_DEADLINE_KO="10월 3일(토) 오후 6시"
+FEST_DEADLINE_KO="10월 2일(금)"
 FEST_DEADLINE="$(sed -n "s/^export const FESTIVAL_DEADLINE = '\(.*\)';$/\1/p" shared/jnu-festival.mjs)"
 [ -n "$FEST_DEADLINE" ] || { echo "축제 마감 시각을 못 읽음"; exit 1; }
 mkdir -p "public/$FEST_DIR"
