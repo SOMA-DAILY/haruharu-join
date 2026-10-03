@@ -361,17 +361,20 @@ $('nav').addEventListener('click',function(e){var b=e.target.closest('button');i
 // D1 읽기 한도 아끼기: 신청자(가벼움)는 제출이 생길 때만, 지표(무거움)는 지표 탭을 볼 때만 다시 읽음
 function fail(e){if(e.message!=='401'){setLive(false);console.error(e)}}
 function loadApps(manual){
+  // 오늘 폼 지표(analytics)는 서버가 15분 캐시로 돌려줌 → 매번 받아도 D1 은 안 읽음. 신청자 목록은 캐시 없이 항상 최신
   return Promise.all([api('applicants'),api('analytics?from='+dayStart(0))]).then(function(r){
     S.today=r[1];setApps(r[0].rows,manual);S.appsAt=S.loadedAt=Date.now();renderApps();setLive(true)}).catch(fail);
 }
 function loadStats(){
   var qs=rangeQS();
   return Promise.all([api('analytics?'+qs),api('links?'+qs)]).then(function(r){
-    S.an=r[0];S.links=r[1].rows;S.statsAt=S.loadedAt=Date.now();
+    S.an=r[0];S.links=r[1].rows;S.statsAt=S.loadedAt=Date.now();S.anAt=r[0].cached_at||0;
     renderFilters();renderOverview();renderForms();renderLinks();
     if(S.tab==='visits')loadVisits();setLive(true)}).catch(fail);
 }
-function loadAll(manual){return Promise.all([loadApps(manual),loadStats()])}
+function loadLinks(){return api('links?'+rangeQS()).then(function(d){S.links=d.rows}).catch(fail)}
+// 지표(analytics 9쿼리)는 지표 탭일 때만. 신청자 탭에선 링크 목록(라벨용, 서버 캐시)만 먼저 받고 신청자를 그림
+function loadAll(manual){return S.tab!=='apps'?Promise.all([loadApps(manual),loadStats()]):loadLinks().then(function(){return loadApps(manual)})}
 function loadVisits(){return api('sessions?'+rangeQS()+(S.vstate?'&state='+S.vstate:'')).then(function(d){S.visits=d.rows;renderVisits()})}
 function setApps(rows,manual){
   if(S.seenApps){rows.forEach(function(r){if(!S.seenApps[r.application_id]){S.newApps[r.application_id]=1;if(!manual)toast('새 신청: '+(r.name||''))}})}
@@ -381,12 +384,12 @@ function poll(){if(document.hidden)return;
   api('ping').then(function(d){var changed=(S.lastSub!==null&&(d.last_submit!==S.lastSub||d.last_activity!==S.lastAct));S.lastSub=d.last_submit;S.lastAct=d.last_activity;
     var now=Date.now(),onStats=S.tab!=='apps';
     if(S.lastSubSeen!==d.last_submit||now-(S.appsAt||0)>5*60e3){S.lastSubSeen=d.last_submit;if(S.appsAt)loadApps()}
-    if(onStats&&now-(S.statsAt||0)>5*60e3)loadStats(); // 지표는 5분마다만 자동 갱신 (D1 읽기 한도), 바로 보려면 새로고침
+    if(onStats&&now-(S.statsAt||0)>30*60e3)loadStats(); // 지표는 30분마다만 자동 갱신 (5분이면 탭 하나로도 D1 일 한도 넘김, 10/3 사고), 바로 보려면 새로고침
     setLive(true)}).catch(function(e){if(e.message!=='401')setLive(false)})}
 function start(){stop();poll();S.timer=setInterval(poll,15000)}
 function stop(){if(S.timer)clearInterval(S.timer);S.timer=null}
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&S.timer)poll()});
-function setLive(ok){$('liveDot').classList.toggle('off',!ok);var t=S.loadedAt?new Date(S.loadedAt+9*3600e3).toISOString().slice(11,16):'';$('liveTxt').textContent=ok?('실시간 '+t+' 갱신'):'연결 끊김'}
+function setLive(ok){$('liveDot').classList.toggle('off',!ok);var t=S.loadedAt?new Date(S.loadedAt+9*3600e3).toISOString().slice(11,16):'';var a=S.anAt?new Date(S.anAt+9*3600e3).toISOString().slice(11,16):'';$('liveTxt').textContent=ok?('실시간 '+t+' 갱신'+(a&&S.tab!=='apps'?' / 지표 '+a+' 기준':'')):'연결 끊김'}
 
 function formOf(p){return (S.an&&S.an.forms||[]).filter(function(x){return x.path===p})[0]}
 function formName(p){var f=formOf(p);return f?f.name:p}
