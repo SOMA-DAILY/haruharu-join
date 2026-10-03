@@ -44,3 +44,15 @@ test('pre-registration omits source/device even after expiry; regular forms stil
   assert.deepEqual((await regular.json()).miss,['source','device']);
  }
 });
+
+test('standalone 4900 forms retain regular validation and accept after early deadline',async()=>{
+ const fields=Object.fromEntries(['gender','birth_year','school','source','device','phone','consent','name'].map(k=>[k,'test']));
+ for(const city of ['seoul','gwangju']){
+  const writes=[];
+  const send=fields=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,path:`/${city}/discount-4900/`,hidden:{city,plan:'discount'}})}),params:{path:['submit']},env:{APPLY_KV:{put:async(k,v)=>writes.push([k,v])}}});
+  const invalid=await send({...fields,source:'',device:''});
+  assert.equal(invalid.status,400);assert.equal(writes.length,0);
+  assert.equal((await send(fields)).status,200);
+  const stored=JSON.parse(writes[0][1]);assert.equal(stored.hidden.plan,'discount');assert.equal(stored.hidden.city,city);
+ }
+});

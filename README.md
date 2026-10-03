@@ -24,3 +24,7 @@
 - 관리자 비번 등 시크릿은 Cloudflare 프로젝트 설정에 있음. 코드에 적지 말 것
 - 축제 폼 배포 전 원격 D1 에 `migrations/0007_jnu_festival.sql` 의 ALTER 3개를 먼저 적용 (명령은 CLAUDE.md 진행 예정 작업)
 - 롤백: 대시보드 `haruharu-apply` → Deployments → Rollback, 또는 `git revert` 후 push
+
+## 별도 할인 신청폼
+
+`/seoul/discount-4900/`, `/gwangju/discount-4900/`: 일반 폼과 같은 일정·질문으로 참가비만 4,900원. `plan=discount`, 송금은 `haruharu-pay /d/`. 사전알림 만료 제한을 적용하지 않는다. 관리 페이지의 할인 신청폼 버튼에서 링크를 복사한다. 배포 시 pay `/d/`를 먼저 배포한다.

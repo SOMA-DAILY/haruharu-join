@@ -56,7 +56,7 @@ async function trackSession(env, request, b) {
   const kind = path === '/' ? 'landing' : 'form';
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO forms (path, name, kind, city, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
-      .bind(path, path === '/' ? '지역 선택 랜딩' : isFestival(path, h.plan) ? '전남대 축제 신청폼' : ((h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : '')), kind, h.city && h.city !== 'select' ? h.city : null, now),
+      .bind(path, path === '/' ? '지역 선택 랜딩' : isFestival(path, h.plan) ? '전남대 축제 신청폼' : ((h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : h.plan === 'discount' ? ' (할인 4,900)' : '')), kind, h.city && h.city !== 'select' ? h.city : null, now),
     env.DB.prepare(`INSERT INTO sessions (sid, path, city, src, channel, utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid,
         ref, ua, device, in_app, is_bot, is_return, first_ts, last_ts, active_ms, max_scroll, started, started_ts, max_page, last_field, fields, filled, next_click)
       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?18,?19,?20,?21,?22,?23,?24,?25,?26,?27)
