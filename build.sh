@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 COHORT="3"
 FEE_REGULAR="7,900";  PAY_REGULAR="https://haruharu-pay.pages.dev/j/"
 FEE_EARLY="4,900";    PAY_EARLY="https://haruharu-pay.pages.dev/e/"
+FEE_DISCOUNT="4,900"; PAY_DISCOUNT="https://haruharu-pay.pages.dev/d/"
 EARLY_DIR="pre-4k9x"   # 사전알림 신청자에게만 보내는 폼 경로. 광고/바이오에 쓰지 말 것
 SCHEDULE_SEOUL="- 진행 기간: 10월 6일(화) ~ 10월 8일(목), 3일\n- 신청 마감: 10월 5일(월)\n- 참가비: __FEE__원\n- 최종 참가 안내 문자: 신청 마감일 밤"
 SCHEDULE_GWANGJU="$SCHEDULE_SEOUL"
@@ -46,6 +47,9 @@ gen seoul   "서울" "서울대학교" "$IMG_P1_SEOUL"   "$SCHEDULE_SEOUL"   reg
 gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" regular "$FEE_REGULAR" "$PAY_REGULAR" "gwangju"            "$NOTE_REGULAR"
 gen seoul   "서울" "서울대학교" "$IMG_P1_SEOUL"   "$SCHEDULE_SEOUL"   early   "$FEE_EARLY"   "$PAY_EARLY"   "seoul/$EARLY_DIR"   "$NOTE_EARLY"
 gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" early   "$FEE_EARLY"   "$PAY_EARLY"   "gwangju/$EARLY_DIR" "$NOTE_EARLY"
+NOTE_DISCOUNT="참가비는 ${FEE_DISCOUNT}원이에요. 송금까지 마쳐야 신청이 완료돼요."
+gen seoul "서울" "서울대학교" "$IMG_P1_SEOUL" "$SCHEDULE_SEOUL" discount "$FEE_DISCOUNT" "$PAY_DISCOUNT" "seoul/discount-4900" "$NOTE_DISCOUNT"
+gen gwangju "광주" "전남대학교" "$IMG_P1_GWANGJU" "$SCHEDULE_GWANGJU" discount "$FEE_DISCOUNT" "$PAY_DISCOUNT" "gwangju/discount-4900" "$NOTE_DISCOUNT"
 cp src/early-offer.js public/early-offer.js
 # 전남대 축제 이벤트 폼 (/jnu-festival/). 지역 선택(/)에는 안 걸고 링크로만 보냄. 마감 시각은 shared/jnu-festival.mjs 한 곳에서 읽음
 FEST_DIR="jnu-festival"; FEE_FEST="4,900"; FEE_FEST_ORIG="12,900"; PAY_FEST="https://haruharu-pay.pages.dev/f/"   # 축제 전용 셀(haruharu-pay /f/). /e/ 를 닫아도 영향 없음
