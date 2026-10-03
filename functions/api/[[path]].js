@@ -289,7 +289,12 @@ function filters(url, alias = '') {
   const s = url.searchParams.get('src'); if (s) { if (s === '(없음)') w.push(`${a}src IS NULL`); else { args.push(s); w.push(`${a}src = ?${args.length}`); } }
   return { where: w.join(' AND '), args };
 }
-const LAND = `(path = '/' OR path IN (SELECT path FROM forms WHERE kind = 'landing'))`;
+// 랜딩 경로를 서브쿼리로 두면 sessions 행마다 forms 를 다시 읽어 D1 읽기 한도를 먹음 → 먼저 한 번 읽어 리터럴로 박음
+async function landExpr(DB) {
+  const r = await DB.prepare(`SELECT path FROM forms WHERE kind = 'landing'`).all();
+  const paths = ['/', ...r.results.map((x) => x.path)].filter((x) => /^[\w\-\/.]+$/.test(x));
+  return `(path IN (${paths.map((x) => `'${x}'`).join(', ')}))`;
+}
 const METRICS = `COUNT(*) visits,
   SUM(started) starts,
   SUM(max_page >= 2 OR submitted) page2,
@@ -302,6 +307,21 @@ const METRICS = `COUNT(*) visits,
   AVG(CASE WHEN submitted = 1 THEN submitted_ts - first_ts END) avg_submit_ms,
   SUM(is_return) returns,
   MAX(first_ts) last_visit`;
+
+// 지표/링크 조회는 sessions 전체를 훑어 D1 읽기 한도(무료 하루 5M 행)를 먹음 → 같은 조회는 KV 에 15분 캐시.
+// 새로고침을 아무리 눌러도 D1 은 15분에 한 번만 읽음. 신청자 목록은 가벼워서 캐시 안 함(항상 최신)
+const CACHE_SEC = 900;
+// 키에 meta:cache_ver 를 넣어 폼/링크를 저장하면 그 즉시 새 키로 다시 읽음. 응답의 cached_at 은 그 지표가 D1 에서 읽힌 시각
+async function cached(kv, key, fn) {
+  const ver = (await kv.get('meta:cache_ver').catch(() => '')) || '0';
+  key = key + ':' + ver;
+  try { const hit = await kv.get(key, 'json'); if (hit) return json(hit); } catch (e) {}
+  const out = await fn();
+  out.cached_at = Date.now();
+  try { await kv.put(key, JSON.stringify(out), { expirationTtl: CACHE_SEC }); } catch (e) {}
+  return json(out);
+}
+async function bumpCache(kv) { try { await kv.put('meta:cache_ver', String(Date.now())); } catch (e) {} }
 
 async function admin(sub, request, env, kv, url) {
   if (request.method === 'POST' && sub === '/login') {
@@ -343,8 +363,9 @@ async function admin(sub, request, env, kv, url) {
   }
 
   // 지표 한 번에: 합계, 일별, 시간대별, 폼별, 링크별, 이탈 문항, 기기/인앱
-  if (request.method === 'GET' && sub === '/analytics') {
+  if (request.method === 'GET' && sub === '/analytics') return cached(kv, 'cache:analytics:' + url.search, async () => {
     const { where, args } = filters(url);
+    const LAND = await landExpr(DB);
     const q = (sql) => DB.prepare(sql).bind(...args);
     const [tot, day, hour, form, src, drop, dev, app, fset] = await DB.batch([
       q(`SELECT ${METRICS} FROM sessions WHERE ${where}`),
@@ -365,9 +386,9 @@ async function admin(sub, request, env, kv, url) {
       q(`SELECT COALESCE(NULLIF(in_app, ''), '일반 브라우저') k, COUNT(*) visits, SUM(submitted) submits FROM sessions WHERE ${where} GROUP BY k ORDER BY visits DESC`),
       DB.prepare('SELECT * FROM forms ORDER BY kind DESC, created_at'),
     ]);
-    const bots = await DB.prepare(`SELECT COUNT(*) n FROM sessions WHERE is_bot = 1`).first();
-    return json({ total: tot.results[0], by_day: day.results, by_hour: hour.results, by_form: form.results, by_src: src.results, drop: drop.results, by_device: dev.results, by_app: app.results, forms: fset.results, bots: bots.n });
-  }
+    // 봇 수 COUNT 는 is_bot 인덱스가 없어 전체 스캔(하루 1M 행) → 뺌. 봇은 어차피 WHERE 에서 제외됨
+    return { total: tot.results[0], by_day: day.results, by_hour: hour.results, by_form: form.results, by_src: src.results, drop: drop.results, by_device: dev.results, by_app: app.results, forms: fset.results, bots: 0 };
+  });
 
   // 방문 로그: state = all | bounce | partial | submitted
   if (request.method === 'GET' && sub === '/sessions') {
@@ -429,6 +450,7 @@ async function admin(sub, request, env, kv, url) {
       await DB.prepare(`INSERT INTO forms (path, name, kind, city, archived, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
         ON CONFLICT(path) DO UPDATE SET name = excluded.name, kind = excluded.kind, city = excluded.city, archived = excluded.archived`)
         .bind(normPath(b.path), String(b.name || b.path).slice(0, 60), b.kind === 'landing' ? 'landing' : 'form', b.city || null, b.archived ? 1 : 0, Date.now()).run();
+      await bumpCache(kv); // 폼 이름/종류 바꾼 게 지표 캐시에 가려지지 않게
       return json({ ok: true });
     }
     return json({ rows: (await DB.prepare('SELECT * FROM forms ORDER BY kind DESC, created_at').all()).results });
@@ -442,12 +464,15 @@ async function admin(sub, request, env, kv, url) {
       await DB.prepare(`INSERT INTO links (src, path, label, channel, note, archived, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
         ON CONFLICT(src) DO UPDATE SET path = excluded.path, label = excluded.label, channel = excluded.channel, note = excluded.note, archived = excluded.archived`)
         .bind(b.src, normPath(b.path), String(b.label || '').slice(0, 80), String(b.channel || '').slice(0, 30), String(b.note || '').slice(0, 300), b.archived ? 1 : 0, Date.now()).run();
+      await bumpCache(kv); // 링크 저장 직후 목록이 캐시에 가려지지 않게
       return json({ ok: true });
     }
     const { where, args } = filters(url, 's');
-    const rows = await DB.prepare(`SELECT l.src, l.path, l.label, l.channel, l.note, l.archived, l.created_at, 1 registered FROM links l
-      UNION SELECT DISTINCT s.src, s.path, NULL, NULL, NULL, 0, MIN(s.first_ts), 0 FROM sessions s WHERE ${where} AND s.src IS NOT NULL AND s.src NOT IN (SELECT src FROM links) GROUP BY s.src`).bind(...args).all();
-    return json({ rows: rows.results });
+    return cached(kv, 'cache:links:' + url.search, async () => {
+      const rows = await DB.prepare(`SELECT l.src, l.path, l.label, l.channel, l.note, l.archived, l.created_at, 1 registered FROM links l
+        UNION SELECT DISTINCT s.src, s.path, NULL, NULL, NULL, 0, MIN(s.first_ts), 0 FROM sessions s WHERE ${where} AND s.src IS NOT NULL AND s.src NOT IN (SELECT src FROM links) GROUP BY s.src`).bind(...args).all();
+      return { rows: rows.results };
+    });
   }
   return json({ error: 'not found' }, 404);
 }
