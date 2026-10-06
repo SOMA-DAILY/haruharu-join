@@ -121,6 +121,7 @@ button.badge.capbtn:hover{background:#f9d9e4}
 .steps i{width:14px;height:6px;border-radius:3px;background:var(--line)}
 .steps i.on{background:var(--blue)}
 .steps i.done{background:var(--green)}
+tr.grp td{background:var(--bg,#f6f7f9);color:var(--muted,#667085);font-size:12px;padding-top:10px;border-top:0}
 .empty{padding:36px;text-align:center;color:var(--sub)}
 .url{font-size:12px;color:var(--sub);max-width:300px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
 .inline-edit{border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 6px;font-weight:600;width:160px}
@@ -308,7 +309,7 @@ var UNPAID='송금확인 안됨';
 function counted(r){return r.status!==UNPAID}
 var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
-var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'',src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
+var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'cohort:'+REG.CURRENT,src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var fmtPhone=function(d){d=String(d||'').replace(/\D/g,'');return d.length===11?d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7):d};
@@ -362,7 +363,9 @@ $('refreshBtn').onclick=function(){loadAll(true)};
 function dayStart(offset){var n=new Date(Date.now()+9*3600e3);n.setUTCHours(0,0,0,0);return n.getTime()-9*3600e3+offset*86400e3}
 function rangeQS(){var f=0,t=0;
   if(S.range==='today')f=dayStart(0);else if(S.range==='yesterday'){f=dayStart(-1);t=dayStart(0)}else if(S.range==='7d')f=dayStart(-6);else if(S.range==='30d')f=dayStart(-29);
-  var p=[];if(f)p.push('from='+f);if(t)p.push('to='+t);if(S.path)p.push('path='+encodeURIComponent(S.path));if(S.src)p.push('src='+encodeURIComponent(S.src));return p.join('&')}
+  var p=[];if(f)p.push('from='+f);if(t)p.push('to='+t);if(/^cohort:/.test(S.path))p.push('paths='+encodeURIComponent(cohortPaths(S.path.slice(7)).join(',')));else if(S.path)p.push('path='+encodeURIComponent(S.path));if(S.src)p.push('src='+encodeURIComponent(S.src));return p.join('&')}
+// 기수의 폼 경로(등록부) + 랜딩. 자세히 3개 화면이 기수 단위로 볼 때 씀
+function cohortPaths(c){var out=Object.keys(REG.FORMS).filter(function(p){return REG.FORMS[p].cohort===c});var land=['/'].concat(((S.an&&S.an.forms)||[]).filter(function(f){return f.kind==='landing'}).map(function(f){return f.path}));land.forEach(function(p){if(out.indexOf(p)<0)out.push(p)});return out}
 function seg(id,attr,cb){$(id).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});cb(b.dataset[attr])})}
 seg('range','r',function(v){S.range=v;loadStats()});
 seg('vState','s',function(v){S.vstate=v;loadVisits()});
@@ -414,12 +417,16 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden&&S.t
 function setLive(ok){$('liveDot').classList.toggle('off',!ok);var t=S.loadedAt?new Date(S.loadedAt+9*3600e3).toISOString().slice(11,16):'';var a=S.anAt?new Date(S.anAt+9*3600e3).toISOString().slice(11,16):'';$('liveTxt').textContent=ok?('실시간 '+t+' 갱신'+(a&&S.tab!=='apps'?' / 지표 '+a+' 기준':'')):'연결 끊김'}
 
 function formOf(p){return (S.an&&S.an.forms||[]).filter(function(x){return x.path===p})[0]}
-function formName(p){var f=formOf(p);return f?f.name:p}
+function formName(p){var r=regOf(p);if(r)return r.label;var f=formOf(p);return f?f.name:p}
 function isLanding(p){var f=formOf(p);return p==='/'||(f&&f.kind==='landing')}
 function linkOf(src){return S.links.filter(function(l){return l.src===src})[0]}
 function renderFilters(){
   var fs=(S.an.forms||[]).filter(function(f){return !f.archived});
-  $('fForm').innerHTML='<option value="">모든 폼</option>'+fs.map(function(f){return '<option value="'+esc(f.path)+'"'+(f.path===S.path?' selected':'')+'>'+esc(f.name)+'</option>'}).join('');
+  var opt=function(v,t){return '<option value="'+esc(v)+'"'+(v===S.path?' selected':'')+'>'+esc(t)+'</option>'},seen={};
+  var groups=cohortList().map(function(c){var ps=Object.keys(REG.FORMS).filter(function(p){return REG.FORMS[p].cohort===c});ps.forEach(function(p){seen[p]=1});
+    return '<optgroup label="'+esc(cohortKo(c))+'">'+opt('cohort:'+c,cohortKo(c)+' 전체')+ps.map(function(p){return opt(p,REG.FORMS[p].label)}).join('')+'</optgroup>'}).join('');
+  var rest=fs.filter(function(f){return !seen[f.path]});
+  $('fForm').innerHTML=opt('','모든 폼 (기수 무관)')+groups+(rest.length?'<optgroup label="기타">'+rest.map(function(f){return opt(f.path,f.name)}).join('')+'</optgroup>':'');
   var srcs={};S.links.forEach(function(l){srcs[l.src]=l.label||l.src});(S.an.by_src||[]).forEach(function(x){if(!srcs[x.k])srcs[x.k]=x.k});
   $('fSrc').innerHTML='<option value="">모든 링크</option>'+Object.keys(srcs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===S.src?' selected':'')+'>'+esc(srcs[k]===k?k:srcs[k]+' ('+k+')')+'</option>'}).join('');
   var cur=$('bPath').value;
@@ -464,16 +471,22 @@ function renderOverview(){
 
 function renderForms(){
   var by={};S.an.by_form.forEach(function(r){by[r.k]=r});
-  var fs=S.an.forms.filter(function(f){return !f.archived});
-  $('formRows').innerHTML=fs.map(function(f){var r=by[f.path]||{visits:0};var L=isLanding(f.path);
-    return '<tr><td><input class="inline-edit" data-path="'+esc(f.path)+'" value="'+esc(f.name)+'"></td><td><span class="badge '+(L?'green':'blue')+'">'+esc(f.path)+'</span></td>'+
+  var fs=S.an.forms.filter(function(f){return !f.archived}),have={};fs.forEach(function(f){have[f.path]=1});
+  // 기수 묶음: 등록부 기수 순(현재 기수 먼저) → 랜딩/기타. 보고 있는 기수가 있으면 그 기수 폼은 방문 0 이어도 줄을 둠
+  var cur=/^cohort:/.test(S.path)?S.path.slice(7):null,rowsOut=[];
+  cohortList().forEach(function(c){if(cur&&c!==cur)return;var ps=Object.keys(REG.FORMS).filter(function(p){return REG.FORMS[p].cohort===c&&(have[p]||c===cur)});if(!ps.length)return;
+    rowsOut.push('<tr class="grp"><td colspan="13"><b>'+esc(cohortKo(c))+'</b></td></tr>');ps.forEach(function(p){rowsOut.push(rowOf({path:p,name:REG.FORMS[p].label,reg:1}))})});
+  var rest=fs.filter(function(f){return !regOf(f.path)});if(rest.length){rowsOut.push('<tr class="grp"><td colspan="13"><b>랜딩 / 기타</b></td></tr>');rest.forEach(function(f){rowsOut.push(rowOf(f))})}
+  $('formRows').innerHTML=rowsOut.join('')||'<tr><td colspan="13" class="empty">아직 방문이 없음</td></tr>';
+  function rowOf(f){var r=by[f.path]||{visits:0};var L=isLanding(f.path);
+    return '<tr><td>'+(f.reg?esc(f.name):'<input class="inline-edit" data-path="'+esc(f.path)+'" value="'+esc(f.name)+'">')+'</td><td><span class="badge '+(L?'green':'blue')+'">'+esc(f.path)+'</span></td>'+
     '<td class="r num"><b>'+(r.visits||0)+'</b></td>'+
     '<td class="r num">'+(L?(r.next_clicks||0)+' <span class="muted">클릭</span>':(r.starts||0)+' <span class="muted">'+pct(r.starts,r.visits)+'</span>')+'</td>'+
     '<td class="r num">'+(L?'-':(r.page2||0))+'</td><td class="r num"><b>'+(L?'-':(r.submits||0))+'</b></td>'+
     '<td class="r num">'+(L?'-':pct(r.submits,r.starts))+'</td><td class="r num">'+(L?pct(r.next_clicks,r.visits):pct(r.submits,r.visits))+'</td>'+
     '<td class="r num">'+(L?'-':(r.partials||0))+'</td><td class="r num">'+dur(r.avg_active_ms)+'</td><td class="r num">'+(L?'-':dur(r.avg_submit_ms))+'</td>'+
     '<td class="muted">'+ago(r.last_visit)+'</td>'+
-    '<td><button class="btn ghost sm" data-copy="'+esc(HOST+f.path)+'">주소 복사</button> <button class="btn ghost sm" data-view="'+esc(f.path)+'">지표 보기</button></td></tr>'}).join('')||'<tr><td colspan="13" class="empty">아직 방문이 없음</td></tr>';
+    '<td><button class="btn ghost sm" data-copy="'+esc(HOST+f.path)+'">주소 복사</button> <button class="btn ghost sm" data-view="'+esc(f.path)+'">지표 보기</button></td></tr>'}
 }
 $('formRows').addEventListener('change',function(e){var i=e.target.closest('.inline-edit');if(!i)return;var f=formOf(i.dataset.path);
   post('forms',{path:f.path,name:i.value,kind:f.kind,city:f.city,archived:0}).then(function(){f.name=i.value;renderFilters();toast('이름 바꿈')})});
@@ -539,7 +552,7 @@ $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr'
     '<div class="acts">'+(f.phone&&!r.submitted?'<button class="btn ghost" id="vCopy">전화번호 복사</button>':'')+'<button class="btn ghost" id="vClose">닫기</button></div>';
   $('drawer').classList.remove('hidden');$('vClose').onclick=closeD;if($('vCopy'))$('vCopy').onclick=function(){copy(String(f.phone).replace(/\D/g,''))}});
 
-$('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';renderCohortTabs();renderApps()});
+$('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';S.path='cohort:'+S.cohort;S.statsAt=0;renderCohortTabs();renderApps()});
 $('aCityTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.track=b.dataset.t;renderCohortTabs();renderApps()});
 renderCohortTabs();
 ['q','aGender','aStatus'].forEach(function(id){$(id).addEventListener('input',renderApps)});

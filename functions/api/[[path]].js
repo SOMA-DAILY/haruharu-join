@@ -314,6 +314,12 @@ function filters(url, alias = '') {
   if (from) { args.push(from); w.push(`${a}first_ts >= ?${args.length}`); }
   if (to) { args.push(to); w.push(`${a}first_ts < ?${args.length}`); }
   const p = url.searchParams.get('path'); if (p) { args.push(p); w.push(`${a}path = ?${args.length}`); }
+  // paths=경로,경로,… : 기수 단위로 볼 때(등록부에서 그 기수의 경로 목록을 클라가 보냄). path 와 같이 오면 path 우선
+  const ps = url.searchParams.get('paths');
+  if (!p && ps) {
+    const list = ps.split(',').map((x) => x.trim()).filter((x) => /^[\w\-\/.]+$/.test(x)).slice(0, 40);
+    if (list.length) { const ph = list.map((x) => { args.push(x); return `?${args.length}`; }); w.push(`${a}path IN (${ph.join(', ')})`); }
+  }
   const s = url.searchParams.get('src'); if (s) { if (s === '(없음)') w.push(`${a}src IS NULL`); else { args.push(s); w.push(`${a}src = ?${args.length}`); } }
   return { where: w.join(' AND '), args };
 }
