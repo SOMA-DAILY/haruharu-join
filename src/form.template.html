@@ -103,6 +103,14 @@ input:focus{border-color:#1a1a1a}
 .closed h2{font-size:21px;margin:0 0 10px}
 .closed p{font-size:15px;margin:0}
 @media (max-width:480px){.wrap{padding:24px 16px 100px}h1{font-size:23px}}
+.hero{padding:8px 0 22px;margin:0 0 18px;border-bottom:1px solid #eee}
+.hero-h{font-size:27px;font-weight:800;line-height:1.35;letter-spacing:-.02em;margin:0 0 12px}
+.hero-s{font-size:17px;color:#333;margin:0 0 10px}
+.hero-p{font-size:15px;font-weight:700;margin:0 0 18px}
+.hero-btn{width:100%;padding:15px 20px;font-size:17px}
+.hero-bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(rgba(255,255,255,0),#fff 30%);z-index:8}
+.hero-bar .btn{width:100%;max-width:600px;margin:0 auto;display:flex;padding:15px 20px;font-size:17px}
+body.hero-b h1{font-size:15px;font-weight:700;color:#666;margin:0 0 10px}
 </style></head><body>
 <div class="prog" id="prog"></div>
 <div class="wrap">
@@ -111,7 +119,7 @@ input:focus{border-color:#1a1a1a}
 
 <form id="f" novalidate>
 <section class="page on" data-page="1">
-<h1>하루하루 소개팅 __COHORT__기 신청폼 💕</h1>
+__HERO__<h1>하루하루 소개팅 __COHORT__기 신청폼 💕</h1>
 <!-- 기수/지역 값이 박힌 이미지: P1(지역+기수), P4(일정+마감). 기수 바뀌면 build.sh 의 IMG_P1/IMG_P4 만 교체 -->
 <img class="img" data-img="P1" src="/img/__IMG_P1__" alt="솔로인 __TARGET_KO__을 모집합니다. 지금까지 220명 참여, 매칭률 34%">
 <img class="img" data-img="P2" src="/img/P2_approved_0910.png" alt="지난 기수 참가자 후기">
@@ -236,6 +244,15 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  var offerControl = PLAN === 'early' ? window.setupEarlyOffer(hidden, goRegular) : null;
  // 경로 코드: utm_content(광고명) 이 있으면 그것, 없으면 src. 모든 리포트는 이 값으로 갈림
  hidden.channel = hidden.utm_content || hidden.src || 'direct';
+ // ---------- 첫 화면 A/B (10/7) ----------
+ var HERO_ON='__HERO_ON__'==='1', heroV='';
+ if(HERO_ON){
+  var fv=(Q.get('v')||'').toLowerCase();
+  if(fv==='a'||fv==='b') heroV=fv.toUpperCase();
+  else { try{ heroV=localStorage.getItem('hh_hero_v')||''; }catch(e){}
+   if(heroV!=='A'&&heroV!=='B') heroV=Math.random()<.5?'A':'B';
+   try{ localStorage.setItem('hh_hero_v',heroV); }catch(e){} }
+ }
  var T0=Date.now(), sid, returning=false;
  try{ sid=sessionStorage.getItem('hh_sid'); returning=!!localStorage.getItem('hh_seen'); localStorage.setItem('hh_seen','1');
       if(!sid){ sid=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); sessionStorage.setItem('hh_sid',sid);} }catch(e){ sid=String(Date.now()); }
@@ -246,16 +263,22 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  try{
   if(!LOCAL_PREVIEW && window.mixpanel && MIXPANEL_TOKEN && MIXPANEL_TOKEN.indexOf('__')!==0){
    mixpanel.init(MIXPANEL_TOKEN,{ record_sessions_percent:100, record_mask_text_selector:'.mp-sensitive', record_block_selector:'', persistence:'localStorage', ignore_dnt:true });
-   mixpanel.register(Object.assign({ application_session:sid, form:'apply-'+COHORT, track:TRACK, in_app_browser:inApp, returning_visitor:returning }, hidden));
+   mixpanel.register(Object.assign({ application_session:sid, form:'apply-'+COHORT, track:TRACK, in_app_browser:inApp, returning_visitor:returning, hero_variant:heroV||'off' }, hidden));
    mp=mixpanel;
   }
  }catch(e){}
  function ev(name,props){ try{ if(mp) mp.track(name, Object.assign({ seconds_since_land: Math.round((Date.now()-T0)/1000), page: curPage }, props||{})); }catch(e){} }
  function fb(name,params,std){ try{ if(window.fbq) fbq(std?'track':'trackCustom',name,Object.assign({channel:hidden.channel,city:CITY},params||{})); }catch(e){} }
 
- var actMs=0, actT=document.visibilityState==='visible'?Date.now():0;
+ // 체류: iOS 인스타 인앱은 visibilitychange 가 안 오는 경우가 있음(10/6 분석). 처음부터 hidden 이어도 사용자가 만지면 보이는 걸로 침,
+ // 250ms 타이머가 900ms 넘게 늦으면 앱이 백그라운드였던 걸로 보고 그 구간은 빼고 셈
+ var visAtLoad=document.visibilityState, prerender=!!document.prerendering, firstVis=visAtLoad==='visible'?0:-1, bgGaps=0;
+ var actMs=0, actT=visAtLoad==='visible'?Date.now():0, lastTick=Date.now();
  function active(){ return actMs+(actT?Date.now()-actT:0); }
- document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ if(!actT) actT=Date.now(); } else if(actT){ actMs+=Date.now()-actT; actT=0; } });
+ function vis(){ if(!actT) actT=Date.now(); if(firstVis<0) firstVis=Date.now()-T0; }
+ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ vis(); } else if(actT){ actMs+=Date.now()-actT; actT=0; } });
+ ['touchstart','scroll','pointerdown'].forEach(function(n){ addEventListener(n,function(){ if(document.visibilityState!=='hidden'||firstVis<0) vis(); },{passive:true,once:false}); });
+ setInterval(function(){ var now=Date.now(), gap=now-lastTick; lastTick=now; if(gap>900 && actT){ bgGaps++; actMs+=Math.max(0,(now-gap+250)-actT); actT=now; } },250);
  function maxScroll(){ return Math.max.apply(null, Object.keys(depths).filter(function(d){return depths[d]}).map(Number).concat([0])); }
  // 사용 기기: 폰으로 열었으면 묻지 않고 접속 기기로 채움. PC 등 판별 안 되는 경우에만 문항을 보여줌
  (function(){ var dv=/iPhone|iPad|iPod/i.test(ua)?'iPhone':/Android/i.test(ua)?'Android':'';
@@ -264,7 +287,15 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  var form=document.getElementById('f'), started=false, submitted=false, curPage=1, timer=null, lastField='', pageT0=Date.now();
  var fieldT={}, fieldEdits={}, fieldDone={};
 
- ev('page_view',{ referrer:document.referrer, path:location.pathname });
+ ev('page_view',{ referrer:document.referrer, path:location.pathname, vis_at_load:visAtLoad, prerender:prerender });
+ // 첫 화면 B안 켜기 + 시작 버튼
+ if(heroV==='B'){
+  var hs=document.getElementById('hero'), hb=document.getElementById('hero-bar'); if(hs) hs.hidden=false; if(hb) hb.hidden=false; document.body.classList.add('hero-b');
+  var firstQ=document.querySelector('.page[data-page="1"] .q');
+  document.querySelectorAll('[data-hero-cta]').forEach(function(b){ b.addEventListener('click',function(){
+   ev('hero_cta',{where:b.getAttribute('data-hero-cta')}); if(firstQ) firstQ.scrollIntoView({behavior:'smooth',block:'start'}); }); });
+  if(hb && firstQ && window.IntersectionObserver){ new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting||e.boundingClientRect.top<0) hb.hidden=true; else if(curPage===1) hb.hidden=false; }); }).observe(firstQ); }
+ }
 
  // 랜딩 스크롤 깊이 + 이미지 도달
  var depths={25:0,50:0,75:0,100:0}, imgSeen={};
@@ -357,7 +388,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  }
  function show(page){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-page')===String(page)); });
-  curPage=page; pageT0=Date.now(); window.scrollTo({top:0,behavior:'smooth'});
+  curPage=page; pageT0=Date.now(); window.scrollTo({top:0,behavior:'smooth'}); var hb2=document.getElementById('hero-bar'); if(hb2 && page!==1) hb2.hidden=true;
   document.getElementById('prog').style.transform='scaleX('+(page==='done'?1:page===1?.33:.66)+')';
  }
  document.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click',function(){ if(!validate(1)) return; ev('page_next',{from:1,to:2,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); fb('Page1Complete'); show(2); partial(false); }); });
@@ -398,7 +429,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
    })
    .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
  });
- function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll() }); partial(true); } }
+ function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{wall_ms:Date.now()-T0, active_ms:active(), vis_at_load:visAtLoad, prerender:prerender, first_visible_ms:firstVis, bg_gaps:bgGaps, max_scroll: maxScroll() }); partial(true); } }
  window.addEventListener('pagehide',leave);
  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') leave(); });
  // 보관된 작성 내용 복원 (6시간 이내)

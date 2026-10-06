@@ -47,6 +47,15 @@ export const COHORT_INFO = {
   '4': { period: '10월 11일(일) ~ 10월 13일(화), 3일', deadlineKo: '10월 10일(토)' },
 };
 
+// 첫 화면 A/B (10/7). 트랙마다 B안 문구. headline 이 비어 있으면 A/B 없이 지금 화면 그대로.
+// B안 = 맨 위에 광고 1장째와 같은 문장 + 형태 한 줄 + 실적 한 줄 + 시작 버튼, 화면 아래 고정 시작 버튼.
+// 분기는 같은 주소 안에서 sid 로 50/50 (?v=a / ?v=b 로 강제 확인 가능). 결과는 Mixpanel 의 hero_variant 로 봄.
+export const HERO = {
+  'seoul-student':   { headline: '', sub: '', proof: '지금까지 220명 참여, 매칭률 34% 🎉', cta: '신청 시작하기' },
+  'gwangju-student': { headline: '', sub: '', proof: '지금까지 220명 참여, 매칭률 34% 🎉', cta: '신청 시작하기' },
+  'seoul-work':      { headline: '', sub: '', proof: '지금까지 220명 참여, 매칭률 34% 🎉', cta: '사전 알림 신청하기' },
+};
+
 export function normalizePath(p) {
   if (typeof p !== 'string') return '/';
   p = p.split('?')[0].slice(0, 80);

@@ -7,14 +7,15 @@ cd "$(dirname "$0")"
 MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu-FE/.env.production 2>/dev/null | cut -d= -f2 | tr -d '"\r')}"
 [ -n "$MP" ] || { echo "Mixpanel 토큰을 못 읽음"; exit 1; }
 # 등록부를 JSON 으로 (node 는 CI 에 있음)
-REG="$(node --input-type=module -e "import('./shared/forms.mjs').then(m=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO})))")"
+REG="$(node --input-type=module -e "import('./shared/forms.mjs').then(m=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO,HERO:m.HERO||{}})))")"
 [ -n "$REG" ] || { echo "등록부를 못 읽음"; exit 1; }
 export MP REG
 python3 - <<'EOF'
 import os, re, json
 from datetime import datetime
 R=json.loads(os.environ['REG']); MP=os.environ['MP']
-FORMS, CUR, DL, DLKO, INFO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLINE_KO'], R['INFO']
+FORMS, CUR, DL, DLKO, INFO, HERO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLINE_KO'], R['INFO'], R.get('HERO', {})
+import html as H
 TPL=open('src/form.template.html',encoding='utf-8').read()
 CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
@@ -76,6 +77,17 @@ def gen(path, f):
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
+    # 첫 화면 B안 (현재 기수 폼만. 지난 기수는 마감 안내라 안 씀)
+    hv = HERO.get(f.get('track',''), {}) if (cohort == CUR and plan in ('regular','prealert')) else {}   # 광고가 오는 폼만. 메시지 전용 할인 폼은 그대로
+    hero_on = '1' if hv.get('headline') else ''
+    hero = ''
+    if hero_on:
+        hero = ('<section class="hero" id="hero" hidden>'
+                f'<p class="hero-h">{H.escape(hv["headline"]).replace(chr(10),"<br>")}</p>'
+                + (f'<p class="hero-s">{H.escape(hv["sub"]).replace(chr(10),"<br>")}</p>' if hv.get('sub') else '')
+                + (f'<p class="hero-p">{H.escape(hv["proof"])}</p>' if hv.get('proof') else '')
+                + f'<button type="button" class="btn hero-btn" data-hero-cta="top">{H.escape(hv.get("cta","신청 시작하기"))}</button></section>'
+                f'<div class="hero-bar" id="hero-bar" hidden><button type="button" class="btn" data-hero-cta="bar">{H.escape(hv.get("cta","신청 시작하기"))}</button></div>')
     t = TPL
     for k, v in {
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
@@ -83,7 +95,7 @@ def gen(path, f):
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
-        '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
+        '__CONSENT_ITEMS__': consent, '__HERO__': hero, '__HERO_ON__': hero_on, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
     }.items():
         t = t.replace(k, v)
     # P4 이미지 자리: 3기는 기존 이미지(값이 박혀 있음), 4기부터는 글자 카드 (기수값은 HTML 에만)
