@@ -8,6 +8,11 @@ FEE_REGULAR="7,900";  PAY_REGULAR="https://haruharu-pay.pages.dev/j/"
 FEE_EARLY="4,900";    PAY_EARLY="https://haruharu-pay.pages.dev/e/"
 FEE_DISCOUNT="4,900"; PAY_DISCOUNT="https://haruharu-pay.pages.dev/d/"
 EARLY_DIR="pre-4k9x"   # 사전알림 신청자에게만 보내는 폼 경로. 광고/바이오에 쓰지 말 것
+# 기수 마감: shared/cohort.mjs 한 곳 (서버 /api/submit 도 같은 값). 지나면 6벌 + 지역 선택 전부 마감 안내로 바뀜
+DEADLINE_KO="10월 5일(월)"
+DEADLINE="$(sed -n "s/^export const COHORT_DEADLINE = '\(.*\)';$/\1/p" shared/cohort.mjs)"
+[ -n "$DEADLINE" ] || { echo "기수 마감 시각을 못 읽음"; exit 1; }
+DEADLINE_MS="$(python3 -c "import sys;from datetime import datetime;print(int(datetime.fromisoformat(sys.argv[1]).timestamp()*1000))" "$DEADLINE")"
 SCHEDULE_SEOUL="- 진행 기간: 10월 6일(화) ~ 10월 8일(목), 3일\n- 신청 마감: 10월 5일(월)\n- 참가비: __FEE__원\n- 최종 참가 안내 문자: 신청 마감일 밤"
 SCHEDULE_GWANGJU="$SCHEDULE_SEOUL"
 IMG_P1_SEOUL="P1_seoul_3gi.png";     IMG_P1_GWANGJU="P1_gwangju_3gi.png"
@@ -17,14 +22,14 @@ MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu
 
 gen() { # city city_ko school_ex img_p1 schedule plan fee pay_url outdir fee_note
   mkdir -p "public/$9"
-  python3 - "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "$COHORT" "$MP" <<'EOF'
+  python3 - "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "$COHORT" "$MP" "$DEADLINE_MS" "$DEADLINE_KO" <<'EOF'
 import sys, re, os
-city,city_ko,school,p1,sched,plan,fee,pay,outdir,fee_note,cohort,mp=sys.argv[1:]
+city,city_ko,school,p1,sched,plan,fee,pay,outdir,fee_note,cohort,mp,deadline_ms,deadline_ko=sys.argv[1:]
 p4=f'P4_{city}_3gi_{plan}_12900.png'
 if plan == 'early':
     sched=sched.replace('- 신청 마감: 10월 5일(월)\\n', '').replace('- 최종 참가 안내 문자: 신청 마감일 밤', '- 인원이 구성되면 안내 문자를 보내드려요.')
 t=open('src/form.template.html',encoding='utf-8').read()
-for k,v in {'__CITY__':city,'__CITY_KO__':city_ko,'__SCHOOL_EX__':school,'__IMG_P1__':p1,'__IMG_P4__':p4,'__SCHEDULE__':sched.replace('\\n','\n'),'__COHORT__':cohort,'__PLAN__':plan,'__FEE_NOTE__':fee_note,'__PAY_URL__':pay,'__FEE__':fee,'__MP__':mp}.items():
+for k,v in {'__CITY__':city,'__CITY_KO__':city_ko,'__SCHOOL_EX__':school,'__IMG_P1__':p1,'__IMG_P4__':p4,'__SCHEDULE__':sched.replace('\\n','\n'),'__COHORT__':cohort,'__PLAN__':plan,'__FEE_NOTE__':fee_note,'__PAY_URL__':pay,'__FEE__':fee,'__MP__':mp,'__DEADLINE_MS__':deadline_ms,'__DEADLINE_KO__':deadline_ko}.items():
     t=t.replace(k,v)
 if plan == 'early':
     start=t.index('<div class="q" data-name="source">')
@@ -76,9 +81,11 @@ open(f'public/{outdir}/index.html','w',encoding='utf-8').write(t)
 print('built', outdir, 'jnu_festival', fee, 'deadline', deadline, ms, len(t))
 EOF3
 # 지역 선택 페이지 (루트)
-python3 - "$MP" <<'EOF2'
-import sys
-t=open('src/select.template.html',encoding='utf-8').read().replace('__MP__',sys.argv[1])
+python3 - "$MP" "$COHORT" "$DEADLINE_MS" "$DEADLINE_KO" <<'EOF2'
+import sys, re
+t=open('src/select.template.html',encoding='utf-8').read().replace('__MP__',sys.argv[1]).replace('__COHORT__',sys.argv[2]).replace('__DEADLINE_MS__',sys.argv[3]).replace('__DEADLINE_KO__',sys.argv[4])
+left=re.findall(r'__[A-Z0-9_]+__',t)
+assert not left, 'placeholder 남음: '+str(left)
 open('public/index.html','w',encoding='utf-8').write(t); print('built select', len(t))
 EOF2
 # 이미지는 템플릿에서 /img/ 절대경로로 참조 (하위 경로 폼이 생겨서)

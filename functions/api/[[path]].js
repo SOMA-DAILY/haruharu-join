@@ -1,10 +1,12 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
+import { cohortStatus } from '../../shared/cohort.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
 // POST /api/submit   : 최종 제출. 정본 KV s: + D1 submissions 사본. 전남대 축제 폼은 학생 인증 캡처를 KV img:{신청ID} 에 따로 저장
 // GET  /api/festival : 전남대 축제 폼 마감 여부 (서버 시각 기준)
+// GET  /api/cohort   : 기수 본모집 폼(일반/사전알림/할인, 지역 선택) 마감 여부 (서버 시각 기준)
 // GET  /api/export?token=..&type=submissions|partials&format=csv|json
 // GET  /api/stats?token=..  : 단계별 도달 수 (도착 → 입력 시작 → 1페이지 완료 → 제출)
 // /api/admin/*       : 관리 페이지 (비밀번호 로그인 쿠키)
@@ -85,6 +87,7 @@ export async function onRequest({ request, env, params }) {
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
   if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
+  if (request.method === 'GET' && path === '/cohort') return json(cohortStatus(Date.now(), env));
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -105,6 +108,8 @@ export async function onRequest({ request, env, params }) {
       h.plan = FESTIVAL_PLAN;
       if (!festivalStatus(now, env).open) return json({ ok: false, error: 'festival_closed', ...festivalStatus(now, env) }, 409);
     }
+    // 기수 본모집 마감(일반/사전알림/할인 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
+    if (!festival && !cohortStatus(now, env).open) return json({ ok: false, error: 'cohort_closed', ...cohortStatus(now, env) }, 409);
     const preRegistration = /^\/(seoul|gwangju)\/pre-4k9x\/?$/.test(b.path || '');
     const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival) required.push('source', 'device');

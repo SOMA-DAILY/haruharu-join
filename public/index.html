@@ -6,7 +6,7 @@
 <meta property="og:title" content="하루하루 소개팅 신청 💕">
 <meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 160명 참여, 27쌍 매칭 🎉">
 <meta name="robots" content="noindex">
-<script>var PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';</script>
+<script>var COHORT='3', DEADLINE=1791212400000, PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';</script>
 <script>
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init',PIXEL_ID);fbq('track','PageView');
@@ -26,12 +26,17 @@ a.b .t{text-align:left}a.b .t b{display:block;font-size:17px;font-weight:800}a.b
 a.b .ar{flex:none;font-size:17px;color:#B4B8C0}
 .mini{margin:26px 0 0}.mini a{font-size:13px;color:#7A7E88;text-decoration:none;border-bottom:1px solid #DEE1E6}
 .foot{margin:34px 0 0;font-size:13px;color:#A0A4AD;line-height:1.7}
+.closed{padding:26px 22px;margin:28px 0 0;background:#fff5f5;border:1px solid #f2cccc;border-radius:12px;text-align:center}
+.closed h2{font-size:21px;margin:0 0 10px}
+.closed p{font-size:15px;margin:0;line-height:1.6}
+.closed a{color:inherit}
 </style></head><body>
 <div class="wrap">
 <h1>하루하루 소개팅 신청 💕</h1>
 <p class="sub">3일 동안 서로의 하루를 보고<br>마지막 날 서로를 선택해요</p>
 <span class="stat">지금까지 160명 참여, 27쌍 매칭 🎉</span>
-<div class="btns">
+<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 3기 신청은 10월 5일(월)에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p></div>
+<div class="btns" id="btns">
  <a class="b" href="/seoul/" data-city="seoul"><span class="t"><b>서울 소개팅 신청</b><span>서울, 경기 대학생</span></span><span class="ar">→</span></a>
  <a class="b" href="/gwangju/" data-city="gwangju"><span class="t"><b>광주 소개팅 신청</b><span>광주, 전남 대학생</span></span><span class="ar">→</span></a>
 </div>
@@ -56,6 +61,13 @@ a.b .ar{flex:none;font-size:17px;color:#B4B8C0}
  addEventListener('pagehide',function(){ beat(true); });
  setTimeout(function(){ var h=document.documentElement; maxSc=Math.min(100,Math.round(innerHeight/h.scrollHeight*100)); beat(false); },300);
  document.querySelectorAll('a.b').forEach(function(a){ a.href=a.getAttribute('href')+Q; a.addEventListener('click',function(){ clicked=a.getAttribute('data-city'); beat(true); try{ if(mp) mp.track('city_select',{city:a.getAttribute('data-city')}); }catch(e){} }); });
+ // 기수 마감: 지역 버튼 대신 마감 안내. 폼 쪽과 같은 /api/cohort 서버 시각 기준
+ var closed=false, deadline=DEADLINE, clockOffset=0;
+ function closePage(){ if(closed) return; closed=true; document.getElementById('btns').hidden=true; document.getElementById('closed').hidden=false; try{ if(mp) mp.track('cohort_closed_view',{path:'/'}); }catch(e){} }
+ function checkClosed(){ if(Date.now()+clockOffset>=deadline) closePage(); }
+ checkClosed();
+ fetch('/api/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){ if(s && isFinite(s.deadline)) deadline=Number(s.deadline); if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now(); if(s && s.open===false) closePage(); else checkClosed(); }).catch(function(){});
+ setInterval(checkClosed,15000);
 })();
 </script>
 </body></html>
