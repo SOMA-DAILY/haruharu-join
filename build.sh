@@ -131,7 +131,11 @@ for path, f in FORMS.items():
 # 지역 선택 페이지 (루트): 현재 기수의 listed 폼만 버튼으로
 sel = open('src/select.template.html', encoding='utf-8').read()
 listed = [(p, f) for p, f in FORMS.items() if f['cohort'] == CUR and f.get('listed')]
-btns = '\n'.join(f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 소개팅 신청</b><span>{f["cityKo"]} {"직장인" if f.get("occupation") else "대학생"}</span></span><span class="ar">→</span></a>' for p, f in listed)
+def btn(p, f):   # 10/6: 직장인 사전알림도 선택 화면에. 금액 표기 없음
+    if f.get('plan') == 'prealert':
+        return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 직장인 사전 알림</b><span>사전 알림 신청하면 참가비 할인 혜택</span></span><span class="ar">→</span></a>'
+    return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 대학생 소개팅 신청</b><span>{f["cityKo"]} 대학생</span></span><span class="ar">→</span></a>'
+btns = '\n'.join(btn(p, f) for p, f in listed)
 sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', ms(DL[CUR])).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
