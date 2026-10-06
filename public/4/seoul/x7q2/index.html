@@ -1,0 +1,440 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>하루하루 소개팅 4기 신청폼 💕</title>
+<meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 서울 대학생 모집.">
+<meta property="og:title" content="하루하루 소개팅 4기 신청폼 💕">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 220명 참여, 매칭률 34% 🎉">
+<meta name="robots" content="noindex">
+<script>
+var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
+var CITY='seoul', CITY_KO='서울', COHORT='4', PLAN='discount', TRACK='seoul-student', DEADLINE=1791644400000, PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='localtest';
+</script>
+<!-- Meta 픽셀 -->
+<script>
+!function(f,b,e,v,n,t,s){if(LOCAL_PREVIEW)return;if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+if(!LOCAL_PREVIEW){fbq('init',PIXEL_ID);fbq('track','PageView');}
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1586422299864867&ev=PageView&noscript=1"></noscript>
+<!-- Mixpanel (앱과 같은 프로젝트) -->
+<script src="https://cdn.jsdelivr.net/npm/mixpanel-browser@2/dist/mixpanel.umd.min.js"></script>
+<script src="/early-offer.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#fff}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Inter',sans-serif;color:#1a1a1a;line-height:1.55;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:40px 20px 120px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 20px}
+.img{display:block;width:100%;height:auto;border-radius:6px;margin:0 0 14px}
+p{margin:0 0 14px;font-size:16px}
+.b{font-weight:700}
+.sec{margin-top:28px}
+a{color:#1a1a1a}
+hr{border:0;border-top:1px solid #eee;margin:32px 0}
+.q{margin:30px 0 0}
+.q .t{font-size:18px;font-weight:700;margin:0 0 10px}
+.q .t .req{color:#e0245e;font-weight:400;margin-left:3px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;border:1px solid #d9d9d9;border-radius:6px;padding:10px 12px;cursor:pointer;background:#fff;font-size:16px;transition:border-color .1s,background .1s}
+.opt .k{flex:none;width:22px;height:22px;border:1px solid #cfcfcf;border-radius:4px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#666;background:#fafafa}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt.on{border-color:#1a1a1a;background:#f3f3f3}
+.opt.on .k{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+input[type=text],input[type=tel],input[type=number]{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid #d9d9d9;border-radius:6px;outline:none;background:#fff;color:#1a1a1a}
+input:focus{border-color:#1a1a1a}
+.other{margin-top:8px;display:none}.other.show{display:block}
+.chk{display:flex;align-items:flex-start;gap:10px;border:1px solid #d9d9d9;border-radius:6px;padding:12px;cursor:pointer;font-size:16px}
+.chk.on{border-color:#1a1a1a;background:#f3f3f3}
+.chk input{width:18px;height:18px;margin:2px 0 0}
+.note{font-size:15px;color:#333;white-space:pre-line}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#1a1a1a;color:#fff;border:0;border-radius:6px;font:inherit;font-size:16px;font-weight:700;padding:12px 20px;cursor:pointer;text-decoration:none}
+.btn.sec2{background:#fff;color:#1a1a1a;border:1px solid #d9d9d9}
+.btn:disabled{opacity:.5;cursor:default}
+.pay{display:block;margin:10px 0 18px;text-align:center;background:#0064ff;color:#fff;border-radius:8px;padding:14px;font-weight:700;text-decoration:none;font-size:16px}
+.nav{display:flex;gap:10px;margin-top:34px}
+.err{color:#e0245e;font-size:14px;margin-top:6px;display:none}
+.q.bad .err{display:block}.q.bad input[type=text],.q.bad input[type=tel],.q.bad input[type=number]{border-color:#e0245e}
+.page{display:none}.page.on{display:block}
+.prog{position:fixed;left:0;top:0;height:3px;background:#1a1a1a;width:100%;transform:scaleX(0);transform-origin:left;transition:transform .3s;z-index:9}
+.done{text-align:center;padding:80px 0}
+.done h2{font-size:24px;margin:0 0 12px}
+.foot{margin-top:60px;font-size:12px;color:#999;text-align:center}
+.app-guide{margin-bottom:14px}
+.app-guide-visual{position:relative;aspect-ratio:1080/1540;overflow:hidden}
+.app-guide-visual img{display:block;width:100%;height:auto}
+.app-guide-copy{padding:10px 7.8% 38px}
+.app-guide-copy h2{font-size:clamp(19px,4vw,27px);line-height:1.35;margin:0 0 28px;letter-spacing:-.03em}
+.app-guide-copy p{font-size:clamp(12px,2.8vw,16px);line-height:1.6;margin:0 0 22px}
+.app-guide-copy .app-guide-intro{color:#7c818c;font-weight:400}
+.offer-panel{padding:24px 16px;margin:24px 0;background:#fff7ed;border:1px solid #f4ceaa;border-radius:12px;text-align:center}
+.early-info .offer-badge{display:inline-block;padding:5px 11px;margin:0 0 12px;border-radius:5px;background:#ffe5d4;color:#b83828;font-size:13px;font-weight:700}
+.offer-price{display:flex;align-items:baseline;justify-content:center;gap:12px}
+.offer-price del{font-size:18px;color:#857972;font-weight:500}
+.offer-price strong{font-size:38px;line-height:1.2;letter-spacing:-1.5px;color:#df493c}
+.early-info .offer-message{font-size:15px;margin:12px 0 20px;font-weight:600;color:#65372b}
+.offer-price{margin-bottom:20px}
+.flip-clock{display:flex;align-items:flex-start;justify-content:center;gap:7px;margin:0 auto 18px;font-variant-numeric:tabular-nums}
+.flip-clock[hidden]{display:none}
+.flip-unit{display:flex;flex-direction:column;gap:7px}.flip-pair{display:flex;gap:3px}
+.flip-label{font-size:11px;color:#866b5a;font-weight:500}
+.flip-colon{font-size:26px;line-height:50px;color:#c44537;font-weight:800}
+.flip-digit{position:relative;width:34px;height:50px;border-radius:6px;background:#ed584c;box-shadow:0 3px 0 #be382f;perspective:220px;font-size:35px;line-height:50px;font-weight:800;color:#fff}
+.flip-half{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;transform-style:preserve-3d}
+.flip-half span{position:absolute;left:0;width:100%;height:50px;text-align:center;line-height:50px}
+.flip-top{top:0;background:#e95044;border-radius:6px 6px 0 0;transform-origin:bottom}.flip-top span{top:0}
+.flip-bottom{bottom:0;background:#f26154;border-radius:0 0 6px 6px;transform-origin:top}.flip-bottom span{bottom:0}
+.flip-digit:after{content:"";position:absolute;top:50%;left:0;width:100%;height:1px;background:#a7292940;z-index:5}
+.flip-old{z-index:3;animation:flip-away .28s ease-in both}
+.flip-new{z-index:4;animation:flip-in .28s .28s ease-out both}
+@keyframes flip-away{from{transform:rotateX(0)}to{transform:rotateX(-90deg)}}
+@keyframes flip-in{from{transform:rotateX(90deg)}to{transform:rotateX(0)}}
+.early-info .offer-deadline{font-size:13px;font-weight:700;color:#875b44;margin:0 0 6px}
+.early-info .offer-help{font-size:12px;color:#876e60;margin:0}
+.offer-panel[data-state="expired"] .offer-help,.offer-panel[data-state="expired"] .offer-deadline{display:none}
+@media(prefers-reduced-motion:reduce){.flip-old,.flip-new{animation:none;display:none}}
+@media(max-width:360px){.offer-panel{padding:20px 8px}.flip-digit{width:28px;height:44px;font-size:29px;line-height:44px}.flip-half span{height:44px;line-height:44px}.flip-colon{line-height:44px}.flip-clock{gap:5px}}
+.early-info{padding:30px 24px;margin:24px 0;background:#f3f2ef;border-radius:16px}
+.early-info h2{color:#e55743;font-size:24px;margin:0 0 20px}
+.early-info h3{font-size:20px;margin:24px 0 12px}
+.early-info dl{margin:0}.early-info dl>div{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid #ddd}
+.early-info dt{color:#666}.early-info dd{margin:0;font-weight:700}.early-info p{font-size:15px}
+.pay[aria-disabled="true"]{pointer-events:none;opacity:.5}
+.closed{padding:26px 22px;margin:0 0 20px;background:#fff5f5;border:1px solid #f2cccc;border-radius:12px;text-align:center}
+.closed h2{font-size:21px;margin:0 0 10px}
+.closed p{font-size:15px;margin:0}
+@media (max-width:480px){.wrap{padding:24px 16px 100px}h1{font-size:23px}}
+</style></head><body>
+<div class="prog" id="prog"></div>
+<div class="wrap">
+
+<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 4기 신청은 10월 10일(토)에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p></div>
+
+<form id="f" novalidate>
+<section class="page on" data-page="1">
+<h1>하루하루 소개팅 4기 신청폼 💕</h1>
+<!-- 기수/지역 값이 박힌 이미지: P1(지역+기수), P4(일정+마감). 기수 바뀌면 build.sh 의 IMG_P1/IMG_P4 만 교체 -->
+<img class="img" data-img="P1" src="/img/P1_seoul_4gi.png" alt="솔로인 서울 대학생을 모집합니다. 지금까지 220명 참여, 매칭률 34%">
+<img class="img" data-img="P2" src="/img/P2_approved_0910.png" alt="지난 기수 참가자 후기">
+<section class="app-guide" aria-label="앱 진행 안내">
+<div class="app-guide-visual"><img data-img="P3" src="/img/P3_approved_0910.png" alt="셋로그로 못 했던 걸, 이번엔 더 많이 해보려고요. 하루 공유, 마지막 날 선택, 서로 선택한 상대와 대화하는 앱 화면"></div>
+<div class="app-guide-copy">
+<h2>앱에서는 이렇게 진행돼요</h2>
+<p class="app-guide-intro">신청하고 방이 열리면 6자리 초대 코드를 보내드려요.<br>앱에 코드를 넣으면 남녀 3:3 ~ 5:5 구성으로 한 방에 모여요.</p>
+<p><strong>Day 1 &nbsp; 같은 방에 모여 하루를 올려요<br>그날 찍은 영상에 자막 한 줄만 달아 올리면 끝이에요.</strong></p>
+<p><strong>Day 2 &nbsp; 진행 중 미션 카드가 와요<br>오늘의 나, 요즘 빠진 것 같은 짧은 주제로 와요.</strong></p>
+<p><strong>Day 3 &nbsp; 마지막 날 앱에서 서로를 골라요<br>둘 다 고른 경우에만 대화가 열려요.</strong></p>
+</div>
+</section>
+<div class="early-info" data-img="P4">
+<h2>하루하루 앱 4기 모집 중</h2>
+<p class="b">지금까지 220명 참여, 매칭률 34% 🎉</p>
+<h3>신청 안내</h3>
+<dl>
+<div><dt>참여 대상</dt><dd>서울 대학생</dd></div>
+<div><dt>진행 기간</dt><dd>10월 11일(일) ~ 10월 13일(화), 3일</dd></div>
+<div><dt>참가 안내</dt><dd>인원이 구성되면 안내 문자와 초대 코드를 보내드려요.</dd></div>
+</dl>
+<h3>이렇게 신청해요</h3>
+<p>1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.<br>2. 방이 열리면 초대 코드를 문자로 보내드려요.<br>3. 앱에 코드를 넣으면 시작이에요.</p>
+<p>인원이 안 맞아 방이 열리지 않으면 참가비를 전액 돌려드려요.</p>
+</div>
+
+
+<p class="sec">3일 동안 서로의 하루를 공유하고, 마지막 날 서로를 고르는 소개팅이에요. 지금까지 220명 참여, 매칭률 34% 🎉</p>
+
+<p class="sec b">📮 참여 흐름</p>
+<p class="note">1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.
+2. 방이 열리면 초대 코드를 문자로 보내드려요.
+3. 앱에 코드를 넣으면 시작이에요.</p>
+<p><a href="https://maize-dead-4af.notion.site/1-3d745027d943815aa8dcf77dbeb98a5f?source=copy_link" target="_blank" rel="noopener" data-track="notion_guide">앱에서 어떻게 진행되는지 자세히 보기</a></p>
+
+<p class="sec b">✅ 4기 정보 안내</p>
+<p class="note" id="schedule">- 진행 기간: 10월 11일(일) ~ 10월 13일(화), 3일
+- 신청 마감: 10월 10일(토)
+- 참가비: 4,900원
+- 최종 참가 안내 문자: 신청 마감일 밤</p>
+
+<p class="sec b">📞 문의사항</p>
+<p>인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">@haruharu.ting</a><br>궁금한 부분이 있다면 편하게 문의해주세요 💌</p>
+
+<hr>
+
+<div class="q" data-name="gender"><p class="t">성별<span class="req">*</span></p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="radio" name="gender" value="여성" required>여성</label>
+  <label class="opt"><span class="k">B</span><input type="radio" name="gender" value="남성">남성</label>
+ </div><p class="err">선택해 주세요</p></div>
+
+<div class="q" data-name="birth_year"><p class="t">출생년도<span class="req">*</span></p>
+ <input type="number" name="birth_year" inputmode="numeric" placeholder="ex) 2005" min="1990" max="2007" required><p class="err">출생년도 4자리를 확인해 주세요 (만 19세 이상)</p></div>
+
+<div class="q" data-name="school"><p class="t">학교<span class="req">*</span></p>
+ <input type="text" name="school" placeholder="ex) 서울대학교" required><p class="err">학교를 입력해 주세요</p></div>
+
+<div class="q" data-name="source"><p class="t">어디서 보고 오셨나요?<span class="req">*</span></p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="radio" name="source" value="인스타그램 광고" required>인스타그램 광고</label>
+  <label class="opt"><span class="k">B</span><input type="radio" name="source" value="친구가 보내줌">친구가 보내줌</label>
+  <label class="opt"><span class="k">C</span><input type="radio" name="source" value="인스타그램 게시물">인스타그램 게시물</label>
+  <label class="opt"><span class="k">D</span><input type="radio" name="source" value="에브리타임">에브리타임</label>
+  <label class="opt"><span class="k">E</span><input type="radio" name="source" value="그 외">그 외</label>
+ </div><p class="err">선택해 주세요</p></div>
+
+<div class="q" data-name="device"><p class="t">사용 기기<span class="req">*</span></p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="radio" name="device" value="iPhone" required>iPhone</label>
+  <label class="opt"><span class="k">B</span><input type="radio" name="device" value="Android">Android</label>
+ </div><p class="err">선택해 주세요</p></div>
+
+<div class="q" data-name="intent"><p class="t">이번 소개팅에 어떤 마음으로 신청하시나요?</p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="radio" name="intent" value="적극적으로 좋은 사람을 만나고 싶어요">적극적으로 좋은 사람을 만나고 싶어요</label>
+  <label class="opt"><span class="k">B</span><input type="radio" name="intent" value="좋은 인연이 있다면 좋겠어요">좋은 인연이 있다면 좋겠어요</label>
+  <label class="opt"><span class="k">C</span><input type="radio" name="intent" value="일상을 공유하는 자체가 재밌을 것 같아요">일상을 공유하는 자체가 재밌을 것 같아요</label>
+  <label class="opt"><span class="k">D</span><input type="radio" name="intent" value="가볍게 새로운 경험을 해보고 싶어요">가볍게 새로운 경험을 해보고 싶어요</label>
+  <label class="opt"><span class="k">E</span><input type="radio" name="intent" value="기타" data-other="intent_other">기타</label>
+ </div>
+ <div class="other" id="other-intent_other"><input type="text" name="intent_other" placeholder="직접 입력"></div></div>
+
+<div class="nav"><button type="button" class="btn" data-next="2">다음 페이지 →</button></div>
+</section>
+
+<section class="page" data-page="2">
+<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>
+ <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 010-1234-5678" required class="mp-sensitive"><p class="err">010으로 시작하는 번호를 입력해 주세요</p></div>
+
+<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">*</span></p>
+ <p class="note">하루하루 앱 소개팅 운영을 위해 성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호를 수집, 이용합니다.
+- 목적 : 참가자 확인, 방 배정, 초대 코드와 일정 안내
+- 보유 : 기수 종료 후 6개월 뒤 파기
+- 후기와 통계는 개인이 식별되지 않는 형태로 홍보에 쓰일 수 있습니다.
+- 동의하지 않으면 신청이 어렵습니다.</p>
+ <label class="chk"><input type="checkbox" name="consent" value="동의합니다" required>동의합니다</label><p class="err">동의가 필요해요</p></div>
+
+<div class="q" data-name="name"><p class="t">참가비 안내<span class="req">*</span></p>
+ <p class="note">사전 알림을 신청해 주신 분은 4,900원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.
+
+직접 입금
+- 입금 계좌 : 토스뱅크 1000-0141-0988
+- 예금주 : 최o현
+- 입금 금액 : 4,900원
+
+인원이 안 맞아 방이 열리지 않으면 참가비는 전액 돌려드려요.</p>
+ <a class="pay" id="pay" href="https://haruharu-pay.pages.dev/e/" target="_blank" rel="noopener">▶ 토스로 4,900원 송금하기</a>
+ <p class="note">송금 후 송금자 이름을 적어주세요.</p>
+ <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"><p class="err">송금자 이름을 입력해 주세요</p></div>
+
+<div class="q" data-name="buddy_room"><p class="t">친구랑 함께 신청하셨나요?</p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="radio" name="buddy_room" value="혼자">혼자 신청해요</label>
+  <label class="opt"><span class="k">B</span><input type="radio" name="buddy_room" value="같은 방" data-other="buddy">친구랑 같은 방이 좋아요</label>
+  <label class="opt"><span class="k">C</span><input type="radio" name="buddy_room" value="다른 방" data-other="buddy">친구랑 다른 방이 좋아요</label>
+  <label class="opt"><span class="k">D</span><input type="radio" name="buddy_room" value="상관없음" data-other="buddy">친구랑 신청했고, 방은 상관없어요</label>
+ </div>
+ <div class="other" id="other-buddy"><p class="note">친구 전화번호를 적어주세요. 친구도 신청서에 내 번호를 적어야 반영돼요.</p>
+  <input type="tel" name="buddy" inputmode="numeric" placeholder="ex) 010-1234-5678" maxlength="20" class="mp-sensitive"></div>
+ <p class="err">친구 전화번호를 확인해 주세요</p></div>
+
+<div class="nav"><button type="button" class="btn sec2" data-prev="1">← 이전</button><button type="submit" class="btn" id="submit">제출하기</button></div>
+</section>
+</form>
+
+<section class="page" data-page="done">
+ <div class="done"><h2>신청이 접수됐어요 💌</h2><p>방이 열리면 초대 코드를 문자로 보내드려요.<br>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
+</section>
+
+<p class="foot">하루하루 / 만 19세 이상 대학생</p>
+</div>
+
+<script>
+(function(){
+ var API='/api';
+ var Q=new URLSearchParams(location.search);
+ var HID=['src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'];
+ var hidden={city:CITY,cohort:COHORT,plan:PLAN}; HID.forEach(function(k){ if(Q.get(k)) hidden[k]=Q.get(k); });
+ var offerControl = PLAN === 'early' ? window.setupEarlyOffer(hidden, goRegular) : null;
+ // 경로 코드: utm_content(광고명) 이 있으면 그것, 없으면 src. 모든 리포트는 이 값으로 갈림
+ hidden.channel = hidden.utm_content || hidden.src || 'direct';
+ var T0=Date.now(), sid, returning=false;
+ try{ sid=sessionStorage.getItem('hh_sid'); returning=!!localStorage.getItem('hh_seen'); localStorage.setItem('hh_seen','1');
+      if(!sid){ sid=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); sessionStorage.setItem('hh_sid',sid);} }catch(e){ sid=String(Date.now()); }
+ var ua=navigator.userAgent, inApp=/Instagram|FBAN|FBAV|KAKAOTALK|Line\//i.test(ua);
+
+ // ---------- Mixpanel ----------
+ var mp=null;
+ try{
+  if(!LOCAL_PREVIEW && window.mixpanel && MIXPANEL_TOKEN && MIXPANEL_TOKEN.indexOf('__')!==0){
+   mixpanel.init(MIXPANEL_TOKEN,{ record_sessions_percent:100, record_mask_text_selector:'.mp-sensitive', record_block_selector:'', persistence:'localStorage', ignore_dnt:true });
+   mixpanel.register(Object.assign({ application_session:sid, form:'apply-'+COHORT, track:TRACK, in_app_browser:inApp, returning_visitor:returning }, hidden));
+   mp=mixpanel;
+  }
+ }catch(e){}
+ function ev(name,props){ try{ if(mp) mp.track(name, Object.assign({ seconds_since_land: Math.round((Date.now()-T0)/1000), page: curPage }, props||{})); }catch(e){} }
+ function fb(name,params,std){ try{ if(window.fbq) fbq(std?'track':'trackCustom',name,Object.assign({channel:hidden.channel,city:CITY},params||{})); }catch(e){} }
+
+ var actMs=0, actT=document.visibilityState==='visible'?Date.now():0;
+ function active(){ return actMs+(actT?Date.now()-actT:0); }
+ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ if(!actT) actT=Date.now(); } else if(actT){ actMs+=Date.now()-actT; actT=0; } });
+ function maxScroll(){ return Math.max.apply(null, Object.keys(depths).filter(function(d){return depths[d]}).map(Number).concat([0])); }
+ // 사용 기기: 폰으로 열었으면 묻지 않고 접속 기기로 채움. PC 등 판별 안 되는 경우에만 문항을 보여줌
+ (function(){ var dv=/iPhone|iPad|iPod/i.test(ua)?'iPhone':/Android/i.test(ua)?'Android':'';
+  if(!dv) return; var q=document.querySelector('.q[data-name="device"]'); if(!q) return;
+  var h=document.createElement('input'); h.type='hidden'; h.name='device'; h.value=dv; q.parentNode.replaceChild(h,q); hidden.device_auto='1'; })();
+ var form=document.getElementById('f'), started=false, submitted=false, curPage=1, timer=null, lastField='', pageT0=Date.now();
+ var fieldT={}, fieldEdits={}, fieldDone={};
+
+ ev('page_view',{ referrer:document.referrer, path:location.pathname });
+
+ // 랜딩 스크롤 깊이 + 이미지 도달
+ var depths={25:0,50:0,75:0,100:0}, imgSeen={};
+ function onScroll(){
+  var h=document.documentElement, pct=Math.round((h.scrollTop+innerHeight)/h.scrollHeight*100);
+  Object.keys(depths).forEach(function(d){ if(!depths[d] && pct>=d){ depths[d]=1; ev('landing_scroll',{depth:Number(d)}); } });
+  document.querySelectorAll('img[data-img]').forEach(function(im){ var id=im.getAttribute('data-img'); if(!imgSeen[id] && im.getBoundingClientRect().top<innerHeight){ imgSeen[id]=1; ev('image_seen',{image:id}); } });
+ }
+ addEventListener('scroll',onScroll,{passive:true}); setTimeout(onScroll,500);
+
+ function data(){ var o={}; new FormData(form).forEach(function(v,k){ if(v!=='') o[k]=v; });
+  // 친구 전화번호는 친구랑 신청한 경우에만 보냄 (혼자로 바꾸면 적어둔 번호는 버림)
+  if(!o.buddy_room || o.buddy_room==='혼자') delete o.buddy;
+  return o; }
+ function post(path,body,beacon){
+  var s=JSON.stringify(body);
+  if(beacon && navigator.sendBeacon){ try{ return navigator.sendBeacon(API+path, new Blob([s],{type:'application/json'})); }catch(e){} }
+  return fetch(API+path,{method:'POST',headers:{'content-type':'application/json'},body:s,keepalive:true}).catch(function(){});
+ }
+ function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),max_scroll:maxScroll(),returning:returning},beacon); }
+ function goRegular(){
+  var target='/'+CITY+'/';
+  var fields=data();
+  if(Object.keys(fields).length){
+   var draft=JSON.stringify({t:Date.now(),page:1,f:fields});
+   try{localStorage.setItem('hh_draft:'+target,draft);}catch(e){}
+   try{sessionStorage.setItem('hh_transfer:'+target,draft);}catch(e){}
+  }
+  var params=new URLSearchParams(location.search); params.set('early_expired','1');
+  location.replace(target+'?'+params.toString());
+ }
+ if(PLAN==='regular' && Q.get('early_expired')==='1'){
+  var notice=document.createElement('p'); notice.className='note'; notice.setAttribute('role','status');
+  notice.textContent='사전알림 특가가 종료됐어요. 일반 참가비와 송금 금액을 확인한 뒤 신청해 주세요. 이미 송금했다면 인스타그램 @haruharu.ting으로 문의해 주세요.';
+  form.parentNode.insertBefore(notice,form);
+ }
+ var DKEY='hh_draft:'+location.pathname;
+ function saveDraft(){ try{ localStorage.setItem(DKEY, JSON.stringify({t:Date.now(),page:curPage,f:data()})); }catch(e){} }
+ function schedule(){ saveDraft(); clearTimeout(timer); timer=setTimeout(function(){partial(false)},900); }
+ function start(){ if(started) return; started=true; ev('form_start',{}); fb('FormStart'); }
+
+ // 문항 단위: focus 시각, 완료(값 확정), 수정 횟수
+ form.addEventListener('focusin',function(e){ var n=e.target.name; if(!n) return; if(!fieldT[n]){ fieldT[n]=Date.now(); ev('field_focus',{field:n}); } });
+ function complete(n,q){
+  var v=(data()[n]||''); if(!v) return;
+  fieldEdits[n]=(fieldEdits[n]||0)+(fieldDone[n]?1:0);
+  ev('field_complete',{ field:n, seconds_in_field: fieldT[n]?Math.round((Date.now()-fieldT[n])/1000):0, edits:fieldEdits[n]||0, had_error: q?q.classList.contains('bad'):false, value_len:String(v).length });
+  fieldDone[n]=1;
+ }
+ form.addEventListener('change',function(e){
+  var el=e.target; lastField=el.name||lastField; var q=el.closest('.q');
+  if(el.type==='radio'){ form.querySelectorAll('input[name="'+el.name+'"]').forEach(function(r){ r.closest('.opt').classList.toggle('on',r.checked); });
+   q.classList.remove('bad'); var oth=q.querySelector('.other'); if(oth) oth.classList.toggle('show', !!el.getAttribute('data-other') && el.checked);
+   complete(el.name,q);
+  }
+  if(el.type==='checkbox'){ el.closest('.chk').classList.toggle('on',el.checked); q.classList.remove('bad'); complete(el.name,q); }
+  start(); schedule();
+ });
+ form.addEventListener('input',function(e){ lastField=e.target.name||lastField; start(); schedule(); });
+ form.addEventListener('focusout',function(e){ var el=e.target; if(el.name && /text|tel|number/.test(el.type)) complete(el.name, el.closest('.q')); });
+ document.querySelectorAll('[data-track]').forEach(function(a){ a.addEventListener('click',function(){ ev('link_click',{link:a.getAttribute('data-track')}); }); });
+ document.addEventListener('keydown',function(e){
+  if(/^[a-eA-E]$/.test(e.key) && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){
+   var page=form.querySelector('.page.on'); var qs=page? page.querySelectorAll('.q'):[]; var focusedQ=null;
+   for(var i=0;i<qs.length;i++){ var r=qs[i].querySelectorAll('input[type=radio]'); if(r.length && ![].some.call(r,function(x){return x.checked})){ focusedQ=qs[i]; break; } }
+   if(!focusedQ) return; var idx=e.key.toUpperCase().charCodeAt(0)-65; var r2=focusedQ.querySelectorAll('input[type=radio]'); if(r2[idx]){ r2[idx].checked=true; r2[idx].dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+ });
+
+ function validate(page){
+  var ok=true, firstBad=null; var sec=form.querySelector('.page[data-page="'+page+'"]');
+  sec.querySelectorAll('.q').forEach(function(q){
+   var bad=false;
+   var radios=q.querySelectorAll('input[type=radio][required]');
+   if(radios.length){ bad=![].some.call(q.querySelectorAll('input[type=radio]'),function(r){return r.checked}); }
+   var chk=q.querySelector('input[type=checkbox][required]'); if(chk) bad=!chk.checked;
+   var inp=q.querySelector('input[type=text][required],input[type=number][required],input[type=tel][required]');
+   if(inp){ var v=inp.value.trim(); bad=!v;
+    if(!bad && inp.name==='birth_year') bad=!/^(19|20)\d{2}$/.test(v) || Number(v)<1990 || Number(v)>2007;
+    if(!bad && inp.name==='phone') bad=!/^01[016789]-?\d{3,4}-?\d{4}$/.test(v.replace(/\s/g,''));
+   }
+   if(q.getAttribute('data-name')==='buddy_room'){
+    var br=q.querySelector('input[name=buddy_room]:checked'), bp=q.querySelector('input[name=buddy]').value.replace(/\D/g,'');
+    bad=!!br && br.value!=='혼자' && (!/^01[016789]\d{7,8}$/.test(bp) || bp===form.querySelector('input[name=phone]').value.replace(/\D/g,''));
+   }
+   q.classList.toggle('bad',bad); if(bad){ ok=false; firstBad=firstBad||q.getAttribute('data-name'); }
+  });
+  if(!ok){ ev('validation_error',{field:firstBad}); var first=sec.querySelector('.q.bad'); first&&first.scrollIntoView({behavior:'smooth',block:'center'}); }
+  return ok;
+ }
+ function show(page){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-page')===String(page)); });
+  curPage=page; pageT0=Date.now(); window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('prog').style.transform='scaleX('+(page==='done'?1:page===1?.33:.66)+')';
+ }
+ document.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click',function(){ if(!validate(1)) return; ev('page_next',{from:1,to:2,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); fb('Page1Complete'); show(2); partial(false); }); });
+ document.querySelectorAll('[data-prev]').forEach(function(b){ b.addEventListener('click',function(){ ev('page_back',{from:2,to:1,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); show(1); }); });
+ var payBtn=document.getElementById('pay'); if(payBtn) payBtn.addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; saveDraft(); partial(false); });
+
+ // ---------- 마감 ----------
+ // 기수 마감 시각이 지나면 폼 대신 마감 안내. 서버(/api/submit)도 따로 거부함. 기기 시계가 틀려도 되게 서버 시각으로 맞춤
+ var closed=false, deadline=DEADLINE, clockOffset=0;
+ function closeForm(){
+  if(closed||submitted) return; closed=true;
+  form.hidden=true; document.getElementById('prog').hidden=true; document.getElementById('closed').hidden=false;
+  window.scrollTo({top:0}); ev('cohort_closed_view',{});
+ }
+ function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }
+ checkClosed();
+ fetch(API+'/cohort?path='+encodeURIComponent(location.pathname),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
+  if(s && isFinite(s.deadline)) deadline=Number(s.deadline);
+  if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now();
+  if(s && s.open===false) closeForm(); else checkClosed();
+ }).catch(function(){});
+ setInterval(checkClosed,15000);
+
+ form.addEventListener('submit',function(e){
+  e.preventDefault(); checkClosed(); if(closed) return; if(offerControl && !offerControl.canSubmit()) return; if(!validate(2)) return;
+  clearTimeout(timer); submitted=true; form.dataset.submitting='true';
+  var btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='제출 중…';
+  var d=data();
+  var payload={sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active()};
+  fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
+   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
+   .then(function(res){
+     var appId=res.application_id||res.id;
+     try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, track:TRACK, plan:PLAN, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
+     ev('submit',{ application_id:appId, total_seconds:Math.round((Date.now()-T0)/1000), gender:d.gender, source_self_report:d.source, device_answer:d.device, intent:d.intent });
+     fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true);
+     show('done'); if(offerControl) document.getElementById('early-banner').hidden=true; try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
+   })
+   .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
+ });
+ function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll() }); partial(true); } }
+ window.addEventListener('pagehide',leave);
+ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') leave(); });
+ // 보관된 작성 내용 복원 (6시간 이내)
+ try{ var transferred=sessionStorage.getItem('hh_transfer:'+location.pathname);
+  var dr=JSON.parse(transferred || localStorage.getItem(DKEY)||'null');
+  if(transferred) sessionStorage.removeItem('hh_transfer:'+location.pathname);
+  if(dr && dr.f && Date.now()-dr.t<6*3600e3){
+   Object.keys(dr.f).forEach(function(k){ var els=form.querySelectorAll('[name="'+k+'"]'); [].forEach.call(els,function(el){
+    if(el.type==='radio'){ if(el.value===dr.f[k]){ el.checked=true; el.closest('.opt').classList.add('on'); if(el.getAttribute('data-other')){ var o=el.closest('.q').querySelector('.other'); if(o) o.classList.add('show'); } } }
+    else if(el.type==='checkbox'){ el.checked=true; el.closest('.chk').classList.add('on'); }
+    else el.value=dr.f[k]; }); });
+   if(Object.keys(dr.f).length){ started=true; ev('draft_restored',{fields:Object.keys(dr.f).length,page:dr.page}); if(dr.page===2 && validate(1)) show(2); }
+  } }catch(e){}
+ post('/partial',{sid:sid,path:location.pathname,page:1,last_field:'',fields:{},hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),landed:true,returning:returning});
+ // 페이지를 켜둔 채 머무는 경우 대비 30초마다 체류시간 갱신 (보일 때만, 최대 20회)
+ var hb=0, hbT=setInterval(function(){ if(submitted||++hb>20){ clearInterval(hbT); return; } if(document.visibilityState==='visible') partial(false); },30000);
+ console.log('[hh] city',CITY,'pixel',!!window.fbq,'mixpanel',!!mp,'sid',sid,'hidden',hidden);
+})();
+</script>
+</body></html>
