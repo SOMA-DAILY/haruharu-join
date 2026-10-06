@@ -75,7 +75,7 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
-    p1 = 'P1_seoul_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
+    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
     t = TPL
     for k, v in {
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
@@ -131,7 +131,11 @@ for path, f in FORMS.items():
 # 지역 선택 페이지 (루트): 현재 기수의 listed 폼만 버튼으로
 sel = open('src/select.template.html', encoding='utf-8').read()
 listed = [(p, f) for p, f in FORMS.items() if f['cohort'] == CUR and f.get('listed')]
-btns = '\n'.join(f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 소개팅 신청</b><span>{f["cityKo"]} {"직장인" if f.get("occupation") else "대학생"} / {f["fee"]:,}원</span></span><span class="ar">→</span></a>' for p, f in listed)
+def btn(p, f):   # 10/6: 직장인 사전알림도 선택 화면에. 금액 표기 없음
+    if f.get('plan') == 'prealert':
+        return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 직장인 사전 알림</b><span>사전 알림 신청하면 참가비 할인 혜택</span></span><span class="ar">→</span></a>'
+    return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 대학생 소개팅 신청</b><span>{f["cityKo"]} 대학생</span></span><span class="ar">→</span></a>'
+btns = '\n'.join(btn(p, f) for p, f in listed)
 sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', ms(DL[CUR])).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])

@@ -36,7 +36,7 @@ export const FORMS = {
   '/4/gwangju/':            { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 광주 학생', listed: true },
   '/4/seoul/x7q2/':         { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 서울 학생 할인 (메시지 전용)' },
   '/4/gwangju/x7q2/':       { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 광주 학생 할인 (메시지 전용)' },
-  '/4/seoul-work/pre/':     { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료)' },
+  '/4/seoul-work/pre/':     { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료)', listed: true },
   '/4/seoul-work/x7q2/':    { ...W4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 수도권 직장인 할인 (사전알림 메시지 전용)' },
   '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인' },
 };
