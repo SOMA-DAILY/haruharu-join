@@ -7,13 +7,14 @@
 하루하루(라이프스타일 공유 소개팅 앱) 기수 참가 신청폼. 3기부터 Tally 대신 이걸 씀.
 - 주소 `https://join.haruharu.co.kr` (Cloudflare Pages 프로젝트 이름은 `haruharu-apply`, 헷갈림 주의)
 - main push 하면 바로 라이브 신청폼이 바뀜
-- **3기 신청은 10/5(월) 마감 → 10/6 00:00 KST 부터 6벌(`/seoul/` `/gwangju/` + pre-4k9x + discount-4900)과 지역 선택 `/` 전부 마감 안내.** 마감 시각은 `shared/cohort.mjs` 한 곳 (build.sh 가 페이지에 박고, `/api/submit` 도 같은 값으로 409 `cohort_closed` 거부, `GET /api/cohort` 로 상태 조회). 4기 열 땐 이 값과 build.sh 의 `DEADLINE_KO` 를 바꾸면 됨. 로컬 시험은 환경값 `COHORT_DEADLINE`
+- **기수/트랙/요금제/금액/마감은 전부 `shared/forms.mjs` 등록부 한 곳.** 경로 하나가 폼 하나 (`/{기수}/{트랙}/{요금제}/`, 3기는 옛 경로 그대로). 서버는 제출 경로로 요금제/기수/지역을 확정하고(클라이언트 hidden 값 안 믿음), 등록부에 없는 경로는 404 `unknown_form`. 기수 마감은 `COHORT_DEADLINES`, 지나면 그 기수 폼 전부 마감 안내 + 현재 기수 같은 트랙 폼으로 가는 버튼, `/api/submit` 은 409 `cohort_closed`. `GET /api/cohort?path=/seoul/` 로 폼별 상태 조회. 로컬 시험은 환경값 `COHORT_DEADLINE`(현재 기수에만 먹음)
+- **새 기수 여는 법:** `shared/forms.mjs` 에 줄 추가 + `CURRENT_COHORT` + `COHORT_DEADLINES` + `COHORT_INFO`(진행 기간) 바꾸고 build. 지난 기수 줄은 지우지 않음(옛 링크 마감 안내용, 관리 페이지 기수 탭용). `shared/cohort.mjs` 는 옛 import 호환용 껍데기
 
 ## 사용자 흐름
 
 광고/인스타 바이오/메시지 링크 (`?src=광고코드`)
 → `/` 지역 선택 (쿼리 그대로 넘김)
-→ `/seoul/` 또는 `/gwangju/` 폼 1페이지 (성별, 출생년도, 학교, 유입경로, 기기, 신청 마음)
+→ `/4/seoul/` 또는 `/4/gwangju/` 폼 1페이지 (성별, 출생년도, 학교, 유입경로, 기기, 신청 마음). 직장인 트랙(`/4/seoul-work/…`)은 학교 대신 [하시는 일] 선택지 + [편한 진행 시기], 유입경로의 에브리타임이 블라인드
 → 2페이지 (전화번호, 동의, 친구랑 함께 신청 여부 + 친구 번호, 토스 송금 버튼, 송금자 이름)
 → 제출 → 완료 화면
 → 운영진이 `/admin/` 에서 송금 확인 → 연락 → 확정 + 방 배정
@@ -27,30 +28,34 @@
 
 송금은 별도 레포 `haruharu-pay` 페이지로 나감. 일반 `/j/` 7,900원, 사전알림 `/e/` 4,900원, 전남대 축제 `/f/` 4,900원. **송금 자동 확인 없음**, 송금자 이름으로 사람이 대조함.
 
-## 요금제 (plan)
+## 요금제 (plan) — 정본은 `shared/forms.mjs`
 
-| 경로 | plan | 참가비 | 누가 |
-|---|---|---|---|
-| `/seoul/` `/gwangju/` | regular | 7,900 | 광고, 바이오, 일반 메시지 |
-| `/seoul/pre-4k9x/` `/gwangju/pre-4k9x/` | early | 4,900 | 사전알림 신청자에게 메시지로만 보냄 |
-| `/jnu-festival/` | jnu_festival | 4,900 (송금은 축제 전용 `/f/`, haruharu-pay 에 셀 추가 필요) | 전남대 축제 이벤트. 링크로만 (`?src=jnu-fest-msg` 등). city 는 gwangju 지만 관리 페이지에선 광주 탭과 따로 봄 |
+| plan | 뜻 | 4기 경로 예 |
+|---|---|---|
+| regular | 정가 7,900 (광고, 바이오, 일반 메시지) | `/4/seoul/` `/4/gwangju/` `/4/seoul-work/` |
+| discount | 할인 4,900, 메시지로만 보냄 (사전알림/이전 참가자). 할인 자격 검사 안 함 | `/4/seoul/x7q2/` `/4/seoul-work/x7q2/` |
+| prealert | 무료 사전알림. 송금/송금자 이름/친구/기기 문항 없음. 관리 페이지에서 같은 번호가 유료 폼에 제출하면 [결제함] 배지 | `/4/seoul-work/pre/` |
+| early | 3기 전용(시간 제한 할인, `shared/early-offer.mjs`). 4기부터 안 씀 | `/seoul/pre-4k9x/` |
+| jnu_festival | 전남대 축제 (`shared/jnu-festival.mjs`) | `/jnu-festival/` |
 
-- 4벌 다 `src/form.template.html` 하나에서 `build.sh` 가 찍어냄. 값은 `build.sh` 상단 변수 (`FEE_*`, `PAY_*`, `EARLY_DIR`, 일정 문구, 이미지 파일명)
-- `plan` 은 빌드 때 페이지에 박히고, 제출 때 클라이언트가 hidden 값으로 보냄 → **서버는 plan 을 검증 안 함.** 4,900 주소가 퍼져도 지금은 못 막음 (관리 페이지 배지 + 사전알림 명단 전화번호로 사람이 대조)
-- P4 이미지(일정/참가비 안내)는 지역 x 요금제 4장: `public/img/P4_{city}_3gi_{plan}_12900.png`
+- 폼 전부 `src/form.template.html` 하나에서 `build.sh` 가 등록부를 돌며 찍어냄. 문구 조각(참여 흐름, 완료 화면, 동의 항목)은 build.sh 안 `gen()`
+- 서버가 경로로 plan 을 확정하므로 클라이언트 hidden 값은 참고용. 송금 셀은 haruharu-pay `/j/`(7,900) `/e/`(4,900) `/f/`(축제)
+- 4기부터 P4 안내 이미지 대신 글자 카드(`src/info-card.html`, 날짜/금액은 HTML 에만). P1 은 학생 `P1_{city}_3gi.png`(기수값 없음) / 직장인 `P1_seoul_work_4gi.png`
 - 축제 폼은 `src/festival.template.html` 따로 (기존 4벌 빌드 결과는 그대로). 3일/3기 수치가 박힌 P1, P3, P4 는 안 씀. 이미지: `jnu_reviews.jpg`(P2 에서 번호와 배경 속 3일 글자 흐림), `jnu_verify_guide.jpg`(전남대 앱 안내. 운영자 본인 이름/학과/학번 포함 원본 그대로(사용자 요청, 가림 없음))
 
 ## 파일 지도
 
 | 파일 | 역할 |
 |---|---|
-| `build.sh` | 빌드. 기수/금액/일정 바꿀 땐 여기 변수만. `MIXPANEL_TOKEN=... ./build.sh` |
+| `build.sh` | 빌드. 등록부를 node 로 읽어 폼마다 찍음. `MIXPANEL_TOKEN=... ./build.sh` |
+| `shared/forms.mjs` | **폼 등록부 (정본)**: 경로별 기수/트랙/요금제/금액/송금 셀/마감. 서버, build.sh, 관리 페이지가 같이 읽음 |
+| `src/info-card.html` | 4기부터 쓰는 신청 안내 카드 (P4 이미지 대체) |
 | `src/form.template.html` | 신청폼 본체 (HTML + CSS + JS 한 파일). `__CITY__` 같은 자리표시자를 build.sh 가 채움 |
 | `src/select.template.html` | `/` 지역 선택 |
 | `src/admin.html` | 관리 페이지. build.sh 가 `public/admin/index.html` 로 복사 |
 | `src/festival.template.html` | 전남대 축제 폼 (form.template 복사본 + 학과, 학생 인증 캡처, 같은 과 피하기, 마감 처리) |
 | `shared/jnu-festival.mjs` | 축제 마감 시각, 캡처 형식 확인(JPEG/PNG/WebP 시그니처, 2MB), 캡처 자동 삭제 시각 |
-| `shared/cohort.mjs` | 기수 본모집 마감 시각 (6벌 + 지역 선택). 서버와 build.sh 가 같이 읽음 |
+| `shared/cohort.mjs` | 옛 import 호환용. 값은 forms.mjs 에서 재export |
 | `public/` | 빌드 결과 + 이미지. **직접 고치지 말 것** (CI 가 빌드해서 덮어씀). 단 `public/img/` 는 원본이라 여기 넣음 |
 | `functions/api/[[path]].js` | 서버 API 전부 (Pages Functions) |
 | `migrations/` | D1 스키마 |
@@ -59,7 +64,7 @@
 ## 데이터
 
 - **KV `APPLY_KV` = 제출 정본.** `s:{시각}-{id}` 제출 1건, `m:{id}` 상태/메모, `meta:last_submit`, `rl:{ip}` 로그인 잠금, `img:{신청ID}` 축제 학생 인증 캡처 (브라우저에서 긴 변 1600px JPEG 로 줄여 제출 본문으로만 받음, `/partial` 에는 절대 안 들어감. 2026-10-08 00:00 KST KV 만료로 자동 삭제, 마감을 늦춰 그 뒤에 들어온 캡처는 받은 지 3일 뒤 삭제. 만료 없이 저장되는 경우 없음. 축제 제출은 KV 쓰기 3)
-- **D1 `haruharu-apply-db` = 분석 + 관리 사본.** `submissions`(제출 사본 + 상태/메모/방/친구, 축제는 `major` `avoid_same_major` `student_card_key` 까지), `sessions`(방문 1건: 도착, 체류, 스크롤, 마지막 문항, 입력값), `forms`, `links`(src 등록부)
+- **D1 `haruharu-apply-db` = 분석 + 관리 사본.** `submissions`(제출 사본 + 상태/메모/방/친구, `track`, 직장인 `schedule_pref`, 축제는 `major` `avoid_same_major` `student_card_key` 까지. 3기 행은 `cohort='3'`), `sessions`(방문 1건: 도착, 체류, 스크롤, 마지막 문항, 입력값), `forms`, `links`(src 등록부)
 - 제출 저장은 이중: KV 실패해도 D1 에 들어가면 접수 처리
 - 새 열 추가는 `migrations/000N_*.sql` 로 파일 남기고, 원격 적용은 `--file` 이 인증 오류 난 적 있어서 `npx wrangler d1 execute haruharu-apply-db --remote --command "ALTER TABLE ..."` 로 함. CI 는 마이그레이션 안 돌림
 - 신청자 이름/전화번호가 들어 있음 → 데이터 덤프, 백업 json 을 레포에 절대 커밋 금지
@@ -71,7 +76,7 @@
 | POST `/partial` | 방문/입력 중 기록 (D1 sessions) | 없음 |
 | POST `/submit` | 제출 (KV + D1). 축제는 `capture`(data URL) 필수 | 없음 |
 | GET `/festival` | 축제 폼 마감 여부 `{open, deadline, serverNow}` | 없음 |
-| GET `/cohort` | 기수 본모집 폼 마감 여부 `{open, deadline, serverNow}` (`shared/cohort.mjs`) | 없음 |
+| GET `/cohort` | 현재 기수 마감 여부. `?path=/seoul/` 이면 그 폼의 상태 + 마감 시 `next`(현재 기수 같은 트랙 폼) | 없음 |
 | GET `/export` `/stats` | CSV / 집계. 시트 IMPORTDATA 가 열 위치로 읽을 수 있어서 **기존 열 순서는 바꾸지 않고 새 열은 맨 끝에만** 붙임 (축제 `major` `avoid_same_major` 도 끝) | `?token=` READ_TOKEN 또는 EXPORT_TOKEN |
 | DELETE `/records` | 삭제 | EXPORT_TOKEN |
 | `/admin/*` (login, logout, ping, analytics, sessions, applicants, mark, capture ...) | 관리 페이지용. `GET /admin/capture?id=신청ID` 는 캡처 이미지. 신청자 삭제는 캡처도 같이 지움 | 비번 로그인 쿠키 |
@@ -104,6 +109,12 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - 참가 인원 숫자 고정 표기 금지 (3:3, 4:4 유동). 예외: 전남대 축제 폼은 남녀 4:4 확정이라 씀
 - 화면에 동작 설명 문구 넣지 않음 ("자동으로 저장돼요" 같은 것)
 - 금지 문자: 원문자 `①②③`, 낫표 `「」`, 가운뎃점 `·`
+
+## 관리 페이지 (`/admin/`)
+
+- 신청자 탭 맨 위에 **기수 탭**(현재 기수가 기본) → 그 기수의 트랙 탭(서울 학생 / 광주 학생 / 서울 직장인). 등록부 JSON 이 build 때 `REG` 로 박혀 들어감(API 호출 없음). 3기 신청자는 3기 탭에 그대로
+- 메시지 링크 카드는 현재 기수 폼 전부를 등록부에서 생성 (`src=h{기수}-msg-{트랙}-{요금제}`)
+- 상태에 `결제 요청함` 추가 (사전알림 → 할인 링크 보낸 사람 표시용)
 
 ## 진행 예정 작업
 

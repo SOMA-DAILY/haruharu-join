@@ -269,7 +269,8 @@ dd{margin:0;word-break:break-all}
     </div>
 
     <div id="t-apps">
-      <div class="citytabs" id="aCityTabs"><button data-c="" class="on">전체</button><button data-c="seoul">서울</button><button data-c="gwangju">광주</button><button data-c="jnu_festival">전남대 축제</button></div>
+      <div class="citytabs" id="aCohortTabs" style="margin-bottom:8px"></div>
+      <div class="citytabs" id="aCityTabs"></div>
       <div class="tiles">
         <div class="tile"><div class="k">총 신청</div><div class="v num" id="aTotal">-</div><div class="s" id="aTotalS"></div></div>
         <div class="tile"><div class="k">오늘 신청</div><div class="v num" id="aToday">-</div><div class="s" id="aTodayS"></div></div>
@@ -280,14 +281,14 @@ dd{margin:0;word-break:break-all}
         <table class="list" style="min-width:0"><thead><tr><th>광고</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
       <div class="strip" id="aStrip"></div>
       <div class="filters" style="margin-bottom:10px">
-        <input id="q" placeholder="이름, 전화번호, 학교, 학과 검색" style="min-width:220px">
+        <input id="q" placeholder="이름, 전화번호, 학교, 하는 일 검색" style="min-width:220px">
         <select id="aGender"><option value="">성별 전체</option><option>여성</option><option>남성</option></select>
-        <select id="aStatus"><option value="">상태 전체</option><option value="-">미처리</option><option>송금확인</option><option>송금확인 안됨</option><option>연락함</option><option>확정</option><option>보류</option><option>취소</option></select>
+        <select id="aStatus"><option value="">상태 전체</option><option value="-">미처리</option><option>송금확인</option><option>송금확인 안됨</option><option>결제 요청함</option><option>연락함</option><option>확정</option><option>보류</option><option>취소</option></select>
         <button class="btn ghost sm" id="csvBtn">CSV</button>
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
       <div class="tbl-wrap"><table class="list">
-        <thead><tr><th>신청 시각</th><th>지역</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 학과</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
+        <thead><tr><th>신청 시각</th><th>폼</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 하는 일</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
         <tbody id="appRows"></tbody></table>
         <div class="empty hidden" id="appEmpty">아직 신청자가 없음</div></div>
     </div>
@@ -297,16 +298,17 @@ dd{margin:0;word-break:break-all}
 <div id="drawer" class="hidden"><div class="panel" id="panel"></div></div>
 <div id="lightbox" class="hidden"><img id="lbImg" alt="학생 인증 캡처"></div>
 
+<script>var REG={"FORMS": {"/seoul/": {"cohort": "3", "city": "seoul", "track": "seoul-student", "trackKo": "서울 학생", "cityKo": "서울", "schoolEx": "서울대학교", "plan": "regular", "fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "label": "3기 서울 학생"}, "/gwangju/": {"cohort": "3", "city": "gwangju", "track": "gwangju-student", "trackKo": "광주 학생", "cityKo": "광주", "schoolEx": "전남대학교", "plan": "regular", "fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "label": "3기 광주 학생"}, "/seoul/pre-4k9x/": {"cohort": "3", "city": "seoul", "track": "seoul-student", "trackKo": "서울 학생", "cityKo": "서울", "schoolEx": "서울대학교", "plan": "early", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "3기 서울 사전알림 할인"}, "/gwangju/pre-4k9x/": {"cohort": "3", "city": "gwangju", "track": "gwangju-student", "trackKo": "광주 학생", "cityKo": "광주", "schoolEx": "전남대학교", "plan": "early", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "3기 광주 사전알림 할인"}, "/seoul/discount-4900/": {"cohort": "3", "city": "seoul", "track": "seoul-student", "trackKo": "서울 학생", "cityKo": "서울", "schoolEx": "서울대학교", "plan": "discount", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "3기 서울 할인"}, "/gwangju/discount-4900/": {"cohort": "3", "city": "gwangju", "track": "gwangju-student", "trackKo": "광주 학생", "cityKo": "광주", "schoolEx": "전남대학교", "plan": "discount", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "3기 광주 할인"}, "/jnu-festival/": {"cohort": "jnu-festival", "city": "gwangju", "track": "festival", "trackKo": "전남대 축제", "cityKo": "광주", "plan": "jnu_festival", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/f/", "label": "전남대 축제", "festival": true}, "/4/seoul/": {"cohort": "4", "city": "seoul", "track": "seoul-student", "trackKo": "서울 학생", "cityKo": "서울", "schoolEx": "서울대학교", "plan": "regular", "fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "label": "4기 서울 학생", "listed": true}, "/4/gwangju/": {"cohort": "4", "city": "gwangju", "track": "gwangju-student", "trackKo": "광주 학생", "cityKo": "광주", "schoolEx": "전남대학교", "plan": "regular", "fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "label": "4기 광주 학생", "listed": true}, "/4/seoul/x7q2/": {"cohort": "4", "city": "seoul", "track": "seoul-student", "trackKo": "서울 학생", "cityKo": "서울", "schoolEx": "서울대학교", "plan": "discount", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "4기 서울 학생 할인 (메시지 전용)"}, "/4/gwangju/x7q2/": {"cohort": "4", "city": "gwangju", "track": "gwangju-student", "trackKo": "광주 학생", "cityKo": "광주", "schoolEx": "전남대학교", "plan": "discount", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "4기 광주 학생 할인 (메시지 전용)"}, "/4/seoul-work/pre/": {"cohort": "4", "city": "seoul", "track": "seoul-work", "trackKo": "서울 직장인", "cityKo": "서울", "occupation": true, "plan": "prealert", "fee": 0, "pay": "", "label": "4기 서울 직장인 사전알림 (무료)"}, "/4/seoul-work/x7q2/": {"cohort": "4", "city": "seoul", "track": "seoul-work", "trackKo": "서울 직장인", "cityKo": "서울", "occupation": true, "plan": "discount", "fee": 4900, "pay": "https://haruharu-pay.pages.dev/e/", "label": "4기 서울 직장인 할인 (사전알림 메시지 전용)"}, "/4/seoul-work/": {"cohort": "4", "city": "seoul", "track": "seoul-work", "trackKo": "서울 직장인", "cityKo": "서울", "occupation": true, "plan": "regular", "fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "label": "4기 서울 직장인"}}, "CURRENT": "4", "DEADLINE_KO": {"3": "10월 5일(월)", "4": "10월 10일(토)"}};</script>
 <script>
 (function(){
 var HOST='https://join.haruharu.co.kr';
-var STATUSES=['','송금확인','송금확인 안됨','연락함','확정','보류','취소'];
+var STATUSES=['','송금확인','송금확인 안됨','결제 요청함','연락함','확정','보류','취소'];
 // 송금확인 안됨: 목록엔 남기고 신청자 관리 화면 집계(총 신청, 오늘, 성비, 처리 현황, 광고별)에서만 뺌
 var UNPAID='송금확인 안됨';
 function counted(r){return r.status!==UNPAID}
-var FL={gender:'성별',birth_year:'출생연도',school:'학교',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
+var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
-var S={tab:'apps',acity:'',today:null,range:'7d',path:'',src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
+var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'',src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var fmtPhone=function(d){d=String(d||'').replace(/\D/g,'');return d.length===11?d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7):d};
@@ -316,9 +318,29 @@ var kst=function(ts){return ts?new Date(ts+9*3600e3).toISOString().slice(5,16).r
 var ago=function(ts){if(!ts)return '-';var s=(Date.now()-ts)/1000;if(s<60)return '방금';if(s<3600)return Math.floor(s/60)+'분 전';if(s<86400)return Math.floor(s/3600)+'시간 전';return kst(ts)};
 var cityKo={seoul:'서울',gwangju:'광주'};
 // 전남대 축제 신청(plan jnu_festival)은 city 가 gwangju 라도 광주 탭(3기)과 따로 봄
-var FEST='jnu_festival',FEST_PATH='/jnu-festival/',tabKo={seoul:'서울',gwangju:'광주',jnu_festival:'전남대 축제'};
+var FEST='jnu_festival',FEST_PATH='/jnu-festival/';
 function isFest(r){return r.plan===FEST}
-function inTab(r,c){if(!c)return true;if(c===FEST)return isFest(r);return r.city===c&&!isFest(r)}
+// 기수/트랙은 등록부(REG, build 때 박힘)로 읽음. 3기 신청자는 cohort='3' 이 이미 들어 있고, 없으면 경로로 찾음
+function regOf(path){return REG.FORMS[path]||null}
+function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);return r.cohort||(f&&f.cohort)||'3'}
+function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
+var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'서울 직장인',festival:'전남대 축제'};
+function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c+'기'}
+function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){return a===REG.CURRENT?-1:b===REG.CURRENT?1:0})}
+function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
+function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
+// 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
+function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
+  if(plan==='prealert')return '사전알림 (무료)';var won=fee.toLocaleString('ko-KR')+'원';return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
+function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return ' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
+// 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
+function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
+function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'}
+function renderCohortTabs(){
+  $('aCohortTabs').innerHTML=cohortList().map(function(c){return '<button data-c="'+esc(c)+'"'+(c===S.cohort?' class="on"':'')+'>'+esc(cohortKo(c))+'</button>'}).join('');
+  var ts=trackList(S.cohort);
+  $('aCityTabs').innerHTML='<button data-t=""'+(S.track?'':' class="on"')+'>전체</button>'+ts.map(function(t){return '<button data-t="'+esc(t)+'"'+(t===S.track?' class="on"':'')+'>'+esc(TRACK_KO[t]||t)+'</button>'}).join('');
+}
 function avoidBadge(r){return r.avoid_same_major==='같은 과 피하기'?' <span class="badge blue">같은 과 피하기</span>':''}
 function capCell(r){if(!isFest(r))return '';return r.student_card_key?' <button type="button" class="badge capbtn" data-cap="'+esc(r.application_id)+'">캡처</button>':' <span class="badge amber">캡처 없음</span>'}
 function capUrl(id){return '/api/admin/capture?id='+encodeURIComponent(id)}
@@ -485,8 +507,11 @@ $('linkRows').addEventListener('click',function(e){var c=e.target.closest('[data
 // 광고 코드 → 사람이 읽는 이름. 등록된 이름이 있으면 그걸 쓰고, 없으면 코드 규칙으로 풂
 function srcName(s){if(!s)return '직접 들어옴';var l=linkOf(s);if(l&&l.label)return l.label;
   var C={card3:{m:'옷가게 3장',f:'4분할 3장'},muhan:'무도짤',film4:'필름 4장',reel:'릴스'};
-  var m=/^h3-(seoul|gwangju)-(m|f)-(.+)$/.exec(s);
-  if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return cityKo[m[1]]+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
+  var m=/^h[34]-(seoul|gwangju|work)-(m|f)-(.+)$/.exec(s);
+  if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return (m[1]==='work'?'서울 직장인':cityKo[m[1]])+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
+  m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':'');
+  m=/^h(\d)-([a-z-]+)-from(\d|jnu-festival)$/.exec(s);if(m)return m[3]+'기 마감 화면 → '+m[1]+'기 '+(TRACK_KO[m[2]]||m[2]);
+  m=/^h(\d)-(work|seoul|gwangju)-bio$/.exec(s);if(m)return m[1]+'기 바이오 '+(m[2]==='work'?'직장인':cityKo[m[2]]);
   m=/^h3-discount-(seoul|gwangju)$/.exec(s);if(m)return '할인 메시지 '+cityKo[m[1]];
   m=/^h3-early-(seoul|gwangju)$/.exec(s);if(m)return '사전알림 메시지 '+cityKo[m[1]];
   m=/^h3-(msg|rejoin)-(seoul|gwangju)$/.exec(s);if(m)return (m[1]==='msg'?'메시지 공유 ':'재참가 메시지 ')+cityKo[m[2]];
@@ -514,19 +539,22 @@ $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr'
     '<div class="acts">'+(f.phone&&!r.submitted?'<button class="btn ghost" id="vCopy">전화번호 복사</button>':'')+'<button class="btn ghost" id="vClose">닫기</button></div>';
   $('drawer').classList.remove('hidden');$('vClose').onclick=closeD;if($('vCopy'))$('vCopy').onclick=function(){copy(String(f.phone).replace(/\D/g,''))}});
 
-document.getElementById('aCityTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});S.acity=b.dataset.c;renderApps()});
+$('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';renderCohortTabs();renderApps()});
+$('aCityTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.track=b.dataset.t;renderCohortTabs();renderApps()});
+renderCohortTabs();
 ['q','aGender','aStatus'].forEach(function(id){$(id).addEventListener('input',renderApps)});
-function appsFiltered(){var q=$('q').value.trim().toLowerCase().replace(/-/g,''),c=S.acity,g=$('aGender').value,st=$('aStatus').value;
-  return S.apps.filter(function(r){if(!inTab(r,c))return false;if(g&&r.gender!==g)return false;if(st==='-'&&r.status)return false;if(st&&st!=='-'&&r.status!==st)return false;
+function appsFiltered(){var q=$('q').value.trim().toLowerCase().replace(/-/g,''),g=$('aGender').value,st=$('aStatus').value;
+  return S.apps.filter(function(r){if(!inTab(r))return false;if(g&&r.gender!==g)return false;if(st==='-'&&r.status)return false;if(st&&st!=='-'&&r.status!==st)return false;
     if(q&&((r.name||'')+' '+(r.phone_digits||'')+' '+(r.school||'')+' '+(r.major||'')).toLowerCase().indexOf(q)<0)return false;return true})}
 function renderAppSummary(){
-  var inTabAll=S.apps.filter(function(r){return inTab(r,S.acity)}),all=inTabAll.filter(counted),ex=inTabAll.length-all.length;
+  var inTabAll=S.apps.filter(inTab),all=inTabAll.filter(counted),ex=inTabAll.length-all.length;
   var dk=function(off){return new Date(dayStart(off)+9*3600e3).toISOString().slice(0,10)};
   var td=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(0)}).length,yd=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(-1)}).length;
   var f=all.filter(function(r){return r.gender==='여성'}).length,m=all.filter(function(r){return r.gender==='남성'}).length;
   var done=all.filter(function(r){return r.status}).length,conf=all.filter(function(r){return r.status==='확정'}).length;
-  var ca=S.apps.filter(counted),s=ca.filter(function(r){return inTab(r,'seoul')}).length,g=ca.filter(function(r){return inTab(r,'gwangju')}).length,fe=ca.filter(isFest).length;
-  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(S.acity?(tabKo[S.acity]+'만'):('서울 '+s+' / 광주 '+g+(fe?' / 전남대 축제 '+fe:'')))+(ex?' <span class="nw">/ 송금확인 안됨 '+ex+'명 제외</span>':'');
+  var ca=S.apps.filter(function(r){return counted(r)&&cohortOf(r)===S.cohort}),byT={};ca.forEach(function(r){var t=trackOf(r);byT[t]=(byT[t]||0)+1});
+  var tsum=trackList(S.cohort).map(function(t){return (TRACK_KO[t]||t)+' '+(byT[t]||0)}).join(' / ');
+  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(cohortKo(S.cohort)+(S.track?' '+(TRACK_KO[S.track]||S.track)+'만':' / '+tsum))+(ex?' <span class="nw">/ 송금확인 안됨 '+ex+'명 제외</span>':'');
   $('aToday').textContent=td;$('aTodayS').textContent='어제 '+yd;
   $('aGen').textContent=f+' : '+m;$('aGenS').textContent=all.length?('여성 '+pct(f,all.length)):'';
   var paid=all.filter(function(r){return r.status==='송금확인'||r.status==='연락함'||r.status==='확정'}).length;$('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 이상 '+paid+' / 확정 '+conf+' / 미처리 '+(all.length-done);
@@ -535,15 +563,15 @@ function renderAppSummary(){
   $('aBySrc').innerHTML=bl.length?bl.map(function(o){return '<tr><td>'+srcCell(o.k)+'</td><td class="r num"><b>'+o.n+'</b></td><td class="r num">'+o.f+'</td><td class="r num">'+o.m+'</td><td class="r num">'+o.t+'</td><td class="r num">'+o.p+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty" style="padding:18px">아직 신청이 없음</td></tr>';
   // 오늘 폼 퍼널 한 줄 (지역 탭 반영)
   var T=S.today;if(!T){$('aStrip').innerHTML='';return}
-  var rows=T.by_form.filter(function(r){var fo=(T.forms||[]).filter(function(x){return x.path===r.k})[0];var L=r.k==='/'||(fo&&fo.kind==='landing');if(L)return false;if(S.acity===FEST)return r.k===FEST_PATH;if(S.acity)return fo&&fo.city===S.acity&&r.k!==FEST_PATH;return true});
+  var rows=T.by_form.filter(function(r){var fo=(T.forms||[]).filter(function(x){return x.path===r.k})[0];var L=r.k==='/'||(fo&&fo.kind==='landing');if(L)return false;var f=regOf(r.k);var c=f?f.cohort:(r.k===FEST_PATH?'jnu-festival':null);if(c!==S.cohort)return false;return !S.track||(f&&f.track===S.track)});
   var sm=function(k){return rows.reduce(function(a,r){return a+(r[k]||0)},0)};
   var v=sm('visits'),st=sm('starts'),sb=sm('submits'),pa=sm('partials');
-  $('aStrip').innerHTML='<span>오늘 '+(S.acity?tabKo[S.acity]+' ':'')+'폼</span><span>방문 <b>'+v+'</b></span><span>→ 입력 시작 <b>'+st+'</b></span><span>→ 제출 <b>'+sb+'</b></span><span>전환율 <b>'+pct(sb,v)+'</b></span><span>쓰다 나감 <b>'+pa+'</b></span><button class="go" id="goStats">지표 자세히 →</button>';
+  $('aStrip').innerHTML='<span>오늘 '+cohortKo(S.cohort)+' '+(S.track?(TRACK_KO[S.track]||S.track)+' ':'')+'폼</span><span>방문 <b>'+v+'</b></span><span>→ 입력 시작 <b>'+st+'</b></span><span>→ 제출 <b>'+sb+'</b></span><span>전환율 <b>'+pct(sb,v)+'</b></span><span>쓰다 나감 <b>'+pa+'</b></span><button class="go" id="goStats">지표 자세히 →</button>';
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('appEmpty').classList.toggle('hidden',rs.length>0);
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+(isFest(r)?'<span class="badge jnu">전남대 축제</span>':'<span class="badge '+esc(r.city)+'">'+esc(cityKo[r.city]||r.city||'-')+'</span>')+'</td>'+
-    '<td><b>'+esc(r.name)+'</b>'+(r.plan==='early'?' <span class="badge amber">사전 4,900</span>':r.plan==='discount'?' <span class="badge amber">할인 4,900</span>':'')+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+formBadge(r)+'</td>'+
+    '<td><b>'+esc(r.name||'(사전알림)')+'</b>'+feeBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
@@ -553,10 +581,10 @@ function buddyText(r){if(!r.buddy)return '';var b=buddyOf(r);if(!b)return (/^01\
 function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자'?r.buddy_room:'';if(!t&&!m)return '';
   return ' <span class="badge amber">친구'+(m?' '+esc(m):'')+(t?': '+esc(t):'')+'</span>'}
 // 팀원이 메시지로 보낼 링크. 링크마다 src 가 달라 [광고별 신청] 표에 따로 잡힘
-var SHARE=[['서울 신청폼','일반 7,900원, 10/5 마감됨','/seoul/?src=h3-msg-seoul'],['광주 신청폼','일반 7,900원, 10/5 마감됨','/gwangju/?src=h3-msg-gwangju'],
-  ['서울 할인 신청폼','4,900원, 10/5 마감됨','/seoul/discount-4900/?src=h3-discount-seoul'],['광주 할인 신청폼','4,900원, 10/5 마감됨','/gwangju/discount-4900/?src=h3-discount-gwangju'],
-  ['서울 사전알림 신청자','4,900원, 10/5 마감됨','/seoul/pre-4k9x/?src=h3-early-seoul'],['광주 사전알림 신청자','4,900원, 10/5 마감됨','/gwangju/pre-4k9x/?src=h3-early-gwangju'],
-  ['전남대 축제 신청폼','4,900원, 10/2 마감됨','/jnu-festival/?src=jnu-fest-msg']];
+// 현재 기수 폼 전부 (등록부). src = h{기수}-msg-{트랙}-{요금제} 라 [광고별 신청] 표에 따로 잡힘. 할인 폼은 사전알림/이전 참가자에게만, 광고/바이오에 쓰지 말 것
+var SHARE=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return f.cohort===REG.CURRENT}).map(function(p){var f=REG.FORMS[p];
+  var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
+  return [f.label,fee+', '+REG.DEADLINE_KO[f.cohort]+' 마감',p+'?src=h'+f.cohort+'-msg-'+f.track+'-'+f.plan]});
 $('shareLinks').innerHTML=SHARE.map(function(x){return '<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>'}).join('');
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
@@ -578,8 +606,9 @@ function deleteApplicant(r,button){
 }
 $('appRows').addEventListener('click',function(e){var del=e.target.closest('button.delete-app');if(del){deleteApplicant(appById(del.dataset.id),del);return;}var cp=e.target.closest('[data-cap]');if(cp){openCap(cp.dataset.cap);return;}if(e.target.closest('select,input,button'))return;var tr=e.target.closest('tr');if(!tr)return;var r=appById(tr.dataset.id);delete S.newApps[r.application_id];updateNew();
   var F=isFest(r);
-  var rows=[[F?'폼':'지역',F?'전남대 축제 신청폼':(cityKo[r.city]||r.city)],['성별',r.gender],['출생연도',r.birth_year],F?['학과',r.major]:['학교',r.school],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['기기',r.device],F?null:['기대하는 것',(r.intent||'')+(r.intent_other?' ('+r.intent_other+')':'')],
-    ['참가비',F?'전남대 축제 4,900원':r.plan==='early'?'사전알림 4,900원':r.plan==='discount'?'할인 4,900원':'일반 7,900원'],['친구',buddyText(r)||(r.buddy_room||'-')],F?['같은 과',r.avoid_same_major==='같은 과 피하기'?'같은 학과 사람과는 다른 방 원함':(r.avoid_same_major||'응답 없음')]:null,F?null:['응답 유입경로',r.source],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['작성 시간',dur(r.active_ms)],['접속 기기',(r.ua_device||'')+(r.in_app?' / '+r.in_app:'')],F?null:['기수',r.cohort],['신청 ID',r.application_id]].filter(Boolean);
+  var RF=regOf(r.path);
+  var rows=[['폼',F?'전남대 축제 신청폼':(RF?RF.label:(cityKo[r.city]||r.city))+' '+(r.path||'')],['성별',r.gender],['출생연도',r.birth_year],F?['학과',r.major]:[(RF&&RF.occupation)?'하시는 일':'학교',r.school],r.schedule_pref?['편한 진행 시기',r.schedule_pref]:null,['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['기기',r.device],F?null:['기대하는 것',(r.intent||'')+(r.intent_other?' ('+r.intent_other+')':'')],
+    ['참가비',feeOf(r)+(paidLater(r)?' (이후 결제함)':'')],['친구',buddyText(r)||(r.buddy_room||'-')],F?['같은 과',r.avoid_same_major==='같은 과 피하기'?'같은 학과 사람과는 다른 방 원함':(r.avoid_same_major||'응답 없음')]:null,F?null:['응답 유입경로',r.source],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['작성 시간',dur(r.active_ms)],['접속 기기',(r.ua_device||'')+(r.in_app?' / '+r.in_app:'')],['기수 / 트랙',cohortKo(cohortOf(r))+' / '+(TRACK_KO[trackOf(r)]||trackOf(r))],['신청 ID',r.application_id]].filter(Boolean);
   var capHtml=F?'<h4>학생 인증 캡처</h4>'+(r.student_card_key?'<img class="capthumb" src="'+esc(capUrl(r.application_id))+'" alt="캡처 없음 (행사 종료로 삭제됐거나 저장 안 됨)" title="크게 보기" data-cap="'+esc(r.application_id)+'">':'<div class="muted">캡처 없음 (저장 실패 또는 D1 사본 누락, KV 원본 확인)</div>'):'';
   $('panel').innerHTML='<h2>'+esc(r.name)+'</h2><div class="meta">'+esc(r.submitted_at)+' 신청'+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+rows.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+capHtml+
     '<h4>상태</h4><select class="stsel" id="dSt" style="padding:8px;width:100%">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
@@ -590,9 +619,9 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
   $('drawer').classList.remove('hidden');renderApps();
   $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value,$('dRoom').value.trim(),{buddy:$('dBuddy').value.trim(),buddy_room:$('dBr').value}).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD});
 $('csvBtn').onclick=function(){var rs=appsFiltered();
-  var head=['신청시각','지역','이름','성별','출생연도','학교','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처'];
+  var head=['신청시각','지역','이름','성별','출생연도','학교/하는일','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처','기수','트랙','편한진행시기'];
   var c=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,isFest(r)?'전남대 축제 4900':r.plan==='early'?'사전알림 4900':r.plan==='discount'?'할인 4900':'일반 7900',/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r),(/^[=+\-@\t\r]/.test(r.major||'')?"'":'')+(r.major||''),r.avoid_same_major||'',isFest(r)?(r.student_card_key?'있음':'없음'):''].map(c).join(',')}));
+  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,feeOf(r),/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r),(/^[=+\-@\t\r]/.test(r.major||'')?"'":'')+(r.major||''),r.avoid_same_major||'',isFest(r)?(r.student_card_key?'있음':'없음'):'',cohortKo(cohortOf(r)),TRACK_KO[trackOf(r)]||trackOf(r),r.schedule_pref||''].map(c).join(',')}));
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));a.download='하루하루_신청자_'+new Date(Date.now()+9*3600e3).toISOString().slice(0,10)+'.csv';a.click()};
 
 function closeD(){$('drawer').classList.add('hidden')}

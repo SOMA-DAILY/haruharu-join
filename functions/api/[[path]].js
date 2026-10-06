@@ -1,6 +1,6 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
-import { cohortStatus } from '../../shared/cohort.mjs';
+import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -16,8 +16,10 @@ const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, header
 // /api/export CSV 는 시트 IMPORTDATA 가 열 위치로 읽을 수 있음 → BASE_FIELDS 순서와 기존 열 위치는 바꾸지 말고, 새 입력값은 FESTIVAL_FIELDS 로 CSV 맨 끝에만 붙임
 const BASE_FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'name', 'buddy', 'buddy_room'];
 const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
+// 4기 직장인 사전알림 문항. 하시는 일은 school 칸을 그대로 씀(라벨만 다름), 편한 진행 시기만 새 칸
+const WORK_FIELDS = ['schedule_pref'];
 // 캡처 이미지는 FIELDS 에 넣지 않음: /partial(D1 sessions.fields)로는 절대 안 들어가게 제출 본문의 capture 로만 받음
-const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS];
+const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS, ...WORK_FIELDS];
 const HIDDEN = ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto'];
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebot|meta-externalagent|preview|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
 
@@ -43,6 +45,13 @@ function normPath(p, city) {
 }
 function device(ua) { return /iphone|ipad|ipod/i.test(ua) ? 'iOS' : /android/i.test(ua) ? 'Android' : /mobile/i.test(ua) ? '기타 모바일' : 'PC'; }
 function inApp(ua) { return /Instagram/i.test(ua) ? '인스타' : /FBAN|FBAV|FB_IAB/i.test(ua) ? '페이스북' : /KAKAOTALK/i.test(ua) ? '카카오톡' : /Line\//i.test(ua) ? '라인' : /everytime/i.test(ua) ? '에브리타임' : ''; }
+// 폼 이름: 등록부에 있으면 그 라벨, 없으면 옛 규칙
+function formName(path, h) {
+  const f = formOf(path);
+  if (f) return f.label + ' 신청폼';
+  if (isFestival(path, h.plan)) return '전남대 축제 신청폼';
+  return (h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : h.plan === 'discount' ? ' (할인 4,900)' : '');
+}
 const num = (v, max) => { v = Math.round(Number(v) || 0); return v < 0 ? 0 : Math.min(v, max); };
 
 async function trackSession(env, request, b) {
@@ -58,7 +67,7 @@ async function trackSession(env, request, b) {
   const kind = path === '/' ? 'landing' : 'form';
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO forms (path, name, kind, city, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
-      .bind(path, path === '/' ? '지역 선택 랜딩' : isFestival(path, h.plan) ? '전남대 축제 신청폼' : ((h.city === 'seoul' ? '서울 신청폼' : h.city === 'gwangju' ? '광주 신청폼' : path) + (h.plan === 'early' ? ' (사전알림 4,900)' : h.plan === 'discount' ? ' (할인 4,900)' : '')), kind, h.city && h.city !== 'select' ? h.city : null, now),
+      .bind(path, path === '/' ? '지역 선택 랜딩' : formName(path, h), kind, (formOf(path) || {}).city || (h.city && h.city !== 'select' ? h.city : null), now),
     env.DB.prepare(`INSERT INTO sessions (sid, path, city, src, channel, utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid,
         ref, ua, device, in_app, is_bot, is_return, first_ts, last_ts, active_ms, max_scroll, started, started_ts, max_page, last_field, fields, filled, next_click)
       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?18,?19,?20,?21,?22,?23,?24,?25,?26,?27)
@@ -87,7 +96,7 @@ export async function onRequest({ request, env, params }) {
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
   if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
-  if (request.method === 'GET' && path === '/cohort') return json(cohortStatus(Date.now(), env));
+  if (request.method === 'GET' && path === '/cohort') { const fp = url.searchParams.get('path'); return json(fp ? formStatus(fp, Date.now(), env) : cohortStatus(Date.now(), env)); }
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -108,11 +117,18 @@ export async function onRequest({ request, env, params }) {
       h.plan = FESTIVAL_PLAN;
       if (!festivalStatus(now, env).open) return json({ ok: false, error: 'festival_closed', ...festivalStatus(now, env) }, 409);
     }
-    // 기수 본모집 마감(일반/사전알림/할인 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
-    if (!festival && !cohortStatus(now, env).open) return json({ ok: false, error: 'cohort_closed', ...cohortStatus(now, env) }, 409);
-    const preRegistration = /^\/(seoul|gwangju)\/pre-4k9x\/?$/.test(b.path || '');
-    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
-    if (!preRegistration && !festival) required.push('source', 'device');
+    // 등록부(shared/forms.mjs)로 요금제/기수/지역을 서버가 확정 (클라이언트 hidden 값은 안 믿음). 등록부에 없는 경로는 받지 않음
+    const form = festival ? null : formOf(b.path);
+    if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
+    if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
+    // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
+    if (form) { const st = formStatus(b.path, now, env); if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409); }
+    const preRegistration = form && form.plan === 'early';
+    const prealert = form && form.plan === 'prealert';
+    // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
+    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    if (!preRegistration && !festival && !prealert) required.push('source', 'device');
+    if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
     let capture = null;
     if (festival) {
@@ -125,7 +141,7 @@ export async function onRequest({ request, env, params }) {
     // 신청 ID = 세션 UUID (랜딩부터 앱까지 한 사람을 잇는 키). Mixpanel distinct_id, 초대 코드 옆에 저장, 앱 identify 에 씀
     const sidOk = typeof b.sid === 'string' && /^[0-9a-f-]{20,64}$/i.test(b.sid);
     const id = sidOk ? b.sid : (crypto.randomUUID ? crypto.randomUUID() : KST(now).replace(/[^0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 7));
-    if (h.plan === 'early' && !earlyOffer(now).active) {
+    if (h.plan === 'early' && form && form.cohort === '3' && !earlyOffer(now).active) {
       return json({ ok: false, error: 'early_expired', offer: earlyOffer(now) }, 409);
     }
     // 학생 인증 캡처는 KV img:{신청ID} 에 바이너리로 (CAPTURE_DELETE_AT 에 만료). 저장이 실패해도 신청은 받고(송금했을 수 있음) 관리 페이지에 '캡처 없음'으로 보임
@@ -138,7 +154,7 @@ export async function onRequest({ request, env, params }) {
         cardKey = 'img:' + id;
       } catch (e) {}
     }
-    const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
+    const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, track: form ? form.track : (festival ? 'festival' : ''), fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
@@ -173,6 +189,13 @@ export async function onRequest({ request, env, params }) {
           .bind(id, f.major || '', f.avoid_same_major || '', cardKey).run();
       } catch (e) {}
     }
+    // 트랙/직장인 문항(migrations/0008)도 batch 밖에서: 원격에 0008 이 없어도 신청자 행은 남음
+    if (form && dbOk) {
+      try {
+        await env.DB.prepare('UPDATE submissions SET track = ?2, schedule_pref = ?3 WHERE application_id = ?1')
+          .bind(id, form.track || '', f.schedule_pref || '').run();
+      } catch (e) {}
+    }
     if (!kvOk && !dbOk) return json({ ok: false, error: 'store failed' }, 500);
     return json({ ok: true, id, application_id: id });
   }
@@ -199,12 +222,12 @@ export async function onRequest({ request, env, params }) {
     if (url.searchParams.get('type') === 'partials') {
       const rows = (await env.DB.prepare(`SELECT * FROM sessions WHERE is_bot = 0 AND path <> '/' ORDER BY first_ts`).all()).results;
       if (url.searchParams.get('format') === 'json') return json(rows);
-      const head = ['sid', 'status', 'first_at', 'last_at', 'page', 'last_field', ...BASE_FIELDS, 'src', 'channel', 'city', 'path', 'active_sec', 'device', 'in_app', 'ref', ...FESTIVAL_FIELDS];
+      const head = ['sid', 'status', 'first_at', 'last_at', 'page', 'last_field', ...BASE_FIELDS, 'src', 'channel', 'city', 'path', 'active_sec', 'device', 'in_app', 'ref', ...FESTIVAL_FIELDS, ...WORK_FIELDS];
       const lines = [head.join(',')];
       for (const r of rows) {
         const f = r.fields ? JSON.parse(r.fields) : {};
         lines.push([r.sid, r.submitted ? 'submitted' : r.started ? 'partial' : 'landed', KST(r.first_ts), KST(r.last_ts), r.max_page, r.last_field, ...BASE_FIELDS.map((k) => f[k]), r.src, r.channel, r.city, r.path, Math.round((r.active_ms || 0) / 1000), r.device, r.in_app, r.ref].map(esc)
-          .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).join(','));
+          .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).join(','));
       }
       return csv(lines);
     }
@@ -218,12 +241,12 @@ export async function onRequest({ request, env, params }) {
     } while (cursor);
     rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
     if (url.searchParams.get('format') === 'json') return json(rows);
-    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS];
+    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track'];
     const lines = [head.join(',')];
     for (const r of rows) {
       const f = r.fields || {}, h = r.hidden || {};
       lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN.map((k) => h[k]), r.ref, r.sid].map(esc)
-        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).join(','));
+        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || '')]).join(','));
     }
     return csv(lines);
   }
