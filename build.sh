@@ -75,7 +75,7 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
-    p1 = 'P1_seoul_work_4gi.png' if work else f'P1_{f["city"]}_3gi.png'   # 학생 P1 은 기수값 없음(00~07년생, 160명/27쌍) → 재사용
+    p1 = 'P1_seoul_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
     t = TPL
     for k, v in {
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),

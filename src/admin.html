@@ -324,7 +324,7 @@ function isFest(r){return r.plan===FEST}
 function regOf(path){return REG.FORMS[path]||null}
 function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);return r.cohort||(f&&f.cohort)||'3'}
 function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
-var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'서울 직장인',festival:'전남대 축제'};
+var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인',festival:'전남대 축제'};
 function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c+'기'}
 function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){return a===REG.CURRENT?-1:b===REG.CURRENT?1:0})}
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
@@ -508,7 +508,7 @@ $('linkRows').addEventListener('click',function(e){var c=e.target.closest('[data
 function srcName(s){if(!s)return '직접 들어옴';var l=linkOf(s);if(l&&l.label)return l.label;
   var C={card3:{m:'옷가게 3장',f:'4분할 3장'},muhan:'무도짤',film4:'필름 4장',reel:'릴스'};
   var m=/^h[34]-(seoul|gwangju|work)-(m|f)-(.+)$/.exec(s);
-  if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return (m[1]==='work'?'서울 직장인':cityKo[m[1]])+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
+  if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return (m[1]==='work'?'수도권 직장인':cityKo[m[1]])+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
   m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':'');
   m=/^h(\d)-([a-z-]+)-from(\d|jnu-festival)$/.exec(s);if(m)return m[3]+'기 마감 화면 → '+m[1]+'기 '+(TRACK_KO[m[2]]||m[2]);
   m=/^h(\d)-(work|seoul|gwangju)-bio$/.exec(s);if(m)return m[1]+'기 바이오 '+(m[2]==='work'?'직장인':cityKo[m[2]]);
