@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { earlyOffer, EARLY_END } from '../shared/early-offer.mjs';
 import { onRequest } from '../functions/api/[[path]].js';
 const deadline=Date.parse(EARLY_END);
+const OPEN={COHORT_DEADLINE:'2099-01-01T00:00:00+09:00'}; // 기수 마감(shared/cohort.mjs)은 지났으니 이 파일은 열린 상태로 시험
 test('KST midnight boundary: discount stops exactly at October 1',()=>{
   assert.equal(new Date(deadline).toISOString(),'2026-09-30T15:00:00.000Z');
   assert.equal(earlyOffer(deadline-1).active,true);
@@ -14,7 +15,7 @@ test('server rejects expired early submissions without storing them; regular sti
  try {
   for(const city of ['seoul','gwangju']) {
    let writes=[];
-   const env={APPLY_KV:{put:async(k,v)=>writes.push([k,v])}};
+   const env={...OPEN,APPLY_KV:{put:async(k,v)=>writes.push([k,v])}};
    const fields=Object.fromEntries(['gender','birth_year','school','source','device','phone','consent','name'].map(k=>[k,'test']));
    const send=async(plan)=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,hidden:{city,plan},path:`/${city}/pre-4k9x/`})}),params:{path:['submit']},env});
    const rejected=await send('early');
@@ -30,14 +31,14 @@ test('valid discount works until final millisecond and status never caches',asyn
  const status=await onRequest({request:new Request('http://localhost/api/early-offer'),params:{path:['early-offer']},env:{}});
  assert.equal(status.headers.get('cache-control'),'no-store');assert.equal((await status.json()).active,true);
  const fields=Object.fromEntries(['gender','birth_year','school','source','device','phone','consent','name'].map(k=>[k,'test']));
- const res=await onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,hidden:{city:'seoul',plan:'early'}})}),params:{path:['submit']},env:{APPLY_KV:{put:async()=>{}}}});
+ const res=await onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,hidden:{city:'seoul',plan:'early'}})}),params:{path:['submit']},env:{...OPEN,APPLY_KV:{put:async()=>{}}}});
  assert.equal(res.status,200);
  }finally{Date.now=original;}
 });
 test('pre-registration omits source/device even after expiry; regular forms still require both',async()=>{
  const fields=Object.fromEntries(['gender','birth_year','school','phone','consent','name'].map(k=>[k,'test']));
  for(const city of ['seoul','gwangju']){
-  const send=path=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,path,hidden:{city,plan:'regular'}})}),params:{path:['submit']},env:{APPLY_KV:{put:async()=>{}}}});
+  const send=path=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,path,hidden:{city,plan:'regular'}})}),params:{path:['submit']},env:{...OPEN,APPLY_KV:{put:async()=>{}}}});
   assert.equal((await send(`/${city}/pre-4k9x/`)).status,200);
   const regular=await send(`/${city}/`);
   assert.equal(regular.status,400);
@@ -49,7 +50,7 @@ test('standalone 4900 forms retain regular validation and accept after early dea
  const fields=Object.fromEntries(['gender','birth_year','school','source','device','phone','consent','name'].map(k=>[k,'test']));
  for(const city of ['seoul','gwangju']){
   const writes=[];
-  const send=fields=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,path:`/${city}/discount-4900/`,hidden:{city,plan:'discount'}})}),params:{path:['submit']},env:{APPLY_KV:{put:async(k,v)=>writes.push([k,v])}}});
+  const send=fields=>onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({fields,path:`/${city}/discount-4900/`,hidden:{city,plan:'discount'}})}),params:{path:['submit']},env:{...OPEN,APPLY_KV:{put:async(k,v)=>writes.push([k,v])}}});
   const invalid=await send({...fields,source:'',device:''});
   assert.equal(invalid.status,400);assert.equal(writes.length,0);
   assert.equal((await send(fields)).status,200);

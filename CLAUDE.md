@@ -6,7 +6,8 @@
 
 하루하루(라이프스타일 공유 소개팅 앱) 기수 참가 신청폼. 3기부터 Tally 대신 이걸 씀.
 - 주소 `https://join.haruharu.co.kr` (Cloudflare Pages 프로젝트 이름은 `haruharu-apply`, 헷갈림 주의)
-- **지금 3기 모집 중 → main push 하면 바로 라이브 신청폼이 바뀜.** 광고 10개가 이 폼으로 들어오는 중
+- main push 하면 바로 라이브 신청폼이 바뀜
+- **3기 신청은 10/5(월) 마감 → 10/6 00:00 KST 부터 6벌(`/seoul/` `/gwangju/` + pre-4k9x + discount-4900)과 지역 선택 `/` 전부 마감 안내.** 마감 시각은 `shared/cohort.mjs` 한 곳 (build.sh 가 페이지에 박고, `/api/submit` 도 같은 값으로 409 `cohort_closed` 거부, `GET /api/cohort` 로 상태 조회). 4기 열 땐 이 값과 build.sh 의 `DEADLINE_KO` 를 바꾸면 됨. 로컬 시험은 환경값 `COHORT_DEADLINE`
 
 ## 사용자 흐름
 
@@ -49,6 +50,7 @@
 | `src/admin.html` | 관리 페이지. build.sh 가 `public/admin/index.html` 로 복사 |
 | `src/festival.template.html` | 전남대 축제 폼 (form.template 복사본 + 학과, 학생 인증 캡처, 같은 과 피하기, 마감 처리) |
 | `shared/jnu-festival.mjs` | 축제 마감 시각, 캡처 형식 확인(JPEG/PNG/WebP 시그니처, 2MB), 캡처 자동 삭제 시각 |
+| `shared/cohort.mjs` | 기수 본모집 마감 시각 (6벌 + 지역 선택). 서버와 build.sh 가 같이 읽음 |
 | `public/` | 빌드 결과 + 이미지. **직접 고치지 말 것** (CI 가 빌드해서 덮어씀). 단 `public/img/` 는 원본이라 여기 넣음 |
 | `functions/api/[[path]].js` | 서버 API 전부 (Pages Functions) |
 | `migrations/` | D1 스키마 |
@@ -69,6 +71,7 @@
 | POST `/partial` | 방문/입력 중 기록 (D1 sessions) | 없음 |
 | POST `/submit` | 제출 (KV + D1). 축제는 `capture`(data URL) 필수 | 없음 |
 | GET `/festival` | 축제 폼 마감 여부 `{open, deadline, serverNow}` | 없음 |
+| GET `/cohort` | 기수 본모집 폼 마감 여부 `{open, deadline, serverNow}` (`shared/cohort.mjs`) | 없음 |
 | GET `/export` `/stats` | CSV / 집계. 시트 IMPORTDATA 가 열 위치로 읽을 수 있어서 **기존 열 순서는 바꾸지 않고 새 열은 맨 끝에만** 붙임 (축제 `major` `avoid_same_major` 도 끝) | `?token=` READ_TOKEN 또는 EXPORT_TOKEN |
 | DELETE `/records` | 삭제 | EXPORT_TOKEN |
 | `/admin/*` (login, logout, ping, analytics, sessions, applicants, mark, capture ...) | 관리 페이지용. `GET /admin/capture?id=신청ID` 는 캡처 이미지. 신청자 삭제는 캡처도 같이 지움 | 비번 로그인 쿠키 |

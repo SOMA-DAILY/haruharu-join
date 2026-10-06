@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-var CITY='seoul', CITY_KO='서울', COHORT='3', PLAN='regular', PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
+var CITY='seoul', CITY_KO='서울', COHORT='3', PLAN='regular', DEADLINE=1791212400000, PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
 </script>
 <!-- Meta 픽셀 -->
 <script>
@@ -99,10 +99,15 @@ input:focus{border-color:#1a1a1a}
 .early-info dl{margin:0}.early-info dl>div{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid #ddd}
 .early-info dt{color:#666}.early-info dd{margin:0;font-weight:700}.early-info p{font-size:15px}
 .pay[aria-disabled="true"]{pointer-events:none;opacity:.5}
+.closed{padding:26px 22px;margin:0 0 20px;background:#fff5f5;border:1px solid #f2cccc;border-radius:12px;text-align:center}
+.closed h2{font-size:21px;margin:0 0 10px}
+.closed p{font-size:15px;margin:0}
 @media (max-width:480px){.wrap{padding:24px 16px 100px}h1{font-size:23px}}
 </style></head><body>
 <div class="prog" id="prog"></div>
 <div class="wrap">
+
+<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 3기 신청은 10월 5일(월)에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p></div>
 
 <form id="f" novalidate>
 <section class="page on" data-page="1">
@@ -365,14 +370,31 @@ input:focus{border-color:#1a1a1a}
  document.querySelectorAll('[data-prev]').forEach(function(b){ b.addEventListener('click',function(){ ev('page_back',{from:2,to:1,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); show(1); }); });
  document.getElementById('pay').addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; saveDraft(); partial(false); });
 
+ // ---------- 마감 ----------
+ // 기수 마감 시각이 지나면 폼 대신 마감 안내. 서버(/api/submit)도 따로 거부함. 기기 시계가 틀려도 되게 서버 시각으로 맞춤
+ var closed=false, deadline=DEADLINE, clockOffset=0;
+ function closeForm(){
+  if(closed||submitted) return; closed=true;
+  form.hidden=true; document.getElementById('prog').hidden=true; document.getElementById('closed').hidden=false;
+  window.scrollTo({top:0}); ev('cohort_closed_view',{});
+ }
+ function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }
+ checkClosed();
+ fetch(API+'/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
+  if(s && isFinite(s.deadline)) deadline=Number(s.deadline);
+  if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now();
+  if(s && s.open===false) closeForm(); else checkClosed();
+ }).catch(function(){});
+ setInterval(checkClosed,15000);
+
  form.addEventListener('submit',function(e){
-  e.preventDefault(); if(offerControl && !offerControl.canSubmit()) return; if(!validate(2)) return;
+  e.preventDefault(); checkClosed(); if(closed) return; if(offerControl && !offerControl.canSubmit()) return; if(!validate(2)) return;
   clearTimeout(timer); submitted=true; form.dataset.submitting='true';
   var btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='제출 중…';
   var d=data();
   var payload={sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active()};
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
-   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
+   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
      var appId=res.application_id||res.id;
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
@@ -380,7 +402,7 @@ input:focus{border-color:#1a1a1a}
      fb('Lead',{content_name:hidden.channel, content_category:hidden.utm_term||''},true);
      show('done'); if(offerControl) document.getElementById('early-banner').hidden=true; try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
    })
-   .catch(function(err){ if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '4,900원 할인이 종료됐어요. 참가비 7,900원과 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
+   .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '4,900원 할인이 종료됐어요. 참가비 7,900원과 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
  });
  function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll() }); partial(true); } }
  window.addEventListener('pagehide',leave);
