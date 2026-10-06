@@ -19,7 +19,6 @@ const G3 = { cohort: '3', city: 'gwangju', track: 'gwangju-student', trackKo: '�
 const S4 = { ...S3, cohort: '4' };
 const G4 = { ...G3, cohort: '4' };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
-const GW4 = { cohort: '4', city: 'gwangju', track: 'gwangju-work', trackKo: '광주 직장인', cityKo: '광주', occupation: true };  // 10/6 저녁 바이오 4번째 버튼용, 광고 없음
 
 export const FORMS = {
   // ---- 3기 (마감됨. 링크는 살아 있고 마감 안내 + 4기 폼 버튼) ----
@@ -40,9 +39,6 @@ export const FORMS = {
   '/4/seoul-work/pre/':     { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료)', listed: true },
   '/4/seoul-work/x7q2/':    { ...W4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 수도권 직장인 할인 (사전알림 메시지 전용)' },
   '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인' },
-  '/4/gwangju-work/pre/':   { ...GW4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 광주 직장인 사전알림 (무료)', listed: true },
-  '/4/gwangju-work/x7q2/':  { ...GW4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 광주 직장인 할인 (사전알림 메시지 전용)' },
-  '/4/gwangju-work/':       { ...GW4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 광주 직장인' },
 };
 
 // 기수별 안내 (폼 안내 카드와 일정 문구. 금액은 등록부 fee 에서, 날짜는 여기서)

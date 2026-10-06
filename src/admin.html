@@ -325,7 +325,7 @@ function isFest(r){return r.plan===FEST}
 function regOf(path){return REG.FORMS[path]||null}
 function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);return r.cohort||(f&&f.cohort)||'3'}
 function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
-var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인','gwangju-work':'광주 직장인',festival:'전남대 축제'};
+var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인',festival:'전남대 축제'};
 function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c+'기'}
 function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){return a===REG.CURRENT?-1:b===REG.CURRENT?1:0})}
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
