@@ -68,7 +68,7 @@
  (function(){
   var ls=document.querySelectorAll('.ld-layers .ld-layer'), el=ls[ls.length-1], sent=false;   // 앱 화면 2줄째(최종 선택, 매칭)가 보일 때 = 1줄째를 지나 내려온 사람
   function fire(){ if(sent) return; sent=true;
-   try{ if(window.fbq) fbq('trackCustom','LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}
+   try{ if(window.hhFb) hhFb('LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}   // 브라우저 픽셀 + 서버 CAPI 같은 eventID
    try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('landing_engaged',{path:location.pathname}); }catch(e){} }
   if(!el) return;
   if(window.IntersectionObserver){ var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && scrollY>80){ fire(); io.disconnect(); } }); },{threshold:0.3}); io.observe(el); addEventListener('scroll',function(){ if(!sent && scrollY>80){ var r=el.getBoundingClientRect(); if(r.top<innerHeight*0.7 && r.bottom>0){ fire(); io.disconnect(); } } },{passive:true}); }
