@@ -111,36 +111,87 @@ input:focus{border-color:#1a1a1a}
 
 <form id="f" novalidate>
 <section class="page on" data-page="1">
-<h1>하루하루 소개팅 4기 신청폼 💕</h1>
-<!-- 기수/지역 값이 박힌 이미지: P1(지역+기수), P4(일정+마감). 기수 바뀌면 build.sh 의 IMG_P1/IMG_P4 만 교체 -->
-<img class="img" data-img="P1" src="/img/P1_seoul_work_4gi.png" alt="솔로인 수도권 직장인을 모집합니다. 지금까지 220명 참여, 매칭률 34%">
-<img class="img" data-img="P2" src="/img/P2_approved_0910.png" alt="지난 기수 참가자 후기">
-<section class="app-guide" aria-label="앱 진행 안내">
-<div class="app-guide-visual"><img data-img="P3" src="/img/P3_approved_0910.png" alt="셋로그로 못 했던 걸, 이번엔 더 많이 해보려고요. 하루 공유, 마지막 날 선택, 서로 선택한 상대와 대화하는 앱 화면"></div>
-<div class="app-guide-copy">
-<h2>앱에서는 이렇게 진행돼요</h2>
-<p class="app-guide-intro">신청하고 방이 열리면 6자리 초대 코드를 보내드려요.<br>앱에 코드를 넣으면 남녀 3:3 ~ 5:5 구성으로 한 방에 모여요.</p>
-<p><strong>Day 1 &nbsp; 같은 방에 모여 하루를 올려요<br>그날 찍은 영상에 자막 한 줄만 달아 올리면 끝이에요.</strong></p>
-<p><strong>Day 2 &nbsp; 진행 중 미션 카드가 와요<br>오늘의 나, 요즘 빠진 것 같은 짧은 주제로 와요.</strong></p>
-<p><strong>Day 3 &nbsp; 마지막 날 앱에서 서로를 골라요<br>둘 다 고른 경우에만 대화가 열려요.</strong></p>
+<!-- 신청폼 랜딩 (10/7 Figma T1~T3). 등록부 landing: true 인 폼만 build.sh 가 옛 P1~P4 자리에 끼움. 트랙별 문구는 build.sh 의 __LD_*__ -->
+<style>
+.ld-eye{font-size:13px;font-weight:700;color:#E0457B;margin:0}
+.ld-h1{font-size:min(24px,6vw);white-space:nowrap;line-height:1.3;font-weight:900;letter-spacing:-.6px;margin:6px 0 0}
+.ld-sub{font-size:15px;line-height:1.6;color:#444;margin:10px 0 0}
+.ld-chip{background:#F3F2EF;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;margin:14px 0 0}
+.ld-stat{font-size:15px;font-weight:700;margin:14px 0 0}
+.ld-btn{display:block;width:100%;margin:18px 0 0;height:54px;border:0;border-radius:12px;background:#1A1A1A;color:#fff;font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+.ld-sec{margin:40px 0 0}
+.ld-sec h2{font-size:22px;line-height:1.38;font-weight:900;letter-spacing:-.3px;margin:0}
+.ld-grid{display:block;width:100%;height:auto;margin:14px 0 0;border-radius:16px}
+.ld-cap{font-size:12px;color:#888;margin:6px 0 0}
+.ld-layers{display:flex;flex-direction:column;gap:26px;margin:24px 0 0}
+.ld-layer{display:flex;gap:10px}
+.ld-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.ld-hk{font-size:16px;font-weight:900;line-height:1.38;letter-spacing:-.3px;margin:0}
+.ld-phone{border-radius:24px;border:4px solid #1E2230;overflow:hidden;background:#EAF2FB}
+.ld-phone img{display:block;width:100%;height:auto}
+.ld-rv{display:flex;flex-direction:column;gap:10px;margin:14px 0 0}
+.ld-b{max-width:300px;background:#F3F5F8;border-radius:18px 18px 18px 4px;padding:11px 14px;font-size:15px;line-height:1.5}
+.ld-b.r{align-self:flex-end;border-radius:18px 18px 4px 18px;background:#FDEBF1}
+.ld-by{font-size:11px;color:#999;margin-top:-4px}
+.ld-by.r{align-self:flex-end}
+.ld-dm{display:block;width:100%;height:auto;margin:14px 0 0;border-radius:16px}
+.ld-sticky{position:fixed;left:0;right:0;bottom:0;z-index:8;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(rgba(255,255,255,0),#fff 30%);transition:opacity .2s,transform .2s}
+.ld-sticky .ld-btn{max-width:600px;margin:0 auto}
+.ld-sticky.off{opacity:0;transform:translateY(100%);pointer-events:none}
+</style>
+<p class="ld-eye">하루하루 소개팅 4기 신청</p>
+<h1 class="ld-h1">솔로인 수도권 직장인을 모집합니다</h1>
+<p class="ld-sub">3일 동안 서로의 하루를 보고,<br>마지막 날 서로를 고르는 소개팅이에요.</p>
+<p class="ld-chip">수도권에 거주하는 솔로 직장인끼리 모여요 💕</p>
+<p class="ld-stat">지금까지 220명 참여, 매칭률 34% 🎉</p>
+<button type="button" class="ld-btn" data-cta="hero">소개팅 신청하기 💌</button>
+
+<div class="ld-sec"><h2>서로의 일상이 대화 소재로</h2>
+<img class="ld-grid" data-img="L_grid" src="/img/L_haru_grid.jpg" alt="지난 기수 참가자들이 올린 하루 영상 6장">
+<p class="ld-cap">지난 기수 참가자들이 올린 하루 (셋로그 앱)</p></div>
+
+<div class="ld-sec"><h2>소개팅은 이렇게 진행돼요</h2></div>
+<div class="ld-layers">
+<div class="ld-layer">
+<div class="ld-col"><p class="ld-hk">서로의 일상을<br>공유하고,</p><div class="ld-phone"><img data-img="L_feed" src="/img/L_app_feed.jpg" alt="방 참가자들이 올린 하루 사진 피드" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">익명으로 부담없이<br>질문하고,</p><div class="ld-phone"><img data-img="L_question" src="/img/L_app_question.jpg" alt="유진에게 익명 질문 보내기" loading="lazy"></div></div>
 </div>
-</section>
-<div class="early-info" data-img="P4">
-<h2>하루하루 앱 4기 모집 중</h2>
-<p class="b">지금까지 220명 참여, 매칭률 34% 🎉</p>
-<h3>신청 안내</h3>
-<dl>
-<div><dt>참여 대상</dt><dd>수도권 직장인</dd></div>
-<div><dt>진행 기간</dt><dd>10월 11일(일) ~ 10월 13일(화), 3일</dd></div>
-<div><dt>참가 안내</dt><dd>인원이 구성되면 안내 문자와 초대 코드를 보내드려요.</dd></div>
-</dl>
-<h3>이렇게 신청해요</h3>
-<p>1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.<br>2. 방이 열리면 초대 코드를 문자로 보내드려요.<br>3. 앱에 코드를 넣으면 시작이에요.</p>
-<p>인원이 안 맞아 방이 열리지 않으면 참가비를 전액 돌려드려요.</p>
+<div class="ld-layer">
+<div class="ld-col"><p class="ld-hk">3일동안 천천히</p><div class="ld-phone"><img data-img="L_select" src="/img/L_app_select.jpg" alt="마음이 가는 사람을 골라주세요" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">자연스럽게 매칭까지!</p><div class="ld-phone"><img data-img="L_match" src="/img/L_app_match.jpg" alt="매칭 성공, 유진님과 서로를 선택했어요" loading="lazy"></div></div>
+</div>
 </div>
 
+<div class="ld-sec"><h2>지난 참가자들이 남긴 후기들</h2>
+<div class="ld-rv">
+<div class="ld-b">연락하는 사람 생겼어요 !! ☺️☺️</div><div class="ld-by">앱 2기 참가자</div>
+<div class="ld-b r">새로운 종류의 소개팅을 해볼 수 있어서 재미있었어요!</div><div class="ld-by r">앱 1기 참가자</div>
+<div class="ld-b">일상을 보게되니 꾸며지지 않은 그 사람의 스타일이나 취향을 알게 되어 좋았습니다</div><div class="ld-by">앱 1기 참가자</div>
+<div class="ld-b r">한 번 더 해보고 싶네요 ㅋㅋㅋㅋ</div><div class="ld-by r">앱 2기 참가자</div>
+<div class="ld-b">상대의 일상을 볼 수 있어서 좋고 색다른 기분이었어요</div><div class="ld-by">앱 2기 참가자</div>
+<div class="ld-b r">혹시 다음에 또 참여해도 되나요..??ㅎㅎ</div><div class="ld-by r">셋로그 11기 참가자</div>
+</div>
+<img class="ld-dm" data-img="L_dm" src="/img/L_review_dm.jpg" alt="매칭된 참가자가 보낸 DM" loading="lazy">
+<p class="ld-cap">셋로그로 진행한 지난 기수, 매칭된 참가자가 보낸 DM</p></div>
+<div class="ld-sticky" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">소개팅 신청하기 💌</button></div>
+<script>
+(function(){
+ var st=document.getElementById('ldSticky');
+ function target(){ return document.querySelector('.q[data-name="gender"]'); }
+ document.querySelectorAll('[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('landing_cta',{where:b.getAttribute('data-cta'),path:location.pathname}); }catch(e){}
+  var t=target(); if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+ }); });
+ // 첫 버튼이 보이는 동안, 문항 구간에 들어간 뒤, 1페이지가 아닐 때는 숨김
+ function upd(){
+  var hero=document.querySelector('[data-cta="hero"]'), t=target(), p1=document.querySelector('.page[data-page="1"]');
+  var off=!p1||!p1.classList.contains('on')||(hero&&hero.getBoundingClientRect().bottom>0)||(t&&t.getBoundingClientRect().top<innerHeight*0.9);
+  st.classList.toggle('off',!!off);
+ }
+ addEventListener('scroll',upd,{passive:true}); addEventListener('resize',upd); setInterval(upd,700); upd();
+})();
+</script>
 
-<p class="sec">3일 동안 서로의 하루를 공유하고, 마지막 날 서로를 고르는 소개팅이에요. 지금까지 220명 참여, 매칭률 34% 🎉</p>
 
 <p class="sec b">📮 참여 흐름</p>
 <p class="note">1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.
@@ -169,14 +220,7 @@ input:focus{border-color:#1a1a1a}
  <input type="number" name="birth_year" inputmode="numeric" placeholder="ex) 2005" min="1990" max="2007" required><p class="err">출생년도 4자리를 확인해 주세요 (만 19세 이상)</p></div>
 
 <div class="q" data-name="school"><p class="t">하시는 일<span class="req">*</span></p>
- <div class="opts">
-  <label class="opt"><span class="k">A</span><input type="radio" name="school" value="회사원" required>회사원</label>
-  <label class="opt"><span class="k">B</span><input type="radio" name="school" value="공무원, 공공기관">공무원, 공공기관</label>
-  <label class="opt"><span class="k">C</span><input type="radio" name="school" value="전문직">전문직</label>
-  <label class="opt"><span class="k">D</span><input type="radio" name="school" value="자영업, 프리랜서">자영업, 프리랜서</label>
-  <label class="opt"><span class="k">E</span><input type="radio" name="school" value="대학원생, 취업 준비">대학원생, 취업 준비</label>
-  <label class="opt"><span class="k">F</span><input type="radio" name="school" value="기타">기타</label>
- </div><p class="err">선택해 주세요</p></div>
+ <input type="text" name="school" placeholder="ex) IT 회사 개발자, 간호사, 초등학교 교사" required><p class="err">하시는 일을 입력해 주세요</p></div>
 
 <div class="q" data-name="source"><p class="t">어디서 보고 오셨나요?<span class="req">*</span></p>
  <div class="opts">
@@ -252,7 +296,48 @@ input:focus{border-color:#1a1a1a}
 </form>
 
 <section class="page" data-page="done">
- <div class="done"><h2>신청이 접수됐어요 💌</h2><p>방이 열리면 초대 코드를 문자로 보내드려요.<br>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
+ <div class="done"><h2>신청이 접수됐어요 💌</h2><p>방이 열리면 초대 코드를 문자로 보내드려요.<br>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p><!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관, 저장은 Mixpanel dating_experience 이벤트만 (D1/KV 쓰기 없음) -->
+<div class="xp" id="xp">
+ <p class="t">최근 1년 동안 해본 소개팅이 있나요? <span class="xp-sub">(여러 개 선택)</span></p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="checkbox" value="dating_app">데이팅 앱 (틴더, 글램, 위피 등)</label>
+  <label class="opt"><span class="k">B</span><input type="checkbox" value="friend_intro">지인 소개</label>
+  <label class="opt"><span class="k">C</span><input type="checkbox" value="offline">오프라인 소개팅 (로테이션, 파티 등)</label>
+  <label class="opt"><span class="k">D</span><input type="checkbox" value="setlog_haruharu">셋로그나 하루하루</label>
+  <label class="opt"><span class="k">E</span><input type="checkbox" value="none">없어요</label>
+ </div>
+ <button type="button" class="btn" id="xpSend" disabled>보내기</button>
+ <p class="xp-done" id="xpDone" hidden>고마워요 🙂</p>
+</div>
+<style>
+.xp{text-align:left;max-width:520px;margin:40px auto 0}
+.xp .t{font-size:17px;font-weight:700;margin:0 0 10px}
+.xp-sub{font-size:13px;font-weight:400;color:#888}
+.xp .btn{margin-top:16px}
+.xp-done{margin:16px 0 0;font-size:15px;color:#333}
+</style>
+<script>
+(function(){
+ var box=document.getElementById('xp'), send=document.getElementById('xpSend');
+ // 폼 change 리스너(임시저장, 문항 이벤트)로 안 올라가게 여기서 끊음
+ box.addEventListener('change',function(e){
+  e.stopPropagation(); var el=e.target; if(el.type!=='checkbox') return;
+  var all=box.querySelectorAll('input[type=checkbox]');
+  if(el.checked && el.value==='none') all.forEach(function(x){ if(x!==el) x.checked=false; });
+  if(el.checked && el.value!=='none') all.forEach(function(x){ if(x.value==='none') x.checked=false; });
+  all.forEach(function(x){ x.closest('.opt').classList.toggle('on',x.checked); });
+  send.disabled=!box.querySelector('input:checked');
+ });
+ box.addEventListener('input',function(e){ e.stopPropagation(); });
+ send.addEventListener('click',function(){
+  var v=[].map.call(box.querySelectorAll('input:checked'),function(x){return x.value;});
+  if(!v.length) return;
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('dating_experience',{methods:v, dating_app:v.indexOf('dating_app')>=0, none:v.indexOf('none')>=0, path:location.pathname}); }catch(e){}
+  box.querySelector('.opts').style.display='none'; send.style.display='none'; document.getElementById('xpDone').hidden=false;
+ });
+})();
+</script>
+</div>
 </section>
 
 <p class="foot">하루하루 / 만 19세 이상 직장인</p>

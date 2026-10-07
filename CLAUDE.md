@@ -14,7 +14,7 @@
 
 광고/인스타 바이오/메시지 링크 (`?src=광고코드`)
 → `/` 지역 선택 (쿼리 그대로 넘김. 등록부 `listed: true` 인 폼만 버튼으로: 4기는 서울/광주 대학생 + 수도권 직장인 사전알림. 금액 표기 없음)
-→ `/4/seoul/` 또는 `/4/gwangju/` 폼 1페이지 (성별, 출생년도, 학교, 유입경로, 기기, 신청 마음). 직장인 트랙(`/4/seoul-work/…`)은 학교 대신 [하시는 일] 선택지 + [편한 진행 시기], 유입경로의 에브리타임이 블라인드
+→ `/4/seoul/` 또는 `/4/gwangju/` 폼 1페이지 (성별, 출생년도, 학교, 유입경로, 기기, 신청 마음). 직장인 트랙(`/4/seoul-work/…`)은 학교 대신 [하시는 일] 주관식(10/7, 서버 칸은 school) + [편한 진행 시기], 유입경로의 에브리타임이 블라인드
 → 2페이지 (전화번호, 동의, 친구랑 함께 신청 여부 + 친구 번호, 토스 송금 버튼, 송금자 이름)
 → 제출 → 완료 화면
 → 운영진이 `/admin/` 에서 송금 확인 → 연락 → 확정 + 방 배정
@@ -50,6 +50,8 @@
 | `build.sh` | 빌드. 등록부를 node 로 읽어 폼마다 찍음. `MIXPANEL_TOKEN=... ./build.sh` |
 | `shared/forms.mjs` | **폼 등록부 (정본)**: 경로별 기수/트랙/요금제/금액/송금 셀/마감. 서버, build.sh, 관리 페이지가 같이 읽음 |
 | `src/info-card.html` | 4기부터 쓰는 신청 안내 카드 (P4 이미지 대체) |
+| `src/landing.html` | 신청폼 랜딩 (10/7). 등록부 `landing: true` 인 폼(4기 7개 전부)만 옛 머리말 + P1~P4 자리(`TOP_START`~`TOP_END`)를 이걸로 바꿈. 제목/자격 줄은 build.sh `__LD_*__`, 이미지는 `public/img/L_*` |
+| `src/done-survey.html` | 4기 폼 완료 화면 선택 문항 (최근 1년 소개팅 경험, 여러 개). 저장은 Mixpanel `dating_experience` 이벤트만, D1/KV 쓰기 없음 |
 | `src/form.template.html` | 신청폼 본체 (HTML + CSS + JS 한 파일). `__CITY__` 같은 자리표시자를 build.sh 가 채움 |
 | `src/select.template.html` | `/` 지역 선택 |
 | `src/admin.html` | 관리 페이지. build.sh 가 `public/admin/index.html` 로 복사 |
