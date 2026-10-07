@@ -87,6 +87,7 @@ def gen(path, f):
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
         '__LD_EYE__': f"하루하루 소개팅 {cohort}기 " + ('사전 알림' if prealert else '신청'),
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'),
         '__LD_TITLE__': f"솔로인 {region} {'직장인' if work else '대학생'}을 모집합니다",
         '__LD_CHIP__': (f"{region}에 거주하는 솔로 직장인끼리 모여요 💕" if work else f"00년생~07년생 {region} 대학생끼리 모여요 💕"), '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
