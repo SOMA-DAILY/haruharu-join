@@ -8,14 +8,15 @@
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-var CITY='seoul', CITY_KO='수도권', COHORT='4', PLAN='regular', TRACK='seoul-work', DEADLINE=1791644400000, PIXEL_ID='1586422299864867', MIXPANEL_TOKEN='localtest';
+var CITY='seoul', CITY_KO='수도권', COHORT='4', PLAN='regular', TRACK='seoul-work', DEADLINE=1791644400000, PIXEL_ID='1144224341416623', PIXEL_OLD='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
 </script>
 <!-- Meta 픽셀 -->
 <script>
 !function(f,b,e,v,n,t,s){if(LOCAL_PREVIEW)return;if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-if(!LOCAL_PREVIEW){fbq('init',PIXEL_ID);fbq('track','PageView');}
+// 픽셀 2개 (10/7): 주 픽셀 haruharu.ting(새 계정 세트 최적화, 서버 CAPI 와 eventID 로 중복 제거) + 옛 dating 픽셀(기존 신청자 제외, 리타겟 이력용 브라우저만)
+if(!LOCAL_PREVIEW){fbq('init',PIXEL_ID);fbq('init',PIXEL_OLD);fbq('track','PageView');}
 </script>
-<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1586422299864867&ev=PageView&noscript=1"></noscript>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1144224341416623&ev=PageView&noscript=1"></noscript>
 <!-- Mixpanel (앱과 같은 프로젝트) -->
 <script src="https://cdn.jsdelivr.net/npm/mixpanel-browser@2/dist/mixpanel.umd.min.js"></script>
 <script src="/early-offer.js"></script>
@@ -181,7 +182,7 @@ input:focus{border-color:#1a1a1a}
  (function(){
   var ls=document.querySelectorAll('.ld-layers .ld-layer'), el=ls[ls.length-1], sent=false;   // 앱 화면 2줄째(최종 선택, 매칭)가 보일 때 = 1줄째를 지나 내려온 사람
   function fire(){ if(sent) return; sent=true;
-   try{ if(window.fbq) fbq('trackCustom','LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}
+   try{ if(window.hhFb) hhFb('LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}   // 브라우저 픽셀 + 서버 CAPI 같은 eventID
    try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('landing_engaged',{path:location.pathname}); }catch(e){} }
   if(!el) return;
   if(window.IntersectionObserver){ var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && scrollY>80){ fire(); io.disconnect(); } }); },{threshold:0.3}); io.observe(el); addEventListener('scroll',function(){ if(!sent && scrollY>80){ var r=el.getBoundingClientRect(); if(r.top<innerHeight*0.7 && r.bottom>0){ fire(); io.disconnect(); } } },{passive:true}); }
@@ -378,7 +379,15 @@ input:focus{border-color:#1a1a1a}
   }
  }catch(e){}
  function ev(name,props){ try{ if(mp) mp.track(name, Object.assign({ seconds_since_land: Math.round((Date.now()-T0)/1000), page: curPage }, props||{})); }catch(e){} }
- function fb(name,params,std){ try{ if(window.fbq) fbq(std?'track':'trackCustom',name,Object.assign({channel:hidden.channel,city:CITY},params||{})); }catch(e){} }
+ // 메타 이벤트 (10/7 CAPI): 브라우저 픽셀과 서버(/api/capi → 전환 API)에 같은 eventID 로 보냄 → 메타가 하나로 합침. 광고 차단/iOS 로 브라우저가 빠져도 서버 건이 남음
+ // Lead 는 서버가 /api/submit 성공 때 전화번호 해시까지 붙여 직접 보냄 (여기선 eventID 만 넘김)
+ function ck(n){ var m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)')); return m?decodeURIComponent(m[1]):''; }
+ function fbIds(){ var fbc=ck('_fbc'); if(!fbc && hidden.fbclid) fbc='fb.1.'+T0+'.'+hidden.fbclid; return {fbp:ck('_fbp'), fbc:fbc}; }
+ function eid(name){ return name+'.'+sid+'.'+Date.now().toString(36); }
+ function fb(name,params,std,id){ if(LOCAL_PREVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
+  try{ if(window.fbq) fbq(std?'track':'trackCustom',name,p,{eventID:id}); }catch(e){}
+  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,custom_data:p},fbIds()),true); }
+ window.hhFb=fb;
 
  // 체류 측정 (10/7). iOS 인스타 인앱은 광고 누르기 전에 페이지를 숨긴 채 미리 열고, 보이게 돼도 visibilitychange 를 안 쏘는 경우가 있음
  // → 1) 숨긴 채 열렸으면 사용자 손길(터치/클릭/키)이나 prerenderingchange/focus 가 올 때부터 셈 (scroll 은 프로그램 스크롤이 있어 안 씀)
@@ -524,14 +533,14 @@ input:focus{border-color:#1a1a1a}
   clearTimeout(timer); submitted=true; form.dataset.submitting='true';
   var btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='제출 중…';
   var d=data();
-  var payload={sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active()};
+  var leadEid=eid('Lead'), payload=Object.assign({sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),lead_eid:leadEid,url:location.href},fbIds());
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
    .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
      var appId=res.application_id||res.id;
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, track:TRACK, plan:PLAN, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
      ev('submit',{ application_id:appId, total_seconds:Math.round((Date.now()-T0)/1000), gender:d.gender, source_self_report:d.source, device_answer:d.device, intent:d.intent });
-     fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true);
+     fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);
      show('done'); if(offerControl) document.getElementById('early-banner').hidden=true; try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
    })
    .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });

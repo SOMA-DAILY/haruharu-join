@@ -54,6 +54,47 @@ function formName(path, h) {
 }
 const num = (v, max) => { v = Math.round(Number(v) || 0); return v < 0 ? 0 : Math.min(v, max); };
 
+// 메타 전환 API (10/7). 주 픽셀 haruharu.ting 에 서버에서 같은 이벤트를 보냄 → 브라우저 픽셀과 event_id 로 합쳐짐
+// 토큰은 secret META_CAPI_TOKEN, 테스트 땐 META_TEST_EVENT_CODE (이벤트 관리자 테스트 탭에만 보이고 실데이터에 안 섞임). 토큰 없으면 아무것도 안 보냄
+// D1/KV 안 씀. 응답을 기다리지 않게 waitUntil 로 보냄
+const CAPI_PIXEL = '1144224341416623';
+const CAPI_EVENTS = ['LandingEngaged', 'FormStart', 'Page1Complete', 'PayButtonClick'];
+async function sha256(v) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
+  return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+const cstr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+async function capiUser(request, b, extra) {
+  const u = { client_ip_address: request.headers.get('cf-connecting-ip') || undefined, client_user_agent: request.headers.get('user-agent') || undefined };
+  const fbp = cstr(b.fbp, 200), fbc = cstr(b.fbc, 300);
+  if (/^fb\.\d\./.test(fbp)) u.fbp = fbp;
+  if (/^fb\.\d\./.test(fbc)) u.fbc = fbc;
+  if (typeof b.sid === 'string' && b.sid) u.external_id = [await sha256(b.sid.slice(0, 64).toLowerCase())];
+  return Object.assign(u, extra || {});
+}
+async function capiSend(env, ev) {
+  if (!env.META_CAPI_TOKEN) return;
+  const body = { data: [ev] };
+  if (env.META_TEST_EVENT_CODE) body.test_event_code = env.META_TEST_EVENT_CODE;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v21.0/${CAPI_PIXEL}/events?access_token=${encodeURIComponent(env.META_CAPI_TOKEN)}`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (env.META_TEST_EVENT_CODE) console.log('[capi]', ev.event_name, r.status, await r.text());
+  } catch (e) {}
+}
+function capiCustom(c) {
+  const o = {};
+  if (c && typeof c === 'object') for (const k of ['channel', 'city', 'content_name', 'content_category']) if (typeof c[k] === 'string') o[k] = c[k].slice(0, 100);
+  return o;
+}
+async function capiEvent(request, b, name, eventId, user, custom) {
+  return {
+    event_name: name, event_time: Math.floor(Date.now() / 1000), event_id: cstr(eventId, 120) || undefined, action_source: 'website',
+    event_source_url: cstr(b.url, 500) || undefined, user_data: await capiUser(request, b, user), custom_data: capiCustom(custom),
+  };
+}
+
 async function trackSession(env, request, b) {
   if (!env.DB) return;
   const h = cleanHidden(b.hidden);
@@ -91,7 +132,7 @@ async function trackSession(env, request, b) {
   ]);
 }
 
-export async function onRequest({ request, env, params }) {
+export async function onRequest({ request, env, params, waitUntil }) {
   const url = new URL(request.url);
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
@@ -103,6 +144,13 @@ export async function onRequest({ request, env, params }) {
   if (request.method === 'POST' && path === '/partial') {
     const b = await readBody(request); if (!b || !b.sid) return json({ ok: false }, 400);
     try { await trackSession(env, request, b); } catch (e) { return json({ ok: false, error: String(e.message || e) }, 500); }
+    return json({ ok: true });
+  }
+
+  if (request.method === 'POST' && path === '/capi') {
+    const b = await readBody(request);
+    if (!b || !CAPI_EVENTS.includes(b.event_name) || !formOf(b.path) || BOT.test(request.headers.get('user-agent') || '')) return json({ ok: false }, 400);
+    waitUntil(capiEvent(request, b, b.event_name, b.event_id, null, b.custom_data).then((ev) => capiSend(env, ev)));
     return json({ ok: true });
   }
 
@@ -197,6 +245,14 @@ export async function onRequest({ request, env, params }) {
       } catch (e) {}
     }
     if (!kvOk && !dbOk) return json({ ok: false, error: 'store failed' }, 500);
+    // Lead 는 서버가 전화번호 해시(82 국가번호), 성별까지 붙여 보냄. 브라우저 픽셀 Lead 와 lead_eid 로 합쳐짐
+    if (form) {
+      const d = normPhone(f.phone), ph = /^0\d{9,10}$/.test(d) ? '82' + d.slice(1) : '';
+      const user = { country: [await sha256('kr')] };
+      if (ph) user.ph = [await sha256(ph)];
+      if (f.gender === '여성' || f.gender === '남성') user.ge = [await sha256(f.gender === '여성' ? 'f' : 'm')];
+      waitUntil(capiEvent(request, b, 'Lead', b.lead_eid, user, { channel: h.utm_content || h.src || 'direct', city: h.city || '', content_name: h.utm_content || h.src || 'direct', content_category: form.plan === 'prealert' ? 'prealert' : 'paid' }).then((ev) => capiSend(env, ev)));
+    }
     return json({ ok: true, id, application_id: id });
   }
 

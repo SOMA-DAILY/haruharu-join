@@ -77,13 +77,16 @@
 |---|---|---|
 | POST `/partial` | 방문/입력 중 기록 (D1 sessions) | 없음 |
 | POST `/submit` | 제출 (KV + D1). 축제는 `capture`(data URL) 필수 | 없음 |
+| POST `/capi` | 메타 전환 API 중계. `LandingEngaged` `FormStart` `Page1Complete` `PayButtonClick` 만, 등록부 경로만, 봇 거부. D1/KV 안 씀. Lead 는 `/submit` 성공 때 서버가 보냄(전화번호/성별 해시) | 없음 |
 | GET `/festival` | 축제 폼 마감 여부 `{open, deadline, serverNow}` | 없음 |
 | GET `/cohort` | 현재 기수 마감 여부. `?path=/seoul/` 이면 그 폼의 상태 + 마감 시 `next`(현재 기수 같은 트랙 폼) | 없음 |
 | GET `/export` `/stats` | CSV / 집계. 시트 IMPORTDATA 가 열 위치로 읽을 수 있어서 **기존 열 순서는 바꾸지 않고 새 열은 맨 끝에만** 붙임 (축제 `major` `avoid_same_major` 도 끝) | `?token=` READ_TOKEN 또는 EXPORT_TOKEN |
 | DELETE `/records` | 삭제 | EXPORT_TOKEN |
 | `/admin/*` (login, logout, ping, analytics, sessions, applicants, mark, capture ...) | 관리 페이지용. `GET /admin/capture?id=신청ID` 는 캡처 이미지. 신청자 삭제는 캡처도 같이 지움 | 비번 로그인 쿠키 |
 
-시크릿 4개(`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `EXPORT_TOKEN`, `READ_TOKEN`)는 Cloudflare 프로젝트 설정에만 있음. 필요하면 레포 관리자(chounjae)한테 받을 것, 코드/커밋/채팅에 적지 말 것.
+시크릿 4개(`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `EXPORT_TOKEN`, `READ_TOKEN`)는 Cloudflare 프로젝트 설정에만 있음. 메타 CAPI 는 `META_CAPI_TOKEN`(없으면 서버 전송만 꺼짐), 테스트 땐 `META_TEST_EVENT_CODE` 추가(이벤트 관리자 테스트 탭에만 보임, 응답이 함수 로그에 찍힘). 테스트 끝나면 이 값은 지울 것.
+
+메타 픽셀(10/7~): 주 픽셀 haruharu.ting `1144224341416623` (브라우저 + 서버, 이벤트마다 같은 eventID 로 중복 제거) + 옛 dating `1586422299864867` (브라우저만, 기존 신청자 제외/리타겟 이력용). 브라우저 이벤트는 전부 `fb()` (`window.hhFb`) 하나로 보냄 필요하면 레포 관리자(chounjae)한테 받을 것, 코드/커밋/채팅에 적지 말 것.
 
 ## 로컬에서 돌리기
 
