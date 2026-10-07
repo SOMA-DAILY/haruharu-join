@@ -18,6 +18,7 @@ FORMS, CUR, DL, DLKO, INFO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLI
 TPL=open('src/form.template.html',encoding='utf-8').read()
 CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
+LANDING=open('src/landing.html',encoding='utf-8').read()
 BAD='·「」①②③④⑤'
 
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
@@ -31,9 +32,8 @@ def next_path(f):
 # 트랙별 문구
 def school_q(f):
     if f.get('occupation'):
-        opts=['회사원','공무원, 공공기관','전문직','자영업, 프리랜서','대학원생, 취업 준비','기타']
-        rows=''.join(f'  <label class="opt"><span class="k">{chr(65+i)}</span><input type="radio" name="school" value="{o}"{" required" if i==0 else ""}>{o}</label>\n' for i,o in enumerate(opts))
-        return f'<div class="q" data-name="school"><p class="t">하시는 일<span class="req">*</span></p>\n <div class="opts">\n{rows} </div><p class="err">선택해 주세요</p></div>'
+        # 10/7: 선택지 → 주관식 (레퍼런스 전부 직업 자유기입, 같은 회사 배정 피하기 용도 겸함). 서버 칸은 school 그대로
+        return '<div class="q" data-name="school"><p class="t">하시는 일<span class="req">*</span></p>\n <input type="text" name="school" placeholder="ex) IT 회사 개발자, 간호사, 초등학교 교사" required><p class="err">하시는 일을 입력해 주세요</p></div>'
     return f'<div class="q" data-name="school"><p class="t">학교<span class="req">*</span></p>\n <input type="text" name="school" placeholder="ex) {f.get("schoolEx","")}" required><p class="err">학교를 입력해 주세요</p></div>'
 
 def extra_q(f):
@@ -50,8 +50,9 @@ def gen(path, f):
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
     fee = f"{f['fee']:,}"
-    info = INFO.get(cohort, {})
+    info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
+    region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
     deadline_iso = DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = DLKO.get(cohort, '')
     # 일정 문구
@@ -77,9 +78,17 @@ def gen(path, f):
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
     t = TPL
+    # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
+    if f.get('landing'):
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: LANDING, t, flags=re.S)
+    else:
+        t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '')
     for k, v in {
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
-        '__TRACK__': f.get('track',''), '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
+        '__TRACK__': f.get('track',''),
+        '__LD_EYE__': f"하루하루 소개팅 {cohort}기 " + ('사전 알림' if prealert else '신청'),
+        '__LD_TITLE__': f"솔로인 {region} {'직장인' if work else '대학생'}을 모집합니다",
+        '__LD_CHIP__': (f"{region}에 거주하는 솔로 직장인끼리 모여요 💕" if work else f"00년생~07년생 {region} 대학생끼리 모여요 💕"), '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
