@@ -15,7 +15,7 @@
 .ld-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
 .ld-hk{font-size:16px;font-weight:900;line-height:1.38;letter-spacing:-.3px;margin:0}
 .ld-phone{border-radius:24px;border:4px solid #1E2230;overflow:hidden;background:#EAF2FB}
-.ld-phone img{display:block;width:100%;height:auto}
+.ld-phone img{display:block;width:100%;height:auto;aspect-ratio:540/1168}
 .ld-rv{display:flex;flex-direction:column;gap:10px;margin:14px 0 0}
 .ld-b{max-width:300px;background:#F3F5F8;border-radius:18px 18px 18px 4px;padding:11px 14px;font-size:15px;line-height:1.5}
 .ld-b.r{align-self:flex-end;border-radius:18px 18px 4px 18px;background:#FDEBF1}
@@ -34,18 +34,18 @@
 <button type="button" class="ld-btn" data-cta="hero">__LD_CTA__</button>
 
 <div class="ld-sec"><h2>서로의 일상이 대화 소재로</h2>
-<img class="ld-grid" data-img="L_grid" src="/img/L_haru_grid.jpg" alt="지난 기수 참가자들이 올린 하루 영상 6장">
+<img width="600" height="485" class="ld-grid" data-img="L_grid" src="/img/L_haru_grid.jpg" alt="지난 기수 참가자들이 올린 하루 영상 6장">
 <p class="ld-cap">지난 기수 참가자들이 올린 하루 (셋로그 앱)</p></div>
 
 <div class="ld-sec"><h2>소개팅은 이렇게 진행돼요</h2></div>
 <div class="ld-layers">
 <div class="ld-layer">
-<div class="ld-col"><p class="ld-hk">서로의 일상을<br>공유하고,</p><div class="ld-phone"><img data-img="L_feed" src="/img/L_app_feed.jpg" alt="방 참가자들이 올린 하루 사진 피드" loading="lazy"></div></div>
-<div class="ld-col"><p class="ld-hk">익명으로 부담없이<br>질문하고,</p><div class="ld-phone"><img data-img="L_question" src="/img/L_app_question.jpg" alt="유진에게 익명 질문 보내기" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">서로의 일상을<br>공유하고,</p><div class="ld-phone"><img width="540" height="1169" data-img="L_feed" src="/img/L_app_feed.jpg" alt="방 참가자들이 올린 하루 사진 피드" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">익명으로 부담없이<br>질문하고,</p><div class="ld-phone"><img width="540" height="1169" data-img="L_question" src="/img/L_app_question.jpg" alt="유진에게 익명 질문 보내기" loading="lazy"></div></div>
 </div>
 <div class="ld-layer">
-<div class="ld-col"><p class="ld-hk">3일동안 천천히</p><div class="ld-phone"><img data-img="L_select" src="/img/L_app_select.jpg" alt="마음이 가는 사람을 골라주세요" loading="lazy"></div></div>
-<div class="ld-col"><p class="ld-hk">자연스럽게 매칭까지!</p><div class="ld-phone"><img data-img="L_match" src="/img/L_app_match.jpg" alt="매칭 성공, 유진님과 서로를 선택했어요" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">3일동안 천천히</p><div class="ld-phone"><img width="540" height="1169" data-img="L_select" src="/img/L_app_select.jpg" alt="마음이 가는 사람을 골라주세요" loading="lazy"></div></div>
+<div class="ld-col"><p class="ld-hk">자연스럽게 매칭까지!</p><div class="ld-phone"><img width="540" height="1169" data-img="L_match" src="/img/L_app_match.jpg" alt="매칭 성공, 유진님과 서로를 선택했어요" loading="lazy"></div></div>
 </div>
 </div>
 
@@ -58,11 +58,22 @@
 <div class="ld-b">상대의 일상을 볼 수 있어서 좋고 색다른 기분이었어요</div><div class="ld-by">앱 2기 참가자</div>
 <div class="ld-b r">혹시 다음에 또 참여해도 되나요..??ㅎㅎ</div><div class="ld-by r">셋로그 11기 참가자</div>
 </div>
-<img class="ld-dm" data-img="L_dm" src="/img/L_review_dm.jpg" alt="매칭된 참가자가 보낸 DM" loading="lazy">
+<img width="600" height="637" class="ld-dm" data-img="L_dm" src="/img/L_review_dm.jpg" alt="매칭된 참가자가 보낸 DM" loading="lazy">
 <p class="ld-cap">셋로그로 진행한 지난 기수, 매칭된 참가자가 보낸 DM</p></div>
 <div class="ld-sticky" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">__LD_CTA__</button></div>
 <script>
 (function(){
+ // LandingEngaged (10/7): 앱 화면 2줄째가 화면에 30% 들어오면 1번. 메타 테스트/스케일 세트 최적화 이벤트
+ // 체류 시간이 아니라 스크롤로 판단 → iOS 인앱 visibility 버그와 무관. 볼륨은 방문의 약 55% (Page1Complete 의 약 8배)
+ (function(){
+  var ls=document.querySelectorAll('.ld-layers .ld-layer'), el=ls[ls.length-1], sent=false;   // 앱 화면 2줄째(최종 선택, 매칭)가 보일 때 = 1줄째를 지나 내려온 사람
+  function fire(){ if(sent) return; sent=true;
+   try{ if(window.fbq) fbq('trackCustom','LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}
+   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('landing_engaged',{path:location.pathname}); }catch(e){} }
+  if(!el) return;
+  if(window.IntersectionObserver){ var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && scrollY>80){ fire(); io.disconnect(); } }); },{threshold:0.3}); io.observe(el); addEventListener('scroll',function(){ if(!sent && scrollY>80){ var r=el.getBoundingClientRect(); if(r.top<innerHeight*0.7 && r.bottom>0){ fire(); io.disconnect(); } } },{passive:true}); }
+  else addEventListener('scroll',function(){ if(scrollY>80 && el.getBoundingClientRect().top<innerHeight*0.85) fire(); },{passive:true});
+ })();
  var st=document.getElementById('ldSticky');
  function target(){ return document.querySelector('.q[data-name="gender"]'); }
  document.querySelectorAll('[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
