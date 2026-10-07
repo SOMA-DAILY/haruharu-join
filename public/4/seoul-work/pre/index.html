@@ -267,7 +267,48 @@ input:focus{border-color:#1a1a1a}
 </form>
 
 <section class="page" data-page="done">
- <div class="done"><h2>사전 알림이 접수됐어요 💌</h2><p>일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.<br>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
+ <div class="done"><h2>사전 알림이 접수됐어요 💌</h2><p>일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.<br>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p><!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관, 저장은 Mixpanel dating_experience 이벤트만 (D1/KV 쓰기 없음) -->
+<div class="xp" id="xp">
+ <p class="t">최근 1년 동안 해본 소개팅이 있나요? <span class="xp-sub">(여러 개 선택)</span></p>
+ <div class="opts">
+  <label class="opt"><span class="k">A</span><input type="checkbox" value="dating_app">데이팅 앱 (틴더, 글램, 위피 등)</label>
+  <label class="opt"><span class="k">B</span><input type="checkbox" value="friend_intro">지인 소개</label>
+  <label class="opt"><span class="k">C</span><input type="checkbox" value="offline">오프라인 소개팅 (로테이션, 파티 등)</label>
+  <label class="opt"><span class="k">D</span><input type="checkbox" value="setlog_haruharu">셋로그나 하루하루</label>
+  <label class="opt"><span class="k">E</span><input type="checkbox" value="none">없어요</label>
+ </div>
+ <button type="button" class="btn" id="xpSend" disabled>보내기</button>
+ <p class="xp-done" id="xpDone" hidden>고마워요 🙂</p>
+</div>
+<style>
+.xp{text-align:left;max-width:520px;margin:40px auto 0}
+.xp .t{font-size:17px;font-weight:700;margin:0 0 10px}
+.xp-sub{font-size:13px;font-weight:400;color:#888}
+.xp .btn{margin-top:16px}
+.xp-done{margin:16px 0 0;font-size:15px;color:#333}
+</style>
+<script>
+(function(){
+ var box=document.getElementById('xp'), send=document.getElementById('xpSend');
+ // 폼 change 리스너(임시저장, 문항 이벤트)로 안 올라가게 여기서 끊음
+ box.addEventListener('change',function(e){
+  e.stopPropagation(); var el=e.target; if(el.type!=='checkbox') return;
+  var all=box.querySelectorAll('input[type=checkbox]');
+  if(el.checked && el.value==='none') all.forEach(function(x){ if(x!==el) x.checked=false; });
+  if(el.checked && el.value!=='none') all.forEach(function(x){ if(x.value==='none') x.checked=false; });
+  all.forEach(function(x){ x.closest('.opt').classList.toggle('on',x.checked); });
+  send.disabled=!box.querySelector('input:checked');
+ });
+ box.addEventListener('input',function(e){ e.stopPropagation(); });
+ send.addEventListener('click',function(){
+  var v=[].map.call(box.querySelectorAll('input:checked'),function(x){return x.value;});
+  if(!v.length) return;
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('dating_experience',{methods:v, dating_app:v.indexOf('dating_app')>=0, none:v.indexOf('none')>=0, path:location.pathname}); }catch(e){}
+  box.querySelector('.opts').style.display='none'; send.style.display='none'; document.getElementById('xpDone').hidden=false;
+ });
+})();
+</script>
+</div>
 </section>
 
 <p class="foot">하루하루 / 만 19세 이상 직장인</p>

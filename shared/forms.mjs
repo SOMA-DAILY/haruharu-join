@@ -34,11 +34,11 @@ export const FORMS = {
   // ---- 4기: 서울 학생 / 광주 학생 (유료 직행) + 수도권 직장인 (무료 사전알림 → 메시지로 할인 결제) ----
   '/4/seoul/':              { ...S4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 서울 학생', listed: true, landing: true },
   '/4/gwangju/':            { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 광주 학생', listed: true, landing: true },
-  '/4/seoul/x7q2/':         { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 서울 학생 할인 (메시지 전용)' },
-  '/4/gwangju/x7q2/':       { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 광주 학생 할인 (메시지 전용)' },
+  '/4/seoul/x7q2/':         { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 서울 학생 할인 (메시지 전용)', landing: true },
+  '/4/gwangju/x7q2/':       { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 광주 학생 할인 (메시지 전용)', landing: true },
   '/4/seoul-work/pre/':     { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료)', listed: true, landing: true, period: '10월 중순' },  // 일정 미확정이라 학생 4기 일정 대신 (10/7)
-  '/4/seoul-work/x7q2/':    { ...W4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 수도권 직장인 할인 (사전알림 메시지 전용)' },
-  '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인' },
+  '/4/seoul-work/x7q2/':    { ...W4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 수도권 직장인 할인 (사전알림 메시지 전용)', landing: true },
+  '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인', landing: true },
 };
 
 // 기수별 안내 (폼 안내 카드와 일정 문구. 금액은 등록부 fee 에서, 날짜는 여기서)

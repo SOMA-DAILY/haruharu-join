@@ -19,6 +19,7 @@ TPL=open('src/form.template.html',encoding='utf-8').read()
 CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.html',encoding='utf-8').read()
+DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 BAD='·「」①②③④⑤'
 
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
@@ -93,6 +94,7 @@ def gen(path, f):
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
+        '__DONE_SURVEY__': (DONE_SURVEY if cohort == '4' else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
     }.items():
         t = t.replace(k, v)
