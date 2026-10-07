@@ -259,9 +259,20 @@ input:focus{border-color:#1a1a1a}
  function ev(name,props){ try{ if(mp) mp.track(name, Object.assign({ seconds_since_land: Math.round((Date.now()-T0)/1000), page: curPage }, props||{})); }catch(e){} }
  function fb(name,params,std){ try{ if(window.fbq) fbq(std?'track':'trackCustom',name,Object.assign({channel:hidden.channel,city:CITY},params||{})); }catch(e){} }
 
- var actMs=0, actT=document.visibilityState==='visible'?Date.now():0;
+ // 체류 측정 (10/7). iOS 인스타 인앱은 광고 누르기 전에 페이지를 숨긴 채 미리 열고, 보이게 돼도 visibilitychange 를 안 쏘는 경우가 있음
+ // → 1) 숨긴 채 열렸으면 사용자 손길(터치/클릭/키)이나 prerenderingchange/focus 가 올 때부터 셈 (scroll 은 프로그램 스크롤이 있어 안 씀)
+ //   2) 250ms 타이머가 2초 넘게 멈췄으면 앱이 백그라운드였던 걸로 보고 그 구간은 뺌 (안드로이드 저사양 버벅임 900ms 대는 오인 안 하게 2초)
+ //   3) 한 번도 안 보인 미리 열기는 D1 방문 기록을 안 남김 (Mixpanel page_view 에는 vis_at_load 로 남음)
+ var prerender=!!document.prerendering, visAtLoad=prerender?'prerender':document.visibilityState;
+ var firstVis=visAtLoad==='visible'?0:-1, bgGaps=0, landedSent=false;
+ var actMs=0, actT=visAtLoad==='visible'?Date.now():0, lastTick=Date.now();
  function active(){ return actMs+(actT?Date.now()-actT:0); }
- document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ if(!actT) actT=Date.now(); } else if(actT){ actMs+=Date.now()-actT; actT=0; } });
+ function vis(){ if(!actT) actT=Date.now(); if(firstVis<0){ firstVis=Date.now()-T0; if(typeof sendLanded==='function') sendLanded(); } }
+ document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ vis(); } else if(actT){ actMs+=Date.now()-actT; actT=0; } });
+ ['touchstart','pointerdown','keydown'].forEach(function(n){ addEventListener(n,function(){ if(document.visibilityState!=='hidden'||firstVis<0) vis(); },{passive:true,capture:true}); });
+ addEventListener('focus',function(){ if(firstVis<0) vis(); });
+ document.addEventListener('prerenderingchange',function(){ vis(); });
+ setInterval(function(){ var now=Date.now(), gap=now-lastTick; lastTick=now; if(gap>2000 && actT){ bgGaps++; actMs+=Math.max(0,(now-gap+250)-actT); actT=now; } },250);
  function maxScroll(){ return Math.max.apply(null, Object.keys(depths).filter(function(d){return depths[d]}).map(Number).concat([0])); }
  // 사용 기기: 폰으로 열었으면 묻지 않고 접속 기기로 채움. PC 등 판별 안 되는 경우에만 문항을 보여줌
  (function(){ var dv=/iPhone|iPad|iPod/i.test(ua)?'iPhone':/Android/i.test(ua)?'Android':'';
@@ -270,7 +281,7 @@ input:focus{border-color:#1a1a1a}
  var form=document.getElementById('f'), started=false, submitted=false, curPage=1, timer=null, lastField='', pageT0=Date.now();
  var fieldT={}, fieldEdits={}, fieldDone={};
 
- ev('page_view',{ referrer:document.referrer, path:location.pathname });
+ ev('page_view',{ referrer:document.referrer, path:location.pathname, vis_at_load:visAtLoad });
 
  // 랜딩 스크롤 깊이 + 이미지 도달
  var depths={25:0,50:0,75:0,100:0}, imgSeen={};
@@ -404,7 +415,10 @@ input:focus{border-color:#1a1a1a}
    })
    .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
  });
- function leave(){ if(submitted) return; saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll() }); partial(true); } }
+ function leave(){ if(submitted) return;
+  // 한 번도 안 보인 미리 열기: D1 에 안 남기고 Mixpanel 에만 (임시저장 복원으로 started 여도 같음)
+  if(firstVis<0){ ev('leave_unseen',{wall_ms:Date.now()-T0, vis_at_load:visAtLoad}); return; }
+  saveDraft(); if(started){ ev('abandon',{last_field:lastField,last_page:curPage,total_seconds:Math.round((Date.now()-T0)/1000)}); partial(true); } else { ev('leave_without_start',{max_scroll: maxScroll(), wall_ms:Date.now()-T0, active_ms:active(), vis_at_load:visAtLoad, first_visible_ms:firstVis, bg_gaps:bgGaps }); partial(true); } }
  window.addEventListener('pagehide',leave);
  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') leave(); });
  // 보관된 작성 내용 복원 (6시간 이내)
@@ -418,7 +432,9 @@ input:focus{border-color:#1a1a1a}
     else el.value=dr.f[k]; }); });
    if(Object.keys(dr.f).length){ started=true; ev('draft_restored',{fields:Object.keys(dr.f).length,page:dr.page}); if(dr.page===2 && validate(1)) show(2); }
   } }catch(e){}
- post('/partial',{sid:sid,path:location.pathname,page:1,last_field:'',fields:{},hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),landed:true,returning:returning});
+ // 도착 기록: 보이는 상태로 열렸으면 바로, 숨긴 채(미리 열기) 열렸으면 처음 보일 때 1번만
+ function sendLanded(){ if(landedSent) return; landedSent=true; post('/partial',{sid:sid,path:location.pathname,page:1,last_field:'',fields:{},hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),landed:true,returning:returning}); }
+ if(firstVis>=0) sendLanded();
  // 페이지를 켜둔 채 머무는 경우 대비 30초마다 체류시간 갱신 (보일 때만, 최대 20회)
  var hb=0, hbT=setInterval(function(){ if(submitted||++hb>20){ clearInterval(hbT); return; } if(document.visibilityState==='visible') partial(false); },30000);
  console.log('[hh] city',CITY,'pixel',!!window.fbq,'mixpanel',!!mp,'sid',sid,'hidden',hidden);
