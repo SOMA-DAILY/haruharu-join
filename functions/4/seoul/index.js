@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
   let arm = forced === 'a' || forced === 'b' ? forced : readCookie(request);
   const fresh = !arm;
   if (!arm) arm = crypto.getRandomValues(new Uint8Array(1))[0] < 128 ? 'a' : 'b';
-  const cookie = `${COOKIE}=${arm}; Path=/4/; Max-Age=2592000; SameSite=Lax; Secure`;
+  const cookie = `${COOKIE}=${arm}; Path=/4/; Max-Age=2592000; SameSite=Lax` + (url.protocol === 'https:' ? '; Secure' : '');
   if (arm === 'b') {
     const q = new URLSearchParams(url.search);
     q.delete('ab');
