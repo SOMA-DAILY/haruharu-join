@@ -1,0 +1,236 @@
+#!/bin/zsh
+# 개선판 빌드 (10/8~): 등록부(shared/forms.mjs)에서 variant 가 'v2' 인 폼만 src/form.v2.template.html + src/landing.v2.html → public/{경로}/index.html
+# 기존 폼, 지역 선택, 관리 화면, 축제 폼은 build.sh 가 만들고 맨 끝에서 이 파일을 부름. 여기서는 그 파일들을 건드리지 않음
+# 기수/금액/일정/마감은 전부 shared/forms.mjs 한 곳. 여기엔 문구 조각과 화면 조립만.
+# Mixpanel 토큰은 FE .env.production 에서 읽음 (파일에 박지 않음). CI 는 MIXPANEL_TOKEN 시크릿
+set -e
+cd "$(dirname "$0")"
+MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu-FE/.env.production 2>/dev/null | cut -d= -f2 | tr -d '"\r')}"
+[ -n "$MP" ] || { echo "Mixpanel 토큰을 못 읽음"; exit 1; }
+# 등록부를 JSON 으로 (node 는 CI 에 있음)
+REG="$(node --input-type=module -e "import('./shared/forms.mjs').then(m=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO})))")"
+[ -n "$REG" ] || { echo "등록부를 못 읽음"; exit 1; }
+export MP REG
+python3 - <<'EOF'
+import os, re, json
+from datetime import datetime
+R=json.loads(os.environ['REG']); MP=os.environ['MP']
+FORMS, CUR, DL, DLKO, INFO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLINE_KO'], R['INFO']
+TPL=open('src/form.v2.template.html',encoding='utf-8').read()
+CARD=open('src/info-card.html',encoding='utf-8').read()
+EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
+LANDING=open('src/landing.v2.html',encoding='utf-8').read()
+DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+# 친구 할인 조각(src/friend-discount.html)과 판정 함수(shared/friend-discount.mjs, export 만 떼고 관리 화면에 그대로 끼움)
+_fr=open('src/friend-discount.html',encoding='utf-8').read()
+FR_HOOK, _fr = _fr.split('<!--HOOK-->\n',1)[1].split('<!--BANNER-->\n',1)
+FR_BANNER, FR_TAIL = _fr.split('<!--TAIL-->\n',1)
+FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
+assert FRIEND_FN.startswith('function friendFee(')
+# 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
+APP_GET=re.sub(r'^<!--.*?-->\n', '', open('src/app-install.html',encoding='utf-8').read(), count=1, flags=re.S)
+assert APP_GET.startswith('<div class="ap-get">') and APP_GET.count('class="ap-btn"') == 2
+BAD='·「」①②③④⑤'
+
+def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
+
+def next_path(f):
+    if f['cohort']==CUR: return None
+    for p,g in FORMS.items():
+        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular' and not g.get('variant'): return p
+    return '/'
+
+# 트랙별 문구
+def school_q(f):
+    if f.get('occupation'):
+        # 10/7: 선택지 → 주관식 (레퍼런스 전부 직업 자유기입, 같은 회사 배정 피하기 용도 겸함). 서버 칸은 school 그대로
+        return '<div class="q" data-name="school"><p class="t">하시는 일<span class="req">*</span></p>\n <input type="text" name="school" placeholder="ex) IT 회사 개발자, 간호사, 초등학교 교사" required><p class="err">하시는 일을 입력해 주세요</p></div>'
+    return f'<div class="q" data-name="school"><p class="t">학교<span class="req">*</span></p>\n <input type="text" name="school" placeholder="ex) {f.get("schoolEx","")}" required><p class="err">학교를 입력해 주세요</p></div>'
+
+def extra_q(f):
+    if not f.get('occupation'): return ''
+    return ('<div class="q" data-name="schedule_pref"><p class="t">편한 진행 시기<span class="req">*</span></p>\n <div class="opts">\n'
+            '  <label class="opt"><span class="k">A</span><input type="radio" name="schedule_pref" value="평일 3일도 괜찮아요" required>평일 3일도 괜찮아요</label>\n'
+            '  <label class="opt"><span class="k">B</span><input type="radio" name="schedule_pref" value="주말이 하루는 껴야 해요">주말이 하루는 껴야 해요</label>\n'
+            ' </div><p class="err">선택해 주세요</p></div>\n')
+
+def gen(path, f):
+    cohort, plan = f['cohort'], f['plan']
+    outdir = 'public' + path
+    os.makedirs(outdir, exist_ok=True)
+    work = bool(f.get('occupation'))
+    prealert = plan == 'prealert'
+    fee = f"{f['fee']:,}"
+    info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
+    target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
+    region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
+    deadline_iso = DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
+    deadline_ko = DLKO.get(cohort, '')
+    # 일정 문구
+    if prealert:
+        sched = f"- 진행 예정: {info.get('period','추후 안내')}\n- 사전 알림 신청자에게 먼저 안내 문자를 보내드려요\n- 사전 알림 신청자는 참가비 할인 혜택이 있어요"
+    elif plan == 'early':
+        sched = f"- 진행 기간: {info.get('period','')}\n- 참가비: {fee}원\n- 인원이 구성되면 안내 문자를 보내드려요."
+    else:
+        sched = f"- 진행 기간: {info.get('period','')}\n- 신청 마감: {deadline_ko}\n- 참가비: {fee}원\n- 최종 참가 안내 문자: 신청 마감일 밤"
+    if prealert:
+        fee_note = '사전 알림은 무료예요. 일정이 확정되면 문자로 할인 신청 링크를 보내드려요.'
+        flow = '1. 이 폼을 작성하고 제출해요.\n2. 일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.\n3. 참가비 송금 후 신청하면 방이 열릴 때 초대 코드를 받아요.'
+        done_title, done_body = '사전 알림이 접수됐어요 💌', '일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.'
+        consent = '성별, 출생연도, 전화번호, 하시는 일'
+    else:
+        fee_note = (f'사전 알림을 신청해 주신 분은 {fee}원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.' if plan in ('early','discount')
+                    else f'참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.')
+        flow = '1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.\n2. 방이 열리면 초대 코드를 문자로 보내드려요.\n3. 앱에 코드를 넣으면 시작이에요.'
+        done_title, done_body = '신청이 접수됐어요 💌', '방이 열리면 초대 코드를 문자로 보내드려요.'
+        consent = ('성별, 출생연도, 전화번호, 하시는 일, 신청자 확인용 이름, 함께 신청한 친구의 전화번호' if work
+                   else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
+    nxt = next_path(f)
+    next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
+    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
+    # 랜딩 v2(10/8) 조각: 첫 화면 안내 칸(진행 일정/참여 대상/그룹 구성), 신청 안내의 칸(마감/참가비, 일정 문구와 같은 값)과 단계(참여 흐름과 같은 문장)
+    area = '서울 경기 인천' if f['city'] == 'seoul' else f['cityKo']   # 서울 트랙은 지역을 풀어서 적음 (10/8 사용자)
+    ld_info = [('진행 일정', info.get('period', '추후 안내') + (' 예정' if prealert else '')),
+               ('참여 대상', f'{area} 직장인' if work else f'{area} 00~07년생 대학생'),
+               # 일찍 신청하게 하려는 안내(10/8 사용자). 받은 문장 "신청자가 많을 경우 신청 순서와 그룹 적합도를 함께 고려해 그룹을 구성"을 성비 줄 + 순서 줄로 풀어 씀. 신청을 받는 폼에만
+               ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5' + ('' if prealert else '<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>'))]
+    if prealert:
+        ld_rows, ld_notes = [], ['사전 알림 신청자에게 먼저 안내 문자를 보내드려요.', '사전 알림 신청자는 참가비 할인 혜택이 있어요.']
+    else:
+        # 1페이지에는 참가비를 드러내지 않음(10/8 사용자: 1페이지 이탈과 2페이지 이탈을 견줘 참가비가 적절한지 보려고). 금액, 송금, 환불 문구는 2페이지 참가비 안내에서 처음 나옴
+        ld_rows = [('신청 마감', deadline_ko), ('참가 안내', '신청 마감일까지 참가 확정 문자를&nbsp;보내드려요')]   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
+        ld_notes = []
+    ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
+    ld_flow = flow if prealert else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭)
+    ld_steps = ''.join('<li>' + re.sub(r'^\d+\.\s*', '', s) + '</li>' for s in ld_flow.split('\n'))
+    t = TPL
+    # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
+    if f.get('landing'):
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: LANDING, t, flags=re.S)
+        # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
+        t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
+    else:
+        t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
+    for k, v in {
+        '__LD_BADGE__': f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
+        '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
+        '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
+        '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
+        '__TRACK__': f.get('track',''),
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'),
+        '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
+        '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
+        '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
+        '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
+        '__DONE_SURVEY__': (DONE_SURVEY if cohort == '4' else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
+        '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
+    }.items():
+        t = t.replace(k, v)
+    # P4 이미지 자리: 3기는 기존 이미지(값이 박혀 있음), 4기부터는 글자 카드 (기수값은 HTML 에만)
+    if cohort == '3' and plan != 'early':
+        p4 = f'P4_{f["city"]}_3gi_{plan if plan!="discount" else "discount"}_12900.png'
+        assert os.path.exists('public/img/' + p4), 'P4 이미지 없음: ' + p4
+        t = t.replace('__IMG_P4__', p4)
+    else:
+        if plan == 'early':
+            card = EARLY_CARD.replace('__CITY_KO__', f['cityKo']).replace('__COHORT__', cohort)
+        else:
+            notice = ('일정이 확정되면 문자로 안내해요.' if prealert else '인원이 구성되면 안내 문자와 초대 코드를 보내드려요.')
+            howto = flow.replace('\n', '<br>')
+            refund = '' if prealert else '인원이 안 맞아 방이 열리지 않으면 참가비를 전액 돌려드려요.'
+            card = (CARD.replace('__COHORT__', cohort).replace('__TARGET_KO__', target_ko).replace('__PERIOD__', info.get('period','추후 안내'))
+                    .replace('__NOTICE__', notice).replace('__HOWTO__', howto).replace('__REFUND__', refund))
+        t = re.sub(r'<img class="img" data-img="P4"[^>]+>', lambda m: card, t)
+    if plan == 'early':
+        # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
+        start = t.index('<div class="q" data-name="source">'); end = t.index('<div class="q" data-name="intent">', start)
+        t = t[:start] + t[end:]
+        t = t.replace('id="pay" href="' + f['pay'] + '"', 'id="pay" aria-disabled="true"').replace('id="submit"', 'id="submit" disabled')
+        t = t.replace('방이 열리면 초대 코드를 문자로 보내드려요.', '인원이 구성되면 안내 문자와 초대 코드를 보내드려요.')
+    if prealert:
+        # 무료 사전알림: 참가비 블록 + 친구 블록 제거, 기기 문항도 제거
+        t = re.sub(r'<!--PAY_START-->.*?<!--PAY_END-->', '', t, flags=re.S)
+        start = t.index('<div class="q" data-name="device">'); end = t.index('<div class="q" data-name="intent">', start)
+        t = t[:start] + t[end:]
+        t = t.replace('<script src="/early-offer.js"></script>', '')
+    else:
+        t = t.replace('<!--PAY_START-->', '').replace('<!--PAY_END-->', '')
+    left = re.findall(r'__[A-Z0-9_]+__', t)
+    assert not left, f'{path} placeholder 남음: {left}'
+    if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
+        for need in ('data-cta="sticky"', 'data-engage'):
+            assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
+        if not prealert:
+            # 전화번호와 개인정보 동의 문항만 따로 2페이지로 떼고, 원래 2페이지(친구 문항, 참가비 안내)는 3페이지로 (10/8 사용자: 어디서 나가는지 자세히 보려고).
+            #   1페이지 이탈 = 기본 문항, 2페이지 이탈 = 연락처와 동의, 3페이지 이탈 = 참가비 반응. 템플릿 스크립트는 페이지 수와 버튼의 data-next/data-prev 를 읽어서 움직임
+            m = re.search(r'<div class="q" data-name="phone">.*?<div class="q" data-name="consent">.*?</div>\n\n', t, flags=re.S)
+            sec2 = '<section class="page" data-page="2">\n'; prev1 = '<button type="button" class="btn sec2" data-prev="1">← 이전</button>'
+            nav3 = prev1 + '<button type="submit" class="btn" id="submit">제출하기</button>'
+            assert m and t.count(sec2) == 1 and t.count(nav3) == 1 and t.index(sec2) + len(sec2) == m.start(), f'{path} 전화번호/동의 문항 또는 2페이지 자리를 못 찾음'
+            nav2 = '<div class="nav">' + prev1 + '<button type="button" class="btn" data-next="3">다음 페이지 →</button></div>\n'
+            t = t.replace(nav3, nav3.replace('data-prev="1"', 'data-prev="2"'), 1)
+            t = t.replace(sec2 + m.group(0), sec2 + m.group(0).rstrip('\n') + '\n\n' + nav2 + '</section>\n\n<section class="page" data-page="3">\n', 1)
+            # 동의에 체크하기 전에 적은 전화번호가 임시 저장(/partial)으로 나가지 않게, 동의 전에는 연락처를 빼고 보냄
+            pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
+            assert t.count(pf) == 1, f'{path} 임시 저장 함수를 못 찾음'
+            t = t.replace(pf, "function partial(beacon){ if(submitted) return; var pfields=data(); if(!pfields.consent){ delete pfields.phone; delete pfields.name; delete pfields.buddy; }\n  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,")
+            p1, rest = t.split('data-page="1"', 1)[1].split('data-page="2"', 1)
+            p2, p3 = rest.split('data-page="3"', 1); p3 = p3.split('data-page="done"', 1)[0]
+            qp, qc = '<div class="q" data-name="phone">', '<div class="q" data-name="consent">'   # 문항 블록으로 찾음 (랜딩의 스타일 선택자에도 data-name 이 나와서)
+            assert qp in p2 and qc in p2 and p2.count('<div class="q"') == 2 and qp not in p1 + p3 and qc not in p1 + p3, f'{path} 전화번호/동의 문항 위치가 다름'
+            assert 'data-next="2"' in p1 and 'data-prev="1"' in p2 and 'data-next="3"' in p2 and 'data-prev="2"' in p3 and 'id="submit"' in p3 and '<div class="q" data-name="name">' in p3, f'{path} 페이지 이동 버튼이 어긋남'
+        if f.get('friendFee'):
+            # 친구 할인 (10/8): 친구 문항을 참가비 안내 위로 올리고, 제목을 할인 안내로 바꾸고, 친구 선택지를 고르면 금액과 송금 버튼이 할인 금액으로 바뀜. 친구 문항에는 공유 버튼
+            won = lambda n: f'{n:,}'
+            frv = {'__FR_OFF__': won(f['fee'] - f['friendFee']), '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f['friendFee']),
+                   '__PAY__': f['pay'], '__FRIEND_PAY__': f['friendPay'], '__FR_LIST__': ('<s>' + won(f['listFee']) + '원</s> → ') if f.get('listFee') else ''}
+            def frfill(s):
+                for k, v in frv.items(): s = s.replace(k, v)
+                return s
+            mb = re.search(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t, flags=re.S)
+            name_open = '<div class="q" data-name="name">'; title = '<p class="t">친구랑 함께 신청하셨나요?</p>\n'; note = '친구도 신청서에 내 번호를 적어야 반영돼요.'
+            assert mb and t.count(name_open) == 1 and mb.group(0).count(title) == 1 and mb.group(0).count(note) == 1, f'{path} 친구 문항/참가비 안내를 못 찾음'
+            buddy = mb.group(0).rstrip('\n').replace(title, frfill(FR_HOOK), 1).replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
+            t = t.replace(mb.group(0), '', 1).replace(name_open, buddy + '\n\n' + name_open, 1)
+            a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
+            blk = t[a0:a1]; ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'; amt = won(f['fee']) + '원'
+            assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
+            blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
+            t = t[:a0] + blk + t[a1:]
+            foot = '<p class="foot">'; assert t.count(foot) == 1
+            t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
+            p3 = t.split('data-page="3"', 1)[1].split('data-page="done"', 1)[0]
+            assert p3.index('data-name="buddy_room"') < p3.index('data-name="name"') and '__FR' not in t and t.count('class="fr-share"') == 1, f'{path} 친구 할인 조각이 제대로 안 들어감'
+        if f.get('listFee'):
+            # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
+            ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
+            assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["listFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+        if not prealert:
+            # 완료 화면: 완료 문구 바로 아래에 앱 설치 안내 (10/8 운영자). 무료 사전 알림 폼은 방이 아직 안 잡혀서 뺌
+            d0 = t.index('<section class="page" data-page="done">'); d1 = t.index('</p>', d0) + 4
+            t = t[:d1] + '\n' + APP_GET.rstrip('\n') + t[d1:]
+        if not prealert:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄
+            page1 = t.split('data-page="1"', 1)[1].split('data-page="3"', 1)[0]
+            for word in ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ()):
+                assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
+        for v in 'fm':   # 첫 화면 그림: 여성용(f), 남성용과 기본판(m). 스크립트가 주소를 이어 붙여 고르므로 아래 src 검사에 안 걸림
+            assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 첫 화면 그림 없음: L_store_feed_{v}.webp'
+        keys = re.findall(r"(\w+):'", t.split('var P={', 1)[1].split('};', 1)[0])   # 스크립트 속 참가자 예시 목록(키 = 사진 파일 이름)
+        assert len(keys) >= 6, f'{path} 참가자 예시 목록을 못 읽음: {keys}'
+        for k in keys:
+            assert os.path.exists(f'public/img/L_p_{k}.webp'), f'{path} 성별 판 프로필 사진 없음: L_p_{k}.webp'
+            assert os.path.exists(f'public/img/L_pc_{k}.webp'), f'{path} 성별 판 프로필 사진(선명) 없음: L_pc_{k}.webp'
+    bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
+    assert not bad, f'{path} 금지 문자: {bad}'
+    for img in re.findall(r'src="/img/([^"]+)"', t):
+        assert os.path.exists('public/img/' + img), f'{path} 이미지 없음: {img}'
+    open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
+    print('built', path, cohort, plan, fee, len(t))
+
+built = 0
+for path, f in FORMS.items():
+    if f.get('variant') != 'v2': continue
+    gen(path, f); built += 1
+assert built, '등록부에 개선판(variant v2) 폼이 없음'
+EOF

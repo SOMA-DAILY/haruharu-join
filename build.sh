@@ -15,6 +15,8 @@ import os, re, json
 from datetime import datetime
 R=json.loads(os.environ['REG']); MP=os.environ['MP']
 FORMS, CUR, DL, DLKO, INFO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLINE_KO'], R['INFO']
+# 개선판(등록부에 variant 가 있는 줄)은 맨 끝에서 build-v2.sh 가 따로 만듦. 여기서는 기존 폼만 다뤄서 기존 화면이 한 글자도 안 바뀌게 함
+ALL_FORMS = FORMS; FORMS = {p: f for p, f in FORMS.items() if not f.get('variant')}
 TPL=open('src/form.template.html',encoding='utf-8').read()
 CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
@@ -152,8 +154,12 @@ sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
 # 관리 페이지: 등록부 JSON 을 박아 넣음 (API 호출 없이 기수/트랙/라벨을 앎)
-adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': FORMS, 'CURRENT': CUR, 'DEADLINE_KO': DLKO}, ensure_ascii=False))
+adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': ALL_FORMS, 'CURRENT': CUR, 'DEADLINE_KO': DLKO}, ensure_ascii=False))   # 관리 화면은 개선판 폼도 앎
 assert '__FORMS_JSON__' not in adm
+# 친구 할인 판정 함수 (서버와 같은 것): shared/friend-discount.mjs 에서 주석과 export 만 떼고 그대로 끼움
+FRIEND_FN = re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs', encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
+assert FRIEND_FN.startswith('function friendFee(') and adm.count('/*FRIEND_FN*/') == 1
+adm = adm.replace('/*FRIEND_FN*/', FRIEND_FN)
 os.makedirs('public/admin', exist_ok=True); open('public/admin/index.html', 'w', encoding='utf-8').write(adm); print('built admin', len(adm))
 EOF
 cp src/early-offer.js public/early-offer.js
@@ -182,3 +188,6 @@ open(f'public/{outdir}/index.html','w',encoding='utf-8').write(t)
 print('built', outdir, 'jnu_festival', fee, 'deadline', deadline, ms, len(t))
 EOF3
 echo "done. 배포는 main push (CI). 비상시: npx wrangler pages deploy public --project-name haruharu-apply"
+
+# 개선판 폼 (등록부의 variant: 'v2'). 기존 폼과 따로, 새 주소에만 씀
+MIXPANEL_TOKEN="$MP" ./build-v2.sh

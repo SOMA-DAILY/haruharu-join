@@ -1,0 +1,60 @@
+<!-- 친구 할인 화면 조각 (10/8). 등록부에 friendFee 가 있는 폼(개선판 정가 폼)에만 build-v2.sh 가 끼워 넣음.
+     HOOK: 친구 문항 제목(할인 안내로 갈아 끼움)과 그 아래 안내, 공유 버튼 / BANNER: 참가비 안내 맨 위(친구 선택지를 고르면 보임) / TAIL: 모양과 동작.
+     화면은 친구 선택지를 고르는 순간 할인 금액을 보여 줌. 친구 번호(휴대폰 꼴, 내 번호 아님)는 폼의 제출 검사가 받아 두므로
+     제출된 신청은 서버 판정(shared/friend-discount.mjs)과 같아짐.
+     금액과 송금 페이지 주소도 등록부 값. 참가비 페이지(3페이지)에만 둠. 완료 화면의 공유 카드는 뺌(10/8 운영자) -->
+<!--HOOK-->
+ <p class="t fr-t">친구랑 함께 신청 시 <b>__FR_OFF__원 할인</b></p>
+ <div class="fr-hook"><p>친구와 서로 번호를 적고 신청하면 둘&nbsp;다&nbsp;할인돼요.</p>
+  <button type="button" class="fr-share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg><span>친구에게 공유하기</span></button></div>
+<!--BANNER-->
+ <p class="fr-on" hidden><b>친구 할인 적용</b>__FR_LIST__<s>__FULL_FEE__원</s> → <strong>__FRIEND_FEE__원</strong><span>친구도 신청과 송금을 마치면 할인이 확정돼요. 확인이 안 되면 따로 연락드려요.</span></p>
+<!--TAIL-->
+<style>
+.fr-hook{margin:-2px 0 10px;padding:12px 13px;border-radius:14px;background:var(--hh-sky);font-size:14px;line-height:1.45;color:#22345A}
+.fr-hook p{margin:0 1px}
+.q .t.fr-t{font-size:20px;line-height:1.35;font-weight:800;letter-spacing:-.03em}
+.fr-t b{color:#1F5FA9;white-space:nowrap}   /* 좁은 화면에서 줄이 바뀔 때 할인 금액 중간에서 안 끊기게 */
+.fr-on{margin:0 0 10px;padding:11px 14px;border:1.5px solid var(--hh-blue);border-radius:14px;background:#F5F9FE;font-size:15px;line-height:1.5;color:var(--hh-ink)}
+.fr-on[hidden]{display:none}
+.q[data-name="name"] .fr-on+.note{padding:13px 15px;border-radius:14px;background:#F6F8FB;font-size:14px}   /* 안내 상자 모양은 제목 바로 뒤의 note 에 걸려 있어서, 사이에 낀 이 줄 뒤에도 같게 */
+.fr-on b{display:block;margin-bottom:1px;font-size:13.5px;font-weight:800;color:var(--hh-blue)}
+.fr-on s{color:var(--hh-mute)}
+.fr-on strong{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.fr-on span{display:block;margin-top:3px;font-size:13px;color:var(--hh-ink2)}
+.fr-share{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:42px;margin-top:10px;border:0;border-radius:13px;background:#fff;color:#1F5FA9;font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(26,52,92,.1)}
+.fr-share svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<script>
+(function(){
+ var form=document.getElementById('f'); if(!form) return;
+ var FULL='__FULL_FEE__', OFF='__FRIEND_FEE__', PAY='__PAY__', FPAY='__FRIEND_PAY__';
+ function mp(name,props){ try{ if(window.mixpanel&&mixpanel.track) mixpanel.track(name,Object.assign({path:location.pathname},props||{})); }catch(e){} }
+ function picked(n){ var r=form.querySelector('input[name="'+n+'"]:checked'); return r?r.value:''; }
+ var pay=document.getElementById('pay'), on=null;
+ // 친구 선택지를 고르면 바로 금액 세 곳과 송금 버튼이 할인 금액으로, 혼자로 바꾸면 도로 정가로
+ function sync(){ var room=picked('buddy_room'), now=!!room && room!=='혼자'; if(now===on) return; var first=on===null; on=now;
+  [].forEach.call(document.querySelectorAll('.fr-fee'),function(e){ e.textContent=on?OFF:FULL; });
+  if(pay) pay.setAttribute('href',on?FPAY:PAY);
+  var b=document.querySelector('.fr-on'); if(b) b.hidden=!on;
+  var w=document.querySelector('.fee-was'); if(w) w.hidden=on;   // 정가 줄은 친구 할인 안내가 대신 보여 줌
+  if(on && !first) mp('friend_discount_on'); }
+ form.addEventListener('change',sync);
+ setTimeout(sync,0); setTimeout(sync,700);   // 저장해 둔 입력을 되살린 뒤에도 맞춤
+ // 친구에게 공유하기: 친구 문항의 버튼 (공유 창이 없으면 주소 복사). 친구도 같은 성별용 화면으로 열리게 g 를 붙임
+ [].forEach.call(document.querySelectorAll('.fr-share'),function(share){ share.addEventListener('click',function(){
+  var g={'여성':'g=f&','남성':'g=m&'}[picked('gender')]||'';
+  var url=location.origin+location.pathname+'?'+g+'src=h'+COHORT+'-friend';
+  var text='하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 __FR_OFF__원 할인이래.';
+  var pg=share.closest('.page');
+  mp('friend_invite_click',{claimed:!!on,page:pg?pg.getAttribute('data-page'):''});
+  if(navigator.share){ navigator.share({title:'하루하루 소개팅',text:text,url:url}).catch(function(){}); return; }
+  function copied(){ var s=share.querySelector('span'), t=share.getAttribute('data-l')||s.textContent; share.setAttribute('data-l',t); s.textContent='링크를 복사했어요'; setTimeout(function(){ s.textContent=t; },2000); }
+  function ask(){ prompt('아래 주소를 복사해 친구에게 보내 주세요',url); }
+  // 클립보드 API 가 없거나 막힌 브라우저(일부 인앱 브라우저)는 옛 방식으로 복사해 보고, 그것도 안 되면 주소를 보여 줌
+  function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=url; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px';
+   document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,url.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) copied(); else ask(); }
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(copied,old); else old();
+ }); });
+})();
+</script>

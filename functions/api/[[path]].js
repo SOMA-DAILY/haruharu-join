@@ -1,6 +1,7 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
 import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
+import { friendFee } from '../../shared/friend-discount.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -203,6 +204,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
       } catch (e) {}
     }
     const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, track: form ? form.track : (festival ? 'festival' : ''), fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
+    // 친구 할인: 안내받은 금액을 서버가 등록부와 친구 문항으로 정해서 남김 (클라이언트 값 안 믿음). 대상 폼이 아니면 칸 자체를 안 만듦
+    const ff = form && form.friendFee ? friendFee(form, f) : null;
+    if (ff != null) rec.friend_fee = ff;
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
@@ -236,6 +240,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
         await env.DB.prepare('UPDATE submissions SET major = ?2, avoid_same_major = ?3, student_card_key = ?4 WHERE application_id = ?1')
           .bind(id, f.major || '', f.avoid_same_major || '', cardKey).run();
       } catch (e) {}
+    }
+    // 친구 할인 금액(migrations/0009)도 batch 밖에서: 원격에 0009 가 없어도 신청자 행은 남고 이 값만 빠짐 (정본 KV 에는 있음)
+    if (ff != null && dbOk) {
+      try { await env.DB.prepare('UPDATE submissions SET friend_fee = ?2 WHERE application_id = ?1').bind(id, ff).run(); } catch (e) {}
     }
     // 트랙/직장인 문항(migrations/0008)도 batch 밖에서: 원격에 0008 이 없어도 신청자 행은 남음
     if (form && dbOk) {
@@ -297,12 +305,12 @@ export async function onRequest({ request, env, params, waitUntil }) {
     } while (cursor);
     rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
     if (url.searchParams.get('format') === 'json') return json(rows);
-    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track'];
+    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track', 'friend_fee'];
     const lines = [head.join(',')];
     for (const r of rows) {
       const f = r.fields || {}, h = r.hidden || {};
       lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN.map((k) => h[k]), r.ref, r.sid].map(esc)
-        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || '')]).join(','));
+        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || ''), esc(r.friend_fee == null ? '' : String(r.friend_fee))]).join(','));
     }
     return csv(lines);
   }
@@ -388,6 +396,7 @@ async function landExpr(DB) {
 const METRICS = `COUNT(*) visits,
   SUM(started) starts,
   SUM(max_page >= 2 OR submitted) page2,
+  SUM(max_page >= 3 OR submitted) page3,
   SUM(submitted) submits,
   SUM(CASE WHEN started = 1 AND submitted = 0 THEN 1 ELSE 0 END) partials,
   SUM(CASE WHEN started = 0 AND submitted = 0 AND next_click IS NULL THEN 1 ELSE 0 END) bounces,
@@ -461,14 +470,14 @@ async function admin(sub, request, env, kv, url) {
       q(`SELECT ${METRICS} FROM sessions WHERE ${where}`),
       q(`SELECT date((first_ts / 1000) + 32400, 'unixepoch') k,
           SUM(${LAND}) land, SUM(${LAND} AND next_click IS NOT NULL) land_click,
-          SUM(NOT ${LAND}) visits, SUM(NOT ${LAND} AND started = 1) starts, SUM(NOT ${LAND} AND (max_page >= 2 OR submitted = 1)) page2,
+          SUM(NOT ${LAND}) visits, SUM(NOT ${LAND} AND started = 1) starts, SUM(NOT ${LAND} AND (max_page >= 2 OR submitted = 1)) page2, SUM(NOT ${LAND} AND (max_page >= 3 OR submitted = 1)) page3,
           SUM(NOT ${LAND} AND submitted = 1) submits, SUM(NOT ${LAND} AND started = 1 AND submitted = 0) partials,
           AVG(CASE WHEN NOT ${LAND} THEN NULLIF(active_ms, 0) END) avg_active_ms
         FROM sessions WHERE ${where} GROUP BY k ORDER BY k`),
       q(`SELECT CAST(strftime('%H', (first_ts / 1000) + 32400, 'unixepoch') AS INTEGER) k, COUNT(*) visits, SUM(submitted) submits FROM sessions WHERE ${where} GROUP BY k`),
       q(`SELECT path k, ${METRICS} FROM sessions WHERE ${where} GROUP BY k`),
       // 링크별: 한 사람이 랜딩 → 폼으로 가면 행이 2개라 방문은 sid 기준으로 셈
-      q(`SELECT COALESCE(src, '(없음)') k, COUNT(DISTINCT sid) visits, SUM(started) starts, SUM(max_page >= 2 OR submitted) page2, SUM(submitted) submits,
+      q(`SELECT COALESCE(src, '(없음)') k, COUNT(DISTINCT sid) visits, SUM(started) starts, SUM(max_page >= 2 OR submitted) page2, SUM(max_page >= 3 OR submitted) page3, SUM(submitted) submits,
           SUM(CASE WHEN started = 1 AND submitted = 0 THEN 1 ELSE 0 END) partials, AVG(CASE WHEN NOT ${LAND} THEN NULLIF(active_ms, 0) END) avg_active_ms, MAX(first_ts) last_visit
         FROM sessions WHERE ${where} GROUP BY k ORDER BY visits DESC`),
       q(`SELECT path, COALESCE(NULLIF(last_field, ''), '(없음)') k, max_page, COUNT(*) n FROM sessions WHERE ${where} AND started = 1 AND submitted = 0 GROUP BY path, k, max_page ORDER BY n DESC`),
