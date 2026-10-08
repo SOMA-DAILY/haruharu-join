@@ -127,12 +127,15 @@ tr.grp td{background:var(--bg,#f6f7f9);color:var(--muted,#667085);font-size:12px
 .inline-edit{border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 6px;font-weight:600;width:160px}
 .inline-edit:hover,.inline-edit:focus{border-color:var(--line);background:#fff}
 h3.sec{font-size:14px;margin:18px 0 8px}
-.share{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.share{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start}
 .share button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink);cursor:pointer;font:inherit;min-width:0}
 .share button:hover{border-color:var(--ink)}
 .share b{font-size:14px}
 .share .fee{font-size:12px;color:var(--sub)}
 .share .u{font-size:11px;color:var(--sub);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.share .sg{display:flex;flex-direction:column;gap:4px;min-width:0}
+.share .sgb{display:flex;gap:4px}
+.share .sgb button{flex:1;flex-direction:row;align-items:center;justify-content:center;padding:6px 8px;border-radius:8px;font-size:12px;font-weight:600}
 @media (max-width:720px){.share{grid-template-columns:1fr}}
 .builder{display:grid;grid-template-columns:1.1fr 1.2fr 1.2fr .9fr auto;gap:8px;align-items:end}
 .builder label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--sub)}
@@ -611,8 +614,10 @@ function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자
 // 현재 기수 폼 전부 (등록부). src = h{기수}-msg-{트랙}-{요금제} 라 [광고별 신청] 표에 따로 잡힘. 할인 폼은 사전알림/이전 참가자에게만, 광고/바이오에 쓰지 말 것
 var SHARE=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return f.cohort===REG.CURRENT}).map(function(p){var f=REG.FORMS[p];
   var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
-  return [f.label,fee+', '+REG.DEADLINE_KO[f.cohort]+' 마감',p+'?src=h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:'')]});
-$('shareLinks').innerHTML=SHARE.map(function(x){return '<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>'}).join('');
+  return [f.label,fee+', '+REG.DEADLINE_KO[f.cohort]+' 마감',p+'?src=h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:''),!!f.variant]});
+// 개선판 폼은 남녀 화면이 따로 있어서(주소 끝 g=f / g=m) 카드 아래에서 여자/남자 링크를 바로 복사
+$('shareLinks').innerHTML=SHARE.map(function(x){var card='<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>';
+  return x[3]?'<div class="sg">'+card+'<div class="sgb"><button type="button" data-copy="'+esc(HOST+x[2]+'&g=f')+'">여자 링크 복사</button><button type="button" data-copy="'+esc(HOST+x[2]+'&g=m')+'">남자 링크 복사</button></div></div>':card}).join('');
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
 function saveMark(r,status,memo,room,bd){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}return post('mark',body).then(function(d){if(d.ok){r.status=status;r.memo=memo;r.room=room;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨')}})}
