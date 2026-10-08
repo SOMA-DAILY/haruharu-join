@@ -13,6 +13,11 @@ export const COHORT_DEADLINES = {
 export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
+// 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
+//   이 두 값이 있는 폼만 대상. 판정은 shared/friend-discount.mjs
+const FRIEND = { friendFee: 5900, friendPay: PAY + '/b/' };
+// 정가 표시 (10/8~, 개선판 정가 폼): 참가비 안내에서 이 금액에 줄을 긋고 실제 참가비 앞에 보여 줌. 3기 안내 그림(P4 ..._12900)과 축제 폼이 써 온 값. 표시만 하고 계산에는 안 씀
+const LIST = { listFee: 12900 };
 // 3기 공통값 (옛 경로, 값 바꾸지 않음)
 const S3 = { cohort: '3', city: 'seoul', track: 'seoul-student', trackKo: '서울 학생', cityKo: '서울', schoolEx: '서울대학교' };
 const G3 = { cohort: '3', city: 'gwangju', track: 'gwangju-student', trackKo: '광주 학생', cityKo: '광주', schoolEx: '전남대학교' };
@@ -39,6 +44,11 @@ export const FORMS = {
   '/4/seoul-work/pre/':     { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료)', listed: true, landing: true, period: '10월 중순' },  // 일정 미확정이라 학생 4기 일정 대신 (10/7)
   '/4/seoul-work/x7q2/':    { ...W4, plan: 'discount', fee: 4900, pay: PAY + '/e/', label: '4기 수도권 직장인 할인 (사전알림 메시지 전용)', landing: true },
   '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인', landing: true },
+  // 개선판 (10/8~): 기존 폼은 그대로 두고 새 주소에 나란히 올림. 이름은 '기존 이름 - 개선'. 화면은 build-v2.sh 가 src/form.v2.template.html + src/landing.v2.html 로 만듦.
+  //   지역 선택(/)에는 안 보임(listed 없음). 남녀 화면은 주소 끝 ?g=f / ?g=m. variant 가 있는 줄은 build.sh 의 기존 빌드와 '같은 트랙 정가 폼 찾기'에서 빠짐
+  '/4/seoul/v2/':           { ...S4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 서울 학생 - 개선', landing: true, variant: 'v2' },
+  '/4/gwangju/v2/':         { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 광주 학생 - 개선', landing: true, variant: 'v2' },
+  '/4/seoul-work/pre/v2/':  { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료) - 개선', landing: true, variant: 'v2', period: '10월 중순' },
 };
 
 // 기수별 안내 (폼 안내 카드와 일정 문구. 금액은 등록부 fee 에서, 날짜는 여기서)
@@ -77,7 +87,7 @@ export function formStatus(path, now = Date.now(), env) {
 }
 export function nextFormPath(f) {
   if (!f || f.cohort === CURRENT_COHORT) return null;
-  const same = Object.keys(FORMS).find((p) => FORMS[p].cohort === CURRENT_COHORT && FORMS[p].track === f.track && FORMS[p].plan === 'regular');
+  const same = Object.keys(FORMS).find((p) => FORMS[p].cohort === CURRENT_COHORT && FORMS[p].track === f.track && FORMS[p].plan === 'regular' && !FORMS[p].variant);
   return same || '/';
 }
 export function cohortStatus(now = Date.now(), env, cohort = CURRENT_COHORT) {

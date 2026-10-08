@@ -1,0 +1,24 @@
+<!-- 완료 화면의 앱 설치 안내 (10/8). 개선판 정가 폼에만 build-v2.sh 가 완료 문구 바로 아래에 끼움 (이 주석은 빼고).
+     스토어 주소는 앱과 같은 값 (haruharu-FE src/features/updates/store-update-policy.ts 의 APP_STORE_URL, PLAY_STORE_URL) -->
+<div class="ap-get">
+ <b>앱 미리 설치하기</b>
+ <p>방이 열리면 초대 코드만 넣고 바로 시작할 수 있어요.</p>
+ <div class="ap-btns">
+  <a class="ap-btn" data-store="ios" href="https://apps.apple.com/kr/app/id6790147623" target="_blank" rel="noopener"><small>아이폰</small>App Store</a>
+  <a class="ap-btn" data-store="android" href="https://play.google.com/store/apps/details?id=com.somadaily.haruharu" target="_blank" rel="noopener"><small>안드로이드</small>Google Play</a>
+ </div>
+</div>
+<style>
+.ap-get{margin-top:20px;padding:16px;border-radius:16px;background:var(--hh-sky);text-align:left}
+.ap-get b{display:block;font-size:16px;line-height:1.4;font-weight:800;color:var(--hh-ink)}
+.ap-get p{margin:5px 0 0;font-size:14px;line-height:1.5;color:var(--hh-ink2)}
+.ap-btns{display:flex;gap:8px;margin-top:12px}
+.ap-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:54px;border-radius:13px;background:var(--hh-ink);color:#fff;font-size:15.5px;line-height:1.25;font-weight:700;text-decoration:none}
+.ap-btn small{font-size:11.5px;font-weight:600;opacity:.72}
+</style>
+<script>
+(function(){
+ [].forEach.call(document.querySelectorAll('.ap-btn'),function(a){ a.addEventListener('click',function(){
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('app_install_click',{path:location.pathname,store:a.getAttribute('data-store')}); }catch(e){} }); });
+})();
+</script>
