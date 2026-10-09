@@ -49,6 +49,9 @@ export const FORMS = {
   '/4/seoul/v2/':           { ...S4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 서울 학생 - 개선', landing: true, variant: 'v2' },
   '/4/gwangju/v2/':         { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 광주 학생 - 개선', landing: true, variant: 'v2' },
   '/4/seoul-work/pre/v2/':  { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료) - 개선', landing: true, variant: 'v2', period: '10월 중순' },
+  // 재참여 (개선판 학생 폼 기반): 본인과 초대한 친구 모두 4,900원 고정. 공유는 같은 폼, 추가 친구 할인 없음.
+  '/4/seoul/rejoin/':       { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 서울 학생 재참여', landing: true, variant: 'v2', rejoin: true },
+  '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
 };
 
 // 기수별 안내 (폼 안내 카드와 일정 문구. 금액은 등록부 fee 에서, 날짜는 여기서)
@@ -108,5 +111,6 @@ export function feeLabel(f) {
   if (f.plan === 'prealert') return '사전알림 (무료)';
   if (f.plan === 'jnu_festival') return '전남대 축제 4,900원';
   const won = f.fee.toLocaleString('ko-KR') + '원';
+  if (f.rejoin) return '재참여 ' + won;
   return f.plan === 'early' ? '사전알림 ' + won : f.plan === 'discount' ? '할인 ' + won : '일반 ' + won;
 }

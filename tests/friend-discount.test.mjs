@@ -6,7 +6,7 @@ import { formOf, FORMS } from '../shared/forms.mjs';
 import { friendFee } from '../shared/friend-discount.mjs';
 
 const seoul = formOf('/4/seoul/v2/');   // 친구 할인은 개선판 정가 폼에만
-const V2 = Object.keys(FORMS).filter((p) => FORMS[p].variant === 'v2');
+const V2 = Object.keys(FORMS).filter((p) => FORMS[p].variant === 'v2' && !FORMS[p].rejoin);   // 기존 개선판 3곳. 재참여 폼은 rejoin.test.mjs에서 별도로 검증
 const OLD4 = Object.keys(FORMS).filter((p) => FORMS[p].cohort === '4' && !FORMS[p].variant);
 const me = '010-1000-0001';
 const open = Date.parse('2026-10-09T12:00:00+09:00');   // 4기 모집 중인 시각

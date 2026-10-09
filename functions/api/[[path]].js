@@ -176,7 +176,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
-    if (!preRegistration && !festival && !prealert) required.push('source', 'device');
+    if (!preRegistration && !festival && !prealert) {
+      if (!form.rejoin) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
+      required.push('device');
+    }
     if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
     let capture = null;

@@ -127,6 +127,12 @@ input:focus{border-color:#1a1a1a}
 @media(max-width:480px){:root{--hh-g:18px}.wrap{padding:0 var(--hh-g) 110px}}
 @media(min-width:700px){html,body{background:#EDF1F6}.wrap{background:#fff;min-height:100vh}}
 .ld{color:var(--hh-ink)}
+.ld-life{margin:28px calc(var(--hh-g)*-1) 0;padding:30px 0 0;background:linear-gradient(160deg,#E7F4FF 0%,#C5E4FB 100%);overflow:hidden}
+.ld .ld-life h2{margin:0;padding:0 var(--hh-g);font-size:clamp(28px,7.5vw,34px);line-height:1.25;letter-spacing:-.04em}
+.ld-life-media{position:relative;width:100%;aspect-ratio:1/1.07;margin-top:24px}
+.ld-life-img{display:block;position:absolute;height:auto}
+.ld-life-media #ldAppPreview{top:14px;left:-8%;width:84%;border-radius:28px;transform:rotate(-4deg);box-shadow:0 18px 35px rgba(27,71,107,.16)}
+.ld-life-media #ldHero{right:16px;bottom:28px;box-sizing:border-box;width:65%;border:6px solid #fff;border-radius:22px;transform:rotate(3deg);box-shadow:0 18px 34px rgba(27,71,107,.23)}
 :where(.ld) p,:where(.ld) h1,:where(.ld) h2,:where(.ld) h3,:where(.ld) ol,:where(.ld) ul,:where(.ld) dl,:where(.ld) dd,:where(.ld) figure{margin:0;padding:0}
 :where(.ld) ol,:where(.ld) ul{list-style:none}
 .ld h1,.ld h2,.ld h3{text-wrap:balance}
@@ -152,8 +158,7 @@ input:focus{border-color:#1a1a1a}
 /* 제목 둘째 줄(마음에 드는 사람을 선택하세요)이 Android 기본 글꼴(Noto Sans, 글자 폭이 더 넓음)의 360 폭에서도 한 줄에 들어가는 크기. 7.4vw 에서는 2px 넘쳐 세 줄이 됐음 */
 .ld-h1{margin-top:8px;font-size:clamp(22px,7.2vw,32px);line-height:1.3;font-weight:800;letter-spacing:-.035em}
 .ld-sub{margin-top:10px;font-size:15.5px;line-height:1.55;color:var(--hh-ink2)}
-/* 첫 화면 그림: 최신 앱 스토어 스크린샷 01-feed 를 스토어 스크린샷 생성기로 다시 뽑아(화면 속 이름만 앱이 실제로 붙여 주는 가명으로) 제목 아래를 잘라 낸 것. 보는 사람(나)이 달라서 여성용 L_store_feed_f(유진), 남성용과 기본판 L_store_feed_m(민준) 두 장이고 바로 아래 스크립트가 HH_G 로 고름. 바탕 하늘색이 이어지게 위 바탕의 끝 색을 그림 맨 윗줄 색(#BEE1FB)에 맞춤 */
-.ld-ph{display:block;width:calc(100% + var(--hh-g)*2);max-width:none;height:auto;margin:22px calc(var(--hh-g)*-1) 0}
+/* 첫 화면 그림: 앱 스토어 소개 이미지처럼 큰 앱 화면 뒤로 실제 일상 사진을 겹침. 앱 화면은 링크 성별에 맞추고 실제 사진은 공통. */
 /* 안내 칸: 이름표 + 값 상자 (첫 화면의 진행 일정/참여 대상/그룹 구성, 신청 안내의 마감/확정 문자) */
 .ld-if{margin-top:16px}
 .ld-if:empty{display:none}
@@ -340,9 +345,14 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 <h1 class="ld-h1">3일 동안 일상을 공유하고<br>마음에 드는 사람을 선택하세요</h1>
 <p class="ld-sub">3초짜리 영상으로 서로를 알아가는 특별한 소개팅</p>
 <dl class="ld-if"><div><dt>진행 일정</dt><dd>10월 중순 예정</dd></div><div><dt>참여 대상</dt><dd>서울 경기 인천 직장인</dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5</dd></div></dl>
-<img class="ld-ph" id="ldHero" width="1040" height="945" data-img="L_feed" fetchpriority="high" alt="하루하루 앱 방 화면. 참가자들이 올린 하루 영상이 가명과 함께 나란히 보여요">
-<script>(function(){ var H='/img/L_store_feed_'; document.getElementById('ldHero').src=H+(HH_G==='f'?'f':'m')+'.webp'; })();</script>
-<noscript><img class="ld-ph" width="1040" height="945" src="/img/L_store_feed_m.webp" alt=""></noscript>
+<section class="ld-life" id="ld-life" data-sec="life">
+<h2>서로의 일상이<br>대화 소재로</h2>
+<div class="ld-life-media">
+<img class="ld-life-img" id="ldAppPreview" width="1040" height="945" data-img="L_feed" src="/img/L_store_feed_m.webp" fetchpriority="high" decoding="async" alt="하루하루 앱 방 화면. 참가자들이 올린 하루 영상이 가명과 함께 나란히 보여요">
+<img class="ld-life-img" id="ldHero" width="600" height="485" data-img="L_grid" src="/img/L_haru_grid.jpg" fetchpriority="high" decoding="async" alt="지난 기수 참가자들이 올린 카페, 고양이, 학교, 러닝, 드럼, 점심 일상 영상 6장">
+</div>
+<script>(function(){ var H='/img/L_store_feed_'; document.getElementById('ldAppPreview').src=H+(HH_G==='f'?'f':'m')+'.webp'; })();</script>
+</section>
 </header>
 
 <section class="ld-sec" id="ld-flow" data-sec="flow">
@@ -387,6 +397,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 </div></div></li>
 </ol>
 </section>
+
 
 <section class="ld-band ld-tint" id="ld-qa" data-sec="qa">
 <p class="ld-k">자주 하는 걱정</p>

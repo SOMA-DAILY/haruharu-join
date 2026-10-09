@@ -1,4 +1,4 @@
-<!-- 친구 할인 화면 조각 (10/8). 등록부에 friendFee 가 있는 폼(개선판 정가 폼)에만 build-v2.sh 가 끼워 넣음.
+<!-- 친구 할인 화면 조각 (10/8). 정가 폼은 전체 조각, 재참여 폼은 스타일과 공유 동작(TAIL)만 build-v2.sh가 재사용.
      HOOK: 친구 문항 제목(할인 안내로 갈아 끼움)과 그 아래 안내, 공유 버튼 / BANNER: 참가비 안내 맨 위(친구 선택지를 고르면 보임) / TAIL: 모양과 동작.
      화면은 친구 선택지를 고르는 순간 할인 금액을 보여 줌. 친구 번호(휴대폰 꼴, 내 번호 아님)는 폼의 제출 검사가 받아 두므로
      제출된 신청은 서버 판정(shared/friend-discount.mjs)과 같아짐.
@@ -28,7 +28,7 @@
 <script>
 (function(){
  var form=document.getElementById('f'); if(!form) return;
- var FULL='__FULL_FEE__', OFF='__FRIEND_FEE__', PAY='__PAY__', FPAY='__FRIEND_PAY__';
+ var FULL='__FULL_FEE__', OFF='__FRIEND_FEE__', PAY='__PAY__', FPAY='__FRIEND_PAY__', SHARE_ONLY=__SHARE_ONLY__;
  function mp(name,props){ try{ if(window.mixpanel&&mixpanel.track) mixpanel.track(name,Object.assign({path:location.pathname},props||{})); }catch(e){} }
  function picked(n){ var r=form.querySelector('input[name="'+n+'"]:checked'); return r?r.value:''; }
  var pay=document.getElementById('pay'), on=null;
@@ -39,22 +39,23 @@
   var b=document.querySelector('.fr-on'); if(b) b.hidden=!on;
   var w=document.querySelector('.fee-was'); if(w) w.hidden=on;   // 정가 줄은 친구 할인 안내가 대신 보여 줌
   if(on && !first) mp('friend_discount_on'); }
- form.addEventListener('change',sync);
- setTimeout(sync,0); setTimeout(sync,700);   // 저장해 둔 입력을 되살린 뒤에도 맞춤
+ if(!SHARE_ONLY){ form.addEventListener('change',sync);
+  setTimeout(sync,0); setTimeout(sync,700); }   // 재참여는 고정 금액. 정가 폼만 가격 전환과 할인 표시를 동기화
  // 친구에게 공유하기: 친구 문항의 버튼 (공유 창이 없으면 주소 복사). 친구도 같은 성별용 화면으로 열리게 g 를 붙임
  [].forEach.call(document.querySelectorAll('.fr-share'),function(share){ share.addEventListener('click',function(){
   var g={'여성':'g=f&','남성':'g=m&'}[picked('gender')]||'';
-  var url=location.origin+location.pathname+'?'+g+'src=h'+COHORT+'-friend';
-  var text='하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 __FR_OFF__원 할인이래.';
+  var url=location.origin+location.pathname+'?'+g+'src=__SHARE_SRC__';
+  var text='__SHARE_TEXT__';
   var pg=share.closest('.page');
   mp('friend_invite_click',{claimed:!!on,page:pg?pg.getAttribute('data-page'):''});
-  if(navigator.share){ navigator.share({title:'하루하루 소개팅',text:text,url:url}).catch(function(){}); return; }
+  if(navigator.share){ navigator.share({title:'하루하루 소개팅',text:text,url:url}).catch(function(e){ if(!e||e.name!=='AbortError') copy(); }); return; }
   function copied(){ var s=share.querySelector('span'), t=share.getAttribute('data-l')||s.textContent; share.setAttribute('data-l',t); s.textContent='링크를 복사했어요'; setTimeout(function(){ s.textContent=t; },2000); }
   function ask(){ prompt('아래 주소를 복사해 친구에게 보내 주세요',url); }
   // 클립보드 API 가 없거나 막힌 브라우저(일부 인앱 브라우저)는 옛 방식으로 복사해 보고, 그것도 안 되면 주소를 보여 줌
   function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=url; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px';
    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,url.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) copied(); else ask(); }
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(copied,old); else old();
+  function copy(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(copied,old); else old(); }
+  copy();
  }); });
 })();
 </script>
