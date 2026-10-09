@@ -25,6 +25,7 @@ DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 _fr=open('src/friend-discount.html',encoding='utf-8').read()
 FR_HOOK, _fr = _fr.split('<!--HOOK-->\n',1)[1].split('<!--BANNER-->\n',1)
 FR_BANNER, FR_TAIL = _fr.split('<!--TAIL-->\n',1)
+REJOIN_HOOK=open('src/rejoin-friend.html',encoding='utf-8').read()
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -79,7 +80,8 @@ def gen(path, f):
         done_title, done_body = '사전 알림이 접수됐어요 💌', '일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.'
         consent = '성별, 출생연도, 전화번호, 하시는 일'
     else:
-        fee_note = (f'사전 알림을 신청해 주신 분은 {fee}원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.' if plan in ('early','discount')
+        fee_note = (f'재참여하시는 분과 초대받은 친구 모두 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin')
+                    else f'사전 알림을 신청해 주신 분은 {fee}원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.' if plan in ('early','discount')
                     else f'참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.')
         flow = '1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.\n2. 방이 열리면 초대 코드를 문자로 보내드려요.\n3. 앱에 코드를 넣으면 시작이에요.'
         done_title, done_body = '신청이 접수됐어요 💌', '방이 열리면 초대 코드를 문자로 보내드려요.'
@@ -141,6 +143,11 @@ def gen(path, f):
             card = (CARD.replace('__COHORT__', cohort).replace('__TARGET_KO__', target_ko).replace('__PERIOD__', info.get('period','추후 안내'))
                     .replace('__NOTICE__', notice).replace('__HOWTO__', howto).replace('__REFUND__', refund))
         t = re.sub(r'<img class="img" data-img="P4"[^>]+>', lambda m: card, t)
+    if f.get('rejoin'):
+        # 재참여는 유입 경로와 신청 마음을 다시 묻지 않음. URL의 src/utm 추적은 유지.
+        for question in ('source', 'intent'):
+            t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
+            assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
         start = t.index('<div class="q" data-name="source">'); end = t.index('<div class="q" data-name="intent">', start)
@@ -179,24 +186,32 @@ def gen(path, f):
             qp, qc = '<div class="q" data-name="phone">', '<div class="q" data-name="consent">'   # 문항 블록으로 찾음 (랜딩의 스타일 선택자에도 data-name 이 나와서)
             assert qp in p2 and qc in p2 and p2.count('<div class="q"') == 2 and qp not in p1 + p3 and qc not in p1 + p3, f'{path} 전화번호/동의 문항 위치가 다름'
             assert 'data-next="2"' in p1 and 'data-prev="1"' in p2 and 'data-next="3"' in p2 and 'data-prev="2"' in p3 and 'id="submit"' in p3 and '<div class="q" data-name="name">' in p3, f'{path} 페이지 이동 버튼이 어긋남'
-        if f.get('friendFee'):
+        if f.get('friendFee') or f.get('rejoin'):
             # 친구 할인 (10/8): 친구 문항을 참가비 안내 위로 올리고, 제목을 할인 안내로 바꾸고, 친구 선택지를 고르면 금액과 송금 버튼이 할인 금액으로 바뀜. 친구 문항에는 공유 버튼
             won = lambda n: f'{n:,}'
-            frv = {'__FR_OFF__': won(f['fee'] - f['friendFee']), '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f['friendFee']),
-                   '__PAY__': f['pay'], '__FRIEND_PAY__': f['friendPay'], '__FR_LIST__': ('<s>' + won(f['listFee']) + '원</s> → ') if f.get('listFee') else ''}
+            share_only = bool(f.get('rejoin'))
+            off = won(f['fee'] - f.get('friendFee', f['fee']))
+            frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])),
+                   '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(f['listFee']) + '원</s> → ') if f.get('listFee') else '',
+                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_SRC__': f'h{cohort}-friend' + ('-rejoin' if share_only else ''),
+                   '__SHARE_TEXT__': (f'하루하루 소개팅 같이 신청하자! 이 링크로 신청하면 친구도 {fee}원이야. 신청서 친구 번호 칸에 서로 번호를 적어줘.' if share_only
+                                      else f'하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 {off}원 할인이래.')}
             def frfill(s):
                 for k, v in frv.items(): s = s.replace(k, v)
                 return s
             mb = re.search(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t, flags=re.S)
             name_open = '<div class="q" data-name="name">'; title = '<p class="t">친구랑 함께 신청하셨나요?</p>\n'; note = '친구도 신청서에 내 번호를 적어야 반영돼요.'
             assert mb and t.count(name_open) == 1 and mb.group(0).count(title) == 1 and mb.group(0).count(note) == 1, f'{path} 친구 문항/참가비 안내를 못 찾음'
-            buddy = mb.group(0).rstrip('\n').replace(title, frfill(FR_HOOK), 1).replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
+            hook = REJOIN_HOOK if share_only else FR_HOOK
+            buddy = mb.group(0).rstrip('\n').replace(title, frfill(hook), 1)
+            if not share_only: buddy = buddy.replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
             t = t.replace(mb.group(0), '', 1).replace(name_open, buddy + '\n\n' + name_open, 1)
-            a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
-            blk = t[a0:a1]; ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'; amt = won(f['fee']) + '원'
-            assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
-            blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
-            t = t[:a0] + blk + t[a1:]
+            if not share_only:
+                a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
+                blk = t[a0:a1]; ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'; amt = won(f['fee']) + '원'
+                assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
+                blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
+                t = t[:a0] + blk + t[a1:]
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
             p3 = t.split('data-page="3"', 1)[1].split('data-page="done"', 1)[0]
@@ -214,8 +229,8 @@ def gen(path, f):
             page1 = t.split('data-page="1"', 1)[1].split('data-page="3"', 1)[0]
             for word in ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ()):
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
-        for v in 'fm':   # 첫 화면 그림: 여성용(f), 남성용과 기본판(m). 스크립트가 주소를 이어 붙여 고르므로 아래 src 검사에 안 걸림
-            assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 첫 화면 그림 없음: L_store_feed_{v}.webp'
+        for v in 'fm':   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
+            assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 앱 화면 이미지 없음: L_store_feed_{v}.webp'
         keys = re.findall(r"(\w+):'", t.split('var P={', 1)[1].split('};', 1)[0])   # 스크립트 속 참가자 예시 목록(키 = 사진 파일 이름)
         assert len(keys) >= 6, f'{path} 참가자 예시 목록을 못 읽음: {keys}'
         for k in keys:
