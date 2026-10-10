@@ -8,7 +8,8 @@
 - 주소 `https://join.haruharu.co.kr` (Cloudflare Pages 프로젝트 이름은 `haruharu-apply`, 헷갈림 주의)
 - main push 하면 바로 라이브 신청폼이 바뀜
 - **기수/트랙/요금제/금액/마감은 전부 `shared/forms.mjs` 등록부 한 곳.** 경로 하나가 폼 하나 (`/{기수}/{트랙}/{요금제}/`, 3기는 옛 경로 그대로). 서버는 제출 경로로 요금제/기수/지역을 확정하고(클라이언트 hidden 값 안 믿음), 등록부에 없는 경로는 404 `unknown_form`. 기수 마감은 `COHORT_DEADLINES`, 지나면 그 기수 폼 전부 마감 안내 + 현재 기수 같은 트랙 폼으로 가는 버튼, `/api/submit` 은 409 `cohort_closed`. `GET /api/cohort?path=/seoul/` 로 폼별 상태 조회. 로컬 시험은 환경값 `COHORT_DEADLINE`(현재 기수에만 먹음)
-- **새 기수 여는 법:** `shared/forms.mjs` 에 줄 추가 + `CURRENT_COHORT` + `COHORT_DEADLINES` + `COHORT_INFO`(진행 기간) 바꾸고 build. 지난 기수 줄은 지우지 않음(옛 링크 마감 안내용, 관리 페이지 기수 탭용). `shared/cohort.mjs` 는 옛 import 호환용 껍데기
+- **고정 링크 (10/10~):** 광고/바이오/메시지는 기수 없는 `/seoul/student/` `/gwangju/student/` `/seoul/work/` 만 씀. `shared/entry.mjs` 가 등록부 `entry` 값이 같은 폼 중 열린 것(마감 가장 이른 것)으로 302, 쿼리 그대로. 마감된 기수의 정가 폼으로 오면 `functions/_middleware.js` 가 현재 기수 폼으로 302. src 에도 기수 안 넣음 (`ad-{지역}-{m/f}-{소재}-{계정}`, `bio-{트랙}`, `msg-{트랙}-{목적}`)
+- **새 기수 여는 법:** `shared/forms.mjs` 에 줄 추가(고정 링크로 받을 폼엔 `entry`) + `CURRENT_COHORT` + `COHORT_DEADLINES` + `COHORT_INFO`(진행 기간) 바꾸고 build. 광고 링크는 안 바꿈. 지난 기수 줄은 지우지 않음(옛 링크 마감 안내용, 관리 페이지 기수 탭용). `shared/cohort.mjs` 는 옛 import 호환용 껍데기
 
 ## 사용자 흐름
 
