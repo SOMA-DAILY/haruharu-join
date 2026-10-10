@@ -616,7 +616,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  [].forEach.call(document.querySelectorAll('.ap-btn'),function(a){ a.addEventListener('click',function(){
   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('app_install_click',{path:location.pathname,store:a.getAttribute('data-store')}); }catch(e){} }); });
 })();
-</script><!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관, 저장은 Mixpanel dating_experience 이벤트만 (D1/KV 쓰기 없음) -->
+</script><!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관. 10/10: Mixpanel dating_experience 이벤트 + 신청서(KV/D1 dating_experience)에도 저장 → 관리 페이지 CSV -->
 <div class="xp" id="xp">
  <p class="t">최근 1년 동안 해본 소개팅이 있나요? <span class="xp-sub">(여러 개 선택)</span></p>
  <div class="opts">
@@ -653,6 +653,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
   var v=[].map.call(box.querySelectorAll('input:checked'),function(x){return x.value;});
   if(!v.length) return;
   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('dating_experience',{methods:v, dating_app:v.indexOf('dating_app')>=0, none:v.indexOf('none')>=0, path:location.pathname}); }catch(e){}
+  try{ if(window.HH_APP_ID) fetch('/api/experience',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:window.HH_APP_ID,methods:v}),keepalive:true}).catch(function(){}); }catch(e){}
   box.querySelector('.opts').style.display='none'; send.style.display='none'; document.getElementById('xpDone').hidden=false;
  });
 })();
@@ -898,7 +899,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
    .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
-     var appId=res.application_id||res.id;
+     var appId=res.application_id||res.id; window.HH_APP_ID=appId;   // 완료 화면 선택 문항 저장용 (done-survey)
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, track:TRACK, plan:PLAN, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
      ev('submit',{ application_id:appId, total_seconds:Math.round((Date.now()-T0)/1000), gender:d.gender, source_self_report:d.source, device_answer:d.device, intent:d.intent });
      fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);

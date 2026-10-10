@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { formOf, feeLabel, listedForms, formStatus, COHORT_DEADLINES } from '../shared/forms.mjs';
 import { friendFee } from '../shared/friend-discount.mjs';
 import { onRequest } from '../functions/api/[[path]].js';
+Date.now = () => Date.parse('2026-10-09T12:00:00+09:00');   // 4기 모집 중 시각으로 고정 (4기 마감 10/10 17:00 뒤에도 같은 결과)
 
 const paths = ['/4/seoul/rejoin/', '/4/gwangju/rejoin/'];
 const read = (p) => readFileSync(new URL('../public' + p + 'index.html', import.meta.url), 'utf8');

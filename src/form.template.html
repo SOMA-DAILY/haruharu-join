@@ -412,7 +412,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
    .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
-     var appId=res.application_id||res.id;
+     var appId=res.application_id||res.id; window.HH_APP_ID=appId;   // 완료 화면 선택 문항 저장용 (done-survey)
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, track:TRACK, plan:PLAN, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
      ev('submit',{ application_id:appId, total_seconds:Math.round((Date.now()-T0)/1000), gender:d.gender, source_self_report:d.source, device_answer:d.device, intent:d.intent });
      fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);

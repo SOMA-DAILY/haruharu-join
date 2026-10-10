@@ -1,4 +1,4 @@
-<!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관, 저장은 Mixpanel dating_experience 이벤트만 (D1/KV 쓰기 없음) -->
+<!-- 완료 화면 선택 문항 (10/7): 최근 1년 소개팅 경험. 제출 뒤라 CVR 무관. 10/10: Mixpanel dating_experience 이벤트 + 신청서(KV/D1 dating_experience)에도 저장 → 관리 페이지 CSV -->
 <div class="xp" id="xp">
  <p class="t">최근 1년 동안 해본 소개팅이 있나요? <span class="xp-sub">(여러 개 선택)</span></p>
  <div class="opts">
@@ -35,6 +35,7 @@
   var v=[].map.call(box.querySelectorAll('input:checked'),function(x){return x.value;});
   if(!v.length) return;
   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('dating_experience',{methods:v, dating_app:v.indexOf('dating_app')>=0, none:v.indexOf('none')>=0, path:location.pathname}); }catch(e){}
+  try{ if(window.HH_APP_ID) fetch('/api/experience',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:window.HH_APP_ID,methods:v}),keepalive:true}).catch(function(){}); }catch(e){}
   box.querySelector('.opts').style.display='none'; send.style.display='none'; document.getElementById('xpDone').hidden=false;
  });
 })();

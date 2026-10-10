@@ -659,11 +659,14 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
   $('drawer').classList.remove('hidden');renderApps();
   $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value,$('dRoom').value.trim(),{buddy:$('dBuddy').value.trim(),buddy_room:$('dBr').value}).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD});
 $('csvBtn').onclick=function(){var rs=appsFiltered();
-  var head=['신청시각','지역','이름','성별','출생연도','학교/하는일','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처','기수','트랙','편한진행시기'];
+  var head=['신청시각','지역','이름','성별','출생연도','학교/하는일','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처','기수','트랙','편한진행시기','최근1년소개팅'];
   var c=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,feeOf(r),/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r),(/^[=+\-@\t\r]/.test(r.major||'')?"'":'')+(r.major||''),r.avoid_same_major||'',isFest(r)?(r.student_card_key?'있음':'없음'):'',cohortKo(cohortOf(r)),TRACK_KO[trackOf(r)]||trackOf(r),r.schedule_pref||''].map(c).join(',')}));
+  var lines=[head.join(',')].concat(rs.map(function(r){return [r.submitted_at,cityKo[r.city]||r.city,r.name,r.gender,r.birth_year,r.school,fmtPhone(r.phone_digits),r.device,r.intent,r.intent_other,r.source,srcName(r.src),r.src,Math.round((r.active_ms||0)/1000),r.status,r.room,r.memo,r.application_id,feeOf(r),/^01\d{8,9}$/.test(r.buddy||'')?fmtPhone(r.buddy):r.buddy,r.buddy_room,buddyText(r),(/^[=+\-@\t\r]/.test(r.major||'')?"'":'')+(r.major||''),r.avoid_same_major||'',isFest(r)?(r.student_card_key?'있음':'없음'):'',cohortKo(cohortOf(r)),TRACK_KO[trackOf(r)]||trackOf(r),r.schedule_pref||'',xpText(r.dating_experience)].map(c).join(',')}));
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));a.download='하루하루_신청자_'+new Date(Date.now()+9*3600e3).toISOString().slice(0,10)+'.csv';a.click()};
 
+// 완료 화면 선택 문항 (최근 1년 소개팅 경험) 코드 → 보기 이름 (src/done-survey.html)
+var XP_KO={dating_app:'데이팅 앱',friend_intro:'지인 소개',offline:'오프라인 소개팅',setlog_haruharu:'셋로그나 하루하루',none:'없어요'};
+function xpText(v){return String(v||'').split(',').filter(Boolean).map(function(x){return XP_KO[x]||x}).join(' / ')}
 function closeD(){$('drawer').classList.add('hidden')}
 $('drawer').addEventListener('click',function(e){if(e.target.id==='drawer')return closeD();var cp=e.target.closest('[data-cap]');if(cp)openCap(cp.dataset.cap)});
 $('lightbox').addEventListener('click',closeCap);
