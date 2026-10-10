@@ -156,7 +156,7 @@ sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
 # 관리 페이지: 등록부 JSON 을 박아 넣음 (API 호출 없이 기수/트랙/라벨을 앎)
-adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': ALL_FORMS, 'CURRENT': CUR, 'DEADLINE_KO': DLKO}, ensure_ascii=False))   # 관리 화면은 개선판 폼도 앎
+adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': ALL_FORMS, 'CURRENT': CUR, 'DEADLINES': DL, 'DEADLINE_KO': DLKO}, ensure_ascii=False))   # 관리 화면은 개선판 폼도 앎
 assert '__FORMS_JSON__' not in adm
 # 친구 할인 판정 함수 (서버와 같은 것): shared/friend-discount.mjs 에서 주석과 export 만 떼고 그대로 끼움
 FRIEND_FN = re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs', encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
