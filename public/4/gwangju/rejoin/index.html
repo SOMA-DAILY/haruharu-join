@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
-var CITY='gwangju', CITY_KO='광주', COHORT='4', PLAN='discount', TRACK='gwangju-student', DEADLINE=1791644400000, PIXEL_ID='1144224341416623', PIXEL_OLD='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
+var CITY='gwangju', CITY_KO='광주', COHORT='4', PLAN='discount', TRACK='gwangju-student', DEADLINE=1791619200000, PIXEL_ID='1144224341416623', PIXEL_OLD='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
 </script>
 <!-- Meta 픽셀 -->
 <script>
@@ -108,7 +108,7 @@ input:focus{border-color:#1a1a1a}
 <div class="prog" id="prog"></div>
 <div class="wrap">
 
-<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 4기 신청은 10월 10일(토)에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p></div>
+<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 4기 신청은 10월 10일(토)에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p><p style="margin-top:14px"><a class="btn" href="/?src=h5-gwangju-student-from4" style="display:inline-flex">5기 신청하러 가기 →</a></p></div>
 
 <form id="f" novalidate>
 <section class="page on" data-page="1">
@@ -881,7 +881,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }
  checkClosed();
  fetch(API+'/cohort?path='+encodeURIComponent(location.pathname),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
-  if(s && isFinite(s.deadline)) deadline=Number(s.deadline);
+  if(s && s.deadline!=null&&isFinite(s.deadline)) deadline=Number(s.deadline);
   if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now();
   if(s && s.open===false) closeForm(); else checkClosed();
  }).catch(function(){});
