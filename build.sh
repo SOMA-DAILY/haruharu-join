@@ -24,6 +24,7 @@ LANDING=open('src/landing.html',encoding='utf-8').read()
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 BAD='·「」①②③④⑤'
 
+def NEWGEN(c): return str(c).isdigit() and int(c) >= 4   # 4기부터 쓰는 화면(실적 220명판 P1, 완료 설문). 5기 이후도 같음
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
 def next_path(f):
@@ -56,7 +57,7 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    deadline_iso = DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
+    deadline_iso = None if f.get('noDeadline') else DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = DLKO.get(cohort, '')
     # 일정 문구
     if prealert:
@@ -79,7 +80,7 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
-    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
+    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
     t = TPL
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
@@ -96,7 +97,7 @@ def gen(path, f):
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
-        '__DONE_SURVEY__': (DONE_SURVEY if cohort == '4' else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
+        '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
     }.items():
         t = t.replace(k, v)
@@ -144,13 +145,14 @@ for path, f in FORMS.items():
 
 # 지역 선택 페이지 (루트): 현재 기수의 listed 폼만 버튼으로
 sel = open('src/select.template.html', encoding='utf-8').read()
-listed = [(p, f) for p, f in FORMS.items() if f['cohort'] == CUR and f.get('listed')]
+listed = [(p, f) for p, f in ALL_FORMS.items() if (f['cohort'] == CUR or f.get('noDeadline')) and f.get('listed')]
+listed.sort(key=lambda x: x[1].get('plan') == 'prealert')   # 학생 먼저, 직장인 사전알림 뒤   # 5기부터 개선판도 버튼에 (10/10)
 def btn(p, f):   # 10/6: 직장인 사전알림도 선택 화면에. 금액 표기 없음
     if f.get('plan') == 'prealert':
         return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 직장인 사전 알림</b><span>사전 알림 신청하면 참가비 할인 혜택</span></span><span class="ar">→</span></a>'
     return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 대학생 소개팅 신청</b><span>{f["cityKo"]} 대학생</span></span><span class="ar">→</span></a>'
 btns = '\n'.join(btn(p, f) for p, f in listed)
-sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', ms(DL[CUR])).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
+sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', (ms(DL[CUR]) if DL.get(CUR) else '9e15')).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
 # 관리 페이지: 등록부 JSON 을 박아 넣음 (API 호출 없이 기수/트랙/라벨을 앎)

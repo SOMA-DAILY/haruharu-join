@@ -66,7 +66,7 @@ __BUTTONS__
  function closePage(){ if(closed) return; closed=true; document.getElementById('btns').hidden=true; document.getElementById('closed').hidden=false; try{ if(mp) mp.track('cohort_closed_view',{path:'/'}); }catch(e){} }
  function checkClosed(){ if(Date.now()+clockOffset>=deadline) closePage(); }
  checkClosed();
- fetch('/api/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){ if(s && isFinite(s.deadline)) deadline=Number(s.deadline); if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now(); if(s && s.open===false) closePage(); else checkClosed(); }).catch(function(){});
+ fetch('/api/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){ if(s && s.deadline!=null&&isFinite(s.deadline)) deadline=Number(s.deadline); if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now(); if(s && s.open===false) closePage(); else checkClosed(); }).catch(function(){});
  setInterval(checkClosed,15000);
 })();
 </script>

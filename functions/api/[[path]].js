@@ -13,6 +13,7 @@ import { friendFee } from '../../shared/friend-discount.mjs';
 // /api/admin/*       : 관리 페이지 (비밀번호 로그인 쿠키)
 
 const KST = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+const EXPERIENCE_VALUES = ['dating_app', 'friend_intro', 'offline', 'setlog_haruharu', 'none'];   // src/done-survey.html 보기와 같음
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 // /api/export CSV 는 시트 IMPORTDATA 가 열 위치로 읽을 수 있음 → BASE_FIELDS 순서와 기존 열 위치는 바꾸지 말고, 새 입력값은 FESTIVAL_FIELDS 로 CSV 맨 끝에만 붙임
 const BASE_FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'name', 'buddy', 'buddy_room'];
@@ -152,6 +153,24 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const b = await readBody(request);
     if (!b || !CAPI_EVENTS.includes(b.event_name) || !formOf(b.path) || BOT.test(request.headers.get('user-agent') || '')) return json({ ok: false }, 400);
     waitUntil(capiEvent(request, b, b.event_name, b.event_id, null, b.custom_data).then((ev) => capiSend(env, ev)));
+    return json({ ok: true });
+  }
+
+  // 완료 화면 선택 문항 (10/10): 최근 1년 소개팅 경험을 신청서에 붙임. 신청 ID 를 아는 본인만(UUID), 정해진 값만, 한 번만 (이미 있으면 그대로)
+  if (request.method === 'POST' && path === '/experience') {
+    const b = await readBody(request);
+    const id = b && typeof b.id === 'string' && /^[0-9a-f-]{20,64}$/i.test(b.id) ? b.id : '';
+    const vals = Array.isArray(b && b.methods) ? [...new Set(b.methods.filter((x) => EXPERIENCE_VALUES.includes(x)))] : [];
+    if (!id || !vals.length) return json({ ok: false, error: 'bad body' }, 400);
+    const v = vals.includes('none') ? 'none' : vals.join(',');
+    let key = '';
+    try { if (env.DB) { const row = await env.DB.prepare('SELECT kv_key FROM submissions WHERE application_id = ?1').bind(id).first(); key = row ? row.kv_key : ''; } } catch (e) {}
+    if (!key || !key.startsWith('s:')) return json({ ok: false, error: 'not_found' }, 404);
+    try {
+      const rec = await kv.get(key, 'json');
+      if (rec && !rec.dating_experience) { rec.dating_experience = v; await kv.put(key, JSON.stringify(rec)); }
+    } catch (e) {}
+    try { await env.DB.prepare("UPDATE submissions SET dating_experience = ?2 WHERE application_id = ?1 AND COALESCE(dating_experience, '') = ''").bind(id, v).run(); } catch (e) {}   // migrations/0010 없으면 KV 에만
     return json({ ok: true });
   }
 
