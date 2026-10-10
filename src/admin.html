@@ -396,7 +396,7 @@ function seg(id,attr,cb){$(id).addEventListener('click',function(e){var b=e.targ
 seg('range','r',function(v){S.range=v;loadStats()});
 seg('vState','s',function(v){S.vstate=v;loadVisits()});
 seg('linkView','v',function(v){S.linkView=v;renderLinks()});
-$('fForm').onchange=function(){S.path=this.value;loadStats()};
+$('fForm').onchange=function(){S.path=this.value;renderShare();loadStats()};
 $('fSrc').onchange=function(){S.src=this.value;loadStats()};
 
 $('nav').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
@@ -463,6 +463,7 @@ function renderFilters(){
   $('fSrc').innerHTML='<option value="">모든 링크</option>'+Object.keys(srcs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===S.src?' selected':'')+'>'+esc(srcs[k]===k?k:srcs[k]+' ('+k+')')+'</option>'}).join('');
   var cur=$('bPath').value;
   $('bPath').innerHTML=fs.map(function(f){return '<option value="'+esc(f.path)+'"'+(f.path===cur?' selected':'')+'>'+esc(f.name)+' '+esc(f.path)+'</option>'}).join('');
+  renderShare();
   $('botNote').textContent=S.an.bots?('봇/크롤러 방문 '+S.an.bots+'건은 전부 제외함'):'';
 }
 
@@ -587,7 +588,7 @@ $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr'
     '<div class="acts">'+(f.phone&&!r.submitted?'<button class="btn ghost" id="vCopy">전화번호 복사</button>':'')+'<button class="btn ghost" id="vClose">닫기</button></div>';
   $('drawer').classList.remove('hidden');$('vClose').onclick=closeD;if($('vCopy'))$('vCopy').onclick=function(){copy(String(f.phone).replace(/\D/g,''))}});
 
-$('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';S.path='cohort:'+S.cohort;S.statsAt=0;renderCohortTabs();renderApps()});
+$('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';S.path='cohort:'+S.cohort;S.statsAt=0;renderShare();renderCohortTabs();renderApps()});
 $('aCityTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.track=b.dataset.t;renderCohortTabs();renderApps()});
 renderCohortTabs();
 ['q','aGender','aStatus'].forEach(function(id){$(id).addEventListener('input',renderApps)});
@@ -629,16 +630,24 @@ function buddyText(r){if(!r.buddy)return '';var b=buddyOf(r);if(!b)return (/^01\
 function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자'?r.buddy_room:'';if(!t&&!m)return '';
   return ' <span class="badge amber">친구'+(m?' '+esc(m):'')+(t?': '+esc(t):'')+'</span>'}
 // 팀원이 메시지로 보낼 링크. 링크마다 src 가 달라 [광고별 신청] 표에 따로 잡힘
-// 현재 기수 폼 전부 (등록부). src = h{기수}-msg-{트랙}-{요금제} 라 [광고별 신청] 표에 따로 잡힘. 할인 폼은 사전알림/이전 참가자에게만, 광고/바이오에 쓰지 말 것
-var SHARE=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return f.cohort===REG.CURRENT&&!f.rejoin}).map(function(p){var f=REG.FORMS[p];
+// 기수 폼 전부 (등록부). src = h{기수}-msg-{트랙}-{요금제} 라 [광고별 신청] 표에 따로 잡힘. 할인 폼은 사전알림/이전 참가자에게만, 광고/바이오에 쓰지 말 것
+// 위 폼 드롭다운을 따라감: N기 전체/N기 폼 → 그 기수, 모든 폼 → 전 기수. 지난 기수는 그때 보낸 링크 기록용
+var SHARE3={regular:'msg',discount:'discount',early:'early'};   // 3기는 위 규칙 전에 쓴 코드 그대로 (h3-msg-seoul 등)
+function shareOf(p){var f=REG.FORMS[p];
   var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
   var rejoin=f.plan==='regular'&&f.variant?Object.keys(REG.FORMS).filter(function(q){var r=REG.FORMS[q];return r.rejoin&&r.cohort===f.cohort&&r.track===f.track&&r.variant===f.variant})[0]:null;
   var rejoinLinks=rejoin?['f','m'].map(function(g){return rejoin+'?src=h'+f.cohort+'-rejoin-'+f.track+'-'+g+'-'+f.variant+'&g='+g}):null;
-  return [f.label,fee+', '+REG.DEADLINE_KO[f.cohort]+' 마감',p+'?src=h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:''),!!f.variant,rejoinLinks]});
-// 개선판 폼은 남녀 화면이 따로 있어서(주소 끝 g=f / g=m) 카드 아래에서 여자/남자 링크를 바로 복사
-$('shareLinks').innerHTML=SHARE.map(function(x){var card='<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>';
-  var rejoin=x[4]?'<span class="fee rejoin-fee">재참여 4,900원</span><div class="sgb"><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][0])+'">여자 재참여</button><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][1])+'">남자 재참여</button></div>':'';
-  return x[3]?'<div class="sg">'+card+'<div class="sgb"><button type="button" data-copy="'+esc(HOST+x[2]+'&g=f')+'">여자 링크 복사</button><button type="button" data-copy="'+esc(HOST+x[2]+'&g=m')+'">남자 링크 복사</button></div>'+rejoin+'</div>':card}).join('');
+  var src=f.cohort==='3'?'h3-'+SHARE3[f.plan]+'-'+f.city:p===FEST_PATH?'jnu-fest-msg':'h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:'');
+  return [f.label,fee+(REG.DEADLINE_KO[f.cohort]?', '+REG.DEADLINE_KO[f.cohort]+' 마감':''),p+'?src='+src,!!f.variant,rejoinLinks]}
+function shareCohorts(){if(/^cohort:/.test(S.path))return [S.path.slice(7)];var f=regOf(S.path);if(f)return [f.cohort];return S.path?[]:cohortList()}
+function renderShare(){var cs=shareCohorts();
+  var list=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return cs.indexOf(f.cohort)>=0&&!f.rejoin&&(f.cohort!=='3'||SHARE3[f.plan])})
+    .sort(function(a,b){return cs.indexOf(REG.FORMS[a].cohort)-cs.indexOf(REG.FORMS[b].cohort)}).map(shareOf);
+  // 개선판 폼은 남녀 화면이 따로 있어서(주소 끝 g=f / g=m) 카드 아래에서 여자/남자 링크를 바로 복사
+  $('shareLinks').innerHTML=list.map(function(x){var card='<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>';
+    var rejoin=x[4]?'<span class="fee rejoin-fee">재참여 4,900원</span><div class="sgb"><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][0])+'">여자 재참여</button><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][1])+'">남자 재참여</button></div>':'';
+    return x[3]?'<div class="sg">'+card+'<div class="sgb"><button type="button" data-copy="'+esc(HOST+x[2]+'&g=f')+'">여자 링크 복사</button><button type="button" data-copy="'+esc(HOST+x[2]+'&g=m')+'">남자 링크 복사</button></div>'+rejoin+'</div>':card}).join('')||'<div class="muted">이 폼은 메시지 링크 없음</div>'}
+renderShare();
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
 function saveMark(r,status,memo,room,bd){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}return post('mark',body).then(function(d){if(d.ok){r.status=status;r.memo=memo;r.room=room;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨')}})}
