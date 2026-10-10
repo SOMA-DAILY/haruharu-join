@@ -268,7 +268,7 @@ dd{margin:0;word-break:break-all}
         <span class="muted" id="vCount" style="margin-left:auto;font-size:13px"></span>
       </div>
       <div class="tbl-wrap"><table class="list">
-        <thead><tr><th>도착 시각</th><th>폼</th><th>광고</th><th>어디까지</th><th>마지막 문항</th><th>입력한 내용</th></tr></thead>
+        <thead><tr><th>도착 시각</th><th>폼</th><th>유입경로</th><th>어디까지</th><th>마지막 문항</th><th>입력한 내용</th></tr></thead>
         <tbody id="visitRows"></tbody></table>
         <div class="empty hidden" id="visitEmpty">이 조건의 방문이 없음</div></div>
     </div>
@@ -283,7 +283,7 @@ dd{margin:0;word-break:break-all}
         <div class="tile"><div class="k">처리 현황</div><div class="v num" id="aDone">-</div><div class="s" id="aDoneS"></div></div>
       </div>
       <div class="card" style="margin-bottom:12px"><h3>광고별 신청 <span class="muted">어느 광고에서 들어왔나</span></h3>
-        <table class="list" style="min-width:0"><thead><tr><th>광고</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
+        <table class="list" style="min-width:0"><thead><tr><th>유입경로</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
       <div class="strip" id="aStrip"></div>
       <div class="filters" style="margin-bottom:10px">
         <input id="q" placeholder="이름, 전화번호, 학교, 하는 일 검색" style="min-width:220px">
@@ -293,7 +293,7 @@ dd{margin:0;word-break:break-all}
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
       <div class="tbl-wrap"><table class="list">
-        <thead><tr><th>신청 시각</th><th>폼</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 하는 일</th><th>전화번호</th><th>광고</th><th>상태 / 방</th><th>관리</th></tr></thead>
+        <thead><tr><th>신청 시각</th><th>폼</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 하는 일</th><th>전화번호</th><th>유입경로</th><th>상태 / 방</th><th>관리</th></tr></thead>
         <tbody id="appRows"></tbody></table>
         <div class="empty hidden" id="appEmpty">아직 신청자가 없음</div></div>
     </div>
@@ -331,7 +331,7 @@ function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);retu
 function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
 var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인',festival:'전남대 축제'};
 function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c+'기'}
-function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){return a===REG.CURRENT?-1:b===REG.CURRENT?1:0})}
+function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){var x=Number(a),y=Number(b);if(isNaN(x)&&isNaN(y))return 0;if(isNaN(x))return 1;if(isNaN(y))return -1;return y-x})}   // 최근 기수부터, 축제 같은 이벤트는 맨 뒤 (10/10)
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
 // 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
@@ -353,7 +353,9 @@ function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),
   return s.k==='ok'?w(friendPaid(r))+' 송금 대상. 친구 '+who:s.k==='refund'?'정가 '+w(f.fee)+' 송금 대상. 친구 '+who+' 확인되면 '+w(f.fee-f.friendFee)+' 환급':w(friendPaid(r))+' 송금 대상인데 친구가 아직 신청 안 함. 끝까지 안 하면 연락해서 '+w(f.fee-f.friendFee)+' 더 받기'}
 // 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
 function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
-function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
+function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
+// 개선판 배지는 같은 기수에 기존판이 같이 있을 때만 (4기 A/B). 5기부터는 폼이 하나라 배지 없음
+function hasBase(p){var f=regOf(p);return !!f&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}
 function renderCohortTabs(){
   $('aCohortTabs').innerHTML=cohortList().map(function(c){return '<button data-c="'+esc(c)+'"'+(c===S.cohort?' class="on"':'')+'>'+esc(cohortKo(c))+'</button>'}).join('');
   var ts=trackList(S.cohort);

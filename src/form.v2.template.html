@@ -401,7 +401,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }
  checkClosed();
  fetch(API+'/cohort?path='+encodeURIComponent(location.pathname),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
-  if(s && isFinite(s.deadline)) deadline=Number(s.deadline);
+  if(s && s.deadline!=null&&isFinite(s.deadline)) deadline=Number(s.deadline);
   if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now();
   if(s && s.open===false) closeForm(); else checkClosed();
  }).catch(function(){});

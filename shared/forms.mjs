@@ -8,7 +8,7 @@ export const CURRENT_COHORT = '5';
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
   '3': '2026-10-06T00:00:00+09:00', // 신청 마감 10/5(월) 밤
-  '4': '2026-10-11T00:00:00+09:00', // 신청 마감 10/10(토) 밤. 진행 10/11(일)~10/13(화)
+  '4': '2026-10-10T17:00:00+09:00', // 10/10 사용자: 직장인 사전알림 빼고 지금 닫고 5기로 이어지게 (원래 10/11 00:00). 진행 10/11(일)~10/13(화)
   // '5': TODO 5기 신청 마감 (사용자 확정 전, 비워 두면 열림)
 };
 export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '추후 안내' };   // TODO 5기 날짜
@@ -56,11 +56,9 @@ export const FORMS = {
   '/4/seoul/rejoin/':       { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 서울 학생 재참여', landing: true, variant: 'v2', rejoin: true },
   '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
 
-  // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 + 개선판. 폼은 개선판(B) 하나로 감 (10/10 사용자, 4기 A/B 결과) → 지역 선택과 고정 링크는 개선판으로
-  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '5기 서울 학생', landing: true },
-  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '5기 광주 학생', landing: true },
-  '/5/seoul/v2/':           { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생 - 개선', listed: true, landing: true, variant: 'v2', entry: '/seoul/student/' },
-  '/5/gwangju/v2/':         { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생 - 개선', listed: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
+  // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 폼 하나씩. 화면은 4기 A/B 에서 이긴 개선판(B) 그대로 (variant 'v2' = build-v2.sh 로 만든다는 뜻)
+  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, landing: true, variant: 'v2', entry: '/seoul/student/' },
+  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
 };
 
 // 고정 링크 (10/10~): 광고와 바이오는 이 주소만 씀. 서버(functions/{경로}/index.js)가 그때 열려 있는 기수 폼으로 302 (쿼리 그대로).
