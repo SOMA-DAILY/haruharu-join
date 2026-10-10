@@ -69,8 +69,9 @@ test('재참여는 기기 필수를 유지하고 다른 폼은 유입 경로를 
 test('재참여 마감 뒤에는 서버도 접수를 거부하고 저장하지 않는다', async () => {
   for (const path of paths) {
     const writes = [];
-    const env = { COHORT_DEADLINE: '2000-01-01T00:00:00+09:00', APPLY_KV: { put: async (k, v) => writes.push([k, v]) } };
-    const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path, fields }) }), params: { path: ['submit'] }, env });
+    const env = { APPLY_KV: { put: async (k, v) => writes.push([k, v]) } };   // 4기 마감 뒤 시각으로 (5기부터 COHORT_DEADLINE 시험값은 현재 기수에만 먹음)
+    const o = Date.now; Date.now = () => Date.parse('2026-10-12T00:00:00+09:00');
+    const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path, fields }) }), params: { path: ['submit'] }, env }).finally(() => { Date.now = o; });
     assert.equal(res.status, 409, path);
     assert.equal((await res.json()).error, 'cohort_closed');
     assert.equal(writes.length, 0);

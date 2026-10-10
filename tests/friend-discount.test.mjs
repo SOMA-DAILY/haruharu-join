@@ -6,7 +6,7 @@ import { formOf, FORMS } from '../shared/forms.mjs';
 import { friendFee } from '../shared/friend-discount.mjs';
 
 const seoul = formOf('/4/seoul/v2/');   // 친구 할인은 개선판 정가 폼에만
-const V2 = Object.keys(FORMS).filter((p) => FORMS[p].variant === 'v2' && !FORMS[p].rejoin);   // 기존 개선판 3곳. 재참여 폼은 rejoin.test.mjs에서 별도로 검증
+const V2 = Object.keys(FORMS).filter((p) => FORMS[p].variant === 'v2' && !FORMS[p].rejoin && FORMS[p].cohort === '4');   // 4기 개선판 3곳 (5기 개선판은 지역 선택에 나옴, 아래 따로). 재참여 폼은 rejoin.test.mjs에서 별도로 검증
 const OLD4 = Object.keys(FORMS).filter((p) => FORMS[p].cohort === '4' && !FORMS[p].variant);
 const me = '010-1000-0001';
 const open = Date.parse('2026-10-09T12:00:00+09:00');   // 4기 모집 중인 시각
@@ -14,7 +14,7 @@ async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { retur
 
 test('친구 할인은 개선판 정가 폼에만 있고 금액은 정가보다 2,000원 낮다', () => {
   const on = Object.keys(FORMS).filter((p) => FORMS[p].friendFee);
-  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/']);
+  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/v2/', '/5/seoul/v2/']);
   for (const p of on) {
     assert.equal(FORMS[p].plan, 'regular', p);
     assert.equal(FORMS[p].fee - FORMS[p].friendFee, 2000, p);
@@ -68,8 +68,10 @@ test('개선판은 새 주소 세 곳이고 이름은 기존 이름 뒤에 - 개
     assert.equal(FORMS[p].plan, base.plan, p); assert.equal(FORMS[p].track, base.track, p); assert.equal(FORMS[p].fee, base.fee, p);
     assert.equal(!!FORMS[p].listed, false, p);
   }
+  // 5기부터는 개선판(B) 하나로 감 (10/10) → 지역 선택 버튼은 5기 개선판, 4기 개선판은 여전히 안 나옴
   const select = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.equal(select.includes('/v2/'), false, '지역 선택 화면');
+  assert.equal(select.includes('/4/seoul/v2/'), false, '지역 선택 화면');
+  assert.ok(select.includes('/5/seoul/v2/') && select.includes('/5/gwangju/v2/'), '5기 개선판 버튼');
 });
 
 test('기존 4기 폼에는 개선판 요소가 하나도 없다 (2페이지 구성 그대로)', () => {

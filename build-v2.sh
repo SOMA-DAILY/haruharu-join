@@ -33,6 +33,7 @@ APP_GET=re.sub(r'^<!--.*?-->\n', '', open('src/app-install.html',encoding='utf-8
 assert APP_GET.startswith('<div class="ap-get">') and APP_GET.count('class="ap-btn"') == 2
 BAD='·「」①②③④⑤'
 
+def NEWGEN(c): return str(c).isdigit() and int(c) >= 4   # 4기부터 쓰는 화면(실적 220명판 P1, 완료 설문). 5기 이후도 같음
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
 def next_path(f):
@@ -65,7 +66,7 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    deadline_iso = DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
+    deadline_iso = None if f.get('noDeadline') else DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = DLKO.get(cohort, '')
     # 일정 문구
     if prealert:
@@ -89,7 +90,7 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
-    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if cohort == '4' else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
+    p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
     # 랜딩 v2(10/8) 조각: 첫 화면 안내 칸(진행 일정/참여 대상/그룹 구성), 신청 안내의 칸(마감/참가비, 일정 문구와 같은 값)과 단계(참여 흐름과 같은 문장)
     area = '서울 경기 인천' if f['city'] == 'seoul' else f['cityKo']   # 서울 트랙은 지역을 풀어서 적음 (10/8 사용자)
     ld_info = [('진행 일정', info.get('period', '추후 안내') + (' 예정' if prealert else '')),
@@ -124,7 +125,7 @@ def gen(path, f):
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
-        '__DONE_SURVEY__': (DONE_SURVEY if cohort == '4' else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
+        '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
     }.items():
         t = t.replace(k, v)
