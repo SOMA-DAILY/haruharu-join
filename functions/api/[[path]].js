@@ -404,7 +404,18 @@ function filters(url, alias = '') {
   const ps = url.searchParams.get('paths');
   if (!p && ps) {
     const list = ps.split(',').map((x) => x.trim()).filter((x) => /^[\w\-\/.]+$/.test(x)).slice(0, 40);
-    if (list.length) { const ph = list.map((x) => { args.push(x); return `?${args.length}`; }); w.push(`${a}path IN (${ph.join(', ')})`); }
+    const cond = [];
+    if (list.length) { const ph = list.map((x) => { args.push(x); return `?${args.length}`; }); cond.push(`${a}path IN (${ph.join(', ')})`); }
+    // land=경로,… + land_from/land_to : 랜딩(/ 등)은 기수 공용이라 그 기수 모집 기간(직전 기수 마감 ~ 이 기수 마감) 방문만 셈
+    const land = (url.searchParams.get('land') || '').split(',').map((x) => x.trim()).filter((x) => /^[\w\-\/.]+$/.test(x)).slice(0, 10);
+    if (land.length) {
+      const lc = [`${a}path IN (${land.map((x) => { args.push(x); return `?${args.length}`; }).join(', ')})`];
+      const lf = Number(url.searchParams.get('land_from')) || 0, lt = Number(url.searchParams.get('land_to')) || 0;
+      if (lf) { args.push(lf); lc.push(`${a}first_ts >= ?${args.length}`); }
+      if (lt) { args.push(lt); lc.push(`${a}first_ts < ?${args.length}`); }
+      cond.push(`(${lc.join(' AND ')})`);
+    }
+    if (cond.length) w.push(`(${cond.join(' OR ')})`);
   }
   const s = url.searchParams.get('src'); if (s) { if (s === '(없음)') w.push(`${a}src IS NULL`); else { args.push(s); w.push(`${a}src = ?${args.length}`); } }
   return { where: w.join(' AND '), args };
