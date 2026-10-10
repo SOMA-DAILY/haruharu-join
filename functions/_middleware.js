@@ -11,7 +11,7 @@ export async function onRequest(context) {
   const st = formStatus(f.path, Date.now(), context.env);
   if (st.open || !st.next || st.next === '/' || st.next === f.path) return context.next();
   const q = new URLSearchParams(url.search);
-  const m = /^h\d+[a-z]*-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || '');
+  const m = /^(?:h\d+[a-z]*|ad)-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || '');
   if (m && !q.get('g') && FORMS[st.next] && FORMS[st.next].variant) q.set('g', m[1].toLowerCase());
   const qs = q.toString();
   return new Response(null, { status: 302, headers: { location: st.next + (qs ? '?' + qs : ''), 'cache-control': 'no-store' } });

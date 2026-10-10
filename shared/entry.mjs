@@ -6,7 +6,7 @@ import { entryTarget, FORMS } from './forms.mjs';
 function genderOf(q) {
   const g = (q.get('g') || '').toLowerCase();
   if (g === 'm' || g === 'f') return g;
-  const m = /^h\d+[a-z]*-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || q.get('utm_content') || '');
+  const m = /^(?:h\d+[a-z]*|ad)-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || q.get('utm_content') || '');
   return m ? m[1].toLowerCase() : '';
 }
 
