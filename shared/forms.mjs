@@ -9,9 +9,9 @@ export const CURRENT_COHORT = '5';
 export const COHORT_DEADLINES = {
   '3': '2026-10-06T00:00:00+09:00', // 신청 마감 10/5(월) 밤
   '4': '2026-10-10T17:00:00+09:00', // 10/10 사용자: 직장인 사전알림 빼고 지금 닫고 5기로 이어지게 (원래 10/11 00:00). 진행 10/11(일)~10/13(화)
-  '5': '2026-10-15T18:00:00+09:00', // 신청 마감 10/15(목) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
+  '5': '2026-10-14T18:00:00+09:00', // 신청 마감 10/14(수) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
 };
-export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 15일(목) 18:00' };
+export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
@@ -69,7 +69,7 @@ export const ENTRIES = ['/seoul/student/', '/gwangju/student/', '/seoul/work/'];
 export const COHORT_INFO = {
   '3': { period: '10월 6일(화) ~ 10월 8일(목), 3일', deadlineKo: '10월 5일(월)' },
   '4': { period: '10월 11일(일) ~ 10월 13일(화), 3일', deadlineKo: '10월 10일(토)' },
-  '5': { period: '10월 15일(목) ~ 10월 17일(토), 3일', deadlineKo: '10월 15일(목) 18:00' },
+  '5': { period: '10월 15일(목) ~ 10월 17일(토), 3일', deadlineKo: '10월 14일(수) 18:00' },
 };
 
 export function normalizePath(p) {
