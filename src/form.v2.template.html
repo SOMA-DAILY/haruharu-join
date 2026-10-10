@@ -262,9 +262,11 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  function ck(n){ var m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)')); return m?decodeURIComponent(m[1]):''; }
  function fbIds(){ var fbc=ck('_fbc'); if(!fbc && hidden.fbclid) fbc='fb.1.'+T0+'.'+hidden.fbclid; return {fbp:ck('_fbp'), fbc:fbc}; }
  function eid(name){ return name+'.'+sid+'.'+Date.now().toString(36); }
- function fb(name,params,std,id){ if(LOCAL_PREVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
+ // 메타 광고 검토 크롤러(fbclid + facebook.com 리퍼러 + 인앱 아님)는 메타 이벤트를 안 보냄 → LandingEngaged 학습 오염 방지. 서버 /capi 도 같은 규칙으로 거름
+ var META_REVIEW=!!hidden.fbclid&&/^https?:\/\/([a-z0-9-]+\.)*facebook\.com(\/|$)/i.test(document.referrer)&&!/Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent);
+ function fb(name,params,std,id){ if(LOCAL_PREVIEW||META_REVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
   try{ if(window.fbq) fbq(std?'track':'trackCustom',name,p,{eventID:id}); }catch(e){}
-  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,custom_data:p},fbIds()),true); }
+  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,ref:document.referrer,custom_data:p},fbIds()),true); }
  window.hhFb=fb;
 
  // 체류 측정 (10/7). iOS 인스타 인앱은 광고 누르기 전에 페이지를 숨긴 채 미리 열고, 보이게 돼도 visibilitychange 를 안 쏘는 경우가 있음

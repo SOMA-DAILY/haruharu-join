@@ -46,6 +46,10 @@ function normPath(p, city) {
   return city && city !== 'select' ? '/' + city + '/' : '/';
 }
 function device(ua) { return /iphone|ipad|ipod/i.test(ua) ? 'iOS' : /android/i.test(ua) ? 'Android' : /mobile/i.test(ua) ? '기타 모바일' : 'PC'; }
+// 메타 광고 검토 크롤러 (10/10): 광고 링크(fbclid)인데 facebook.com 리퍼러 + 인앱 아닌 일반 브라우저 UA. 새 광고 켤 때 몰려옴, 이력 506건 중 제출 0
+// 우리 광고는 인스타 지면만이라 실사용자는 인스타/페북 인앱으로 들어옴
+const FB_REF = /^https?:\/\/([a-z0-9-]+\.)*facebook\.com(\/|$)/i;
+function isBot(ua, ref, fbclid) { return BOT.test(ua) || (!!fbclid && FB_REF.test(String(ref || '')) && !inApp(ua)); }
 function inApp(ua) { return /Instagram/i.test(ua) ? '인스타' : /FBAN|FBAV|FB_IAB/i.test(ua) ? '페이스북' : /KAKAOTALK/i.test(ua) ? '카카오톡' : /Line\//i.test(ua) ? '라인' : /everytime/i.test(ua) ? '에브리타임' : ''; }
 // 폼 이름: 등록부에 있으면 그 라벨, 없으면 옛 규칙
 function formName(path, h) {
@@ -127,7 +131,7 @@ async function trackSession(env, request, b) {
         next_click = COALESCE(excluded.next_click, sessions.next_click)`)
       .bind(String(b.sid).slice(0, 64), path, h.city || null, h.src || null, h.utm_content || h.src || 'direct',
         h.utm_source || null, h.utm_medium || null, h.utm_campaign || null, h.utm_content || null, h.utm_term || null, h.fbclid ? 1 : 0,
-        String(b.ref || '').slice(0, 300), ua, device(ua), inApp(ua), BOT.test(ua) ? 1 : 0, b.returning ? 1 : 0,
+        String(b.ref || '').slice(0, 300), ua, device(ua), inApp(ua), isBot(ua, b.ref, h.fbclid) ? 1 : 0, b.returning ? 1 : 0,
         now, num(b.active_ms, 6 * 3600e3), num(b.max_scroll, 100), started, started ? now : null,
         num(b.page, 9) || 1, String(b.last_field || '').slice(0, 40), filled ? JSON.stringify(f) : null, filled,
         typeof b.next_click === 'string' ? b.next_click.slice(0, 40) : null),
@@ -151,7 +155,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
 
   if (request.method === 'POST' && path === '/capi') {
     const b = await readBody(request);
-    if (!b || !CAPI_EVENTS.includes(b.event_name) || !formOf(b.path) || BOT.test(request.headers.get('user-agent') || '')) return json({ ok: false }, 400);
+    if (!b || !CAPI_EVENTS.includes(b.event_name) || !formOf(b.path) || isBot(request.headers.get('user-agent') || '', b.ref, /[?&]fbclid=/.test(String(b.url || '')))) return json({ ok: false }, 400);
     waitUntil(capiEvent(request, b, b.event_name, b.event_id, null, b.custom_data).then((ev) => capiSend(env, ev)));
     return json({ ok: true });
   }
