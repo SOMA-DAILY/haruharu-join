@@ -43,6 +43,9 @@ nav button.sub{font-size:13px}
 .citytabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .citytabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 16px;cursor:pointer;font-weight:600;color:var(--sub);white-space:nowrap}
 .citytabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+/* 알림 신청(다음 기수 알림, 10/11)은 신청자와 결이 다른 묶음이라 보라색 + 기수 탭과 간격 */
+.citytabs button.alert{margin-left:10px;border-color:#d9cdf7;background:#f5f1fe;color:#6d3fd1}
+.citytabs button.alert.on{background:#6d3fd1;border-color:#6d3fd1;color:#fff}
 .strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--sub)}
 .strip b{color:var(--ink)}
 .strip .go{margin-left:auto;border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer;padding:0}
@@ -105,6 +108,7 @@ table.list tr.excl td:not(.st){opacity:.45}
 .badge.gwangju,.badge.green{background:var(--green-soft);color:var(--green)}
 .badge.amber{background:var(--amber-soft);color:var(--amber)}
 .badge.jnu{background:#fdeef3;color:#c2185b}
+.badge.violet{background:#f1ecfd;color:#6d3fd1}
 button.badge.capbtn{border:0;cursor:pointer;font:inherit;font-size:12px;font-weight:600;background:#fdeef3;color:#c2185b}
 button.badge.capbtn:hover{background:#f9d9e4}
 .capthumb{display:block;max-width:100%;max-height:360px;border:1px solid var(--line);border-radius:10px;cursor:zoom-in;background:#fafbfc}
@@ -338,7 +342,7 @@ function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackO
 // 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
 function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
   if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
-function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return ' <span class="badge blue">'+(cohortOf(r)==='alert'?'알림 신청':'사전알림')+'</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
+function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return (cohortOf(r)==='alert'?' <span class="badge violet">알림 신청</span>':' <span class="badge blue">사전알림</span>')+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
 //   원격 D1 에 0009 가 아직 없어 열이 비면 친구 문항으로 추정함(같은 판정 함수). 친구 쌍은 불러온 목록 안에서 전화번호로 맞춤
 /*FRIEND_FN*/
@@ -354,11 +358,11 @@ function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),
   return s.k==='ok'?w(friendPaid(r))+' 송금 대상. 친구 '+who:s.k==='refund'?'정가 '+w(f.fee)+' 송금 대상. 친구 '+who+' 확인되면 '+w(f.fee-f.friendFee)+' 환급':w(friendPaid(r))+' 송금 대상인데 친구가 아직 신청 안 함. 끝까지 안 하면 연락해서 '+w(f.fee-f.friendFee)+' 더 받기'}
 // 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
 function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&(regOf(x.path)||{}).plan!=='prealert'&&(c==='alert'?(x.submitted_ts||0)>(r.submitted_ts||0):cohortOf(x)===c)})}   // 다음 기수 알림은 기수 상관없이 그 뒤 유료 제출이면 결제함
-function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
+function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';if(cohortOf(r)==='alert')return '<span class="badge violet" title="'+esc(r.path)+'">알림 신청</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
 // 개선판 배지는 같은 기수에 기존판이 같이 있을 때만 (4기 A/B). 5기부터는 폼이 하나라 배지 없음
 function hasBase(p){var f=regOf(p);return !!f&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}
 function renderCohortTabs(){
-  $('aCohortTabs').innerHTML=cohortList().map(function(c){return '<button data-c="'+esc(c)+'"'+(c===S.cohort?' class="on"':'')+'>'+esc(cohortKo(c))+'</button>'}).join('');
+  $('aCohortTabs').innerHTML=cohortList().map(function(c){return '<button data-c="'+esc(c)+'" class="'+(c==='alert'?'alert':'')+(c===S.cohort?' on':'')+'">'+esc(cohortKo(c))+'</button>'}).join('');
   var ts=trackList(S.cohort);
   $('aCityTabs').innerHTML='<button data-t=""'+(S.track?'':' class="on"')+'>전체</button>'+ts.map(function(t){return '<button data-t="'+esc(t)+'"'+(t===S.track?' class="on"':'')+'>'+esc(TRACK_KO[t]||t)+'</button>'}).join('');
 }
@@ -621,7 +625,7 @@ function renderAppSummary(){
 }
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('appEmpty').classList.toggle('hidden',rs.length>0);
   $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+formBadge(r)+'</td>'+
-    '<td><b>'+esc(r.name||(cohortOf(r)==='alert'?'(알림 신청)':'(사전알림)'))+'</b>'+feeBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
+    '<td><b>'+esc(r.name||(cohortOf(r)==='alert'?'':'(사전알림)'))+'</b>'+feeBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
