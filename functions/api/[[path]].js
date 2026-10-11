@@ -79,6 +79,8 @@ async function capiUser(request, b, extra) {
   return Object.assign(u, extra || {});
 }
 async function capiSend(env, ev) {
+  // 로컬 시험용: CAPI_DRY_RUN 이 있으면 메타로 안 보내고 이벤트 이름만 찍음 (.dev.vars)
+  if (env.CAPI_DRY_RUN) { console.log('[capi dry]', ev.event_name, (ev.custom_data || {}).content_category || ''); return; }
   if (!env.META_CAPI_TOKEN) return;
   const body = { data: [ev] };
   if (env.META_TEST_EVENT_CODE) body.test_event_code = env.META_TEST_EVENT_CODE;
@@ -110,7 +112,8 @@ async function trackSession(env, request, b) {
   // 자동으로 채운 기기값만 있는 건 입력으로 안 침 (9/28: 아무것도 안 쓴 방문이 입력 시작으로 잡혔음)
   const filled = Object.keys(f).filter((k) => !(k === 'device' && h.device_auto)).length;
   const now = Date.now();
-  const started = filled > 0 || !!b.last_field ? 1 : 0;
+  // 알림 신청(alert_submit, 10/11)은 신청서 입력이 아니라서 그것만으로는 입력 시작으로 안 셈 (5기 퍼널 [쓰다 나감] 오염 방지)
+  const started = filled > 0 || (!!b.last_field && b.last_field !== 'alert_submit') ? 1 : 0;
   const kind = path === '/' ? 'landing' : 'form';
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO forms (path, name, kind, city, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
@@ -198,7 +201,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const preRegistration = form && form.plan === 'early';
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
-    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
+    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert) {
       if (!form.rejoin) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       required.push('device');
@@ -243,6 +247,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     try {
       if (env.DB) {
         const p = normPath(b.path, h.city);
+        const noSess = !!(form && form.noPage);   // 알림 신청(화면 없음, 10/11): 방문 기록에 가짜 방문/제출을 만들지 않음. 신청 사본(submissions)만
         await env.DB.batch([
           env.DB.prepare(`INSERT OR REPLACE INTO submissions (application_id, kv_key, path, city, cohort, src, channel, submitted_ts, submitted_at,
               name, phone, phone_digits, gender, birth_year, school, source, device, intent, intent_other, consent, buddy, plan, status, memo, status_updated_at, room, buddy_room)
@@ -251,11 +256,11 @@ export async function onRequest({ request, env, params, waitUntil }) {
             .bind(id, kvKey, p, h.city || null, h.cohort || null, h.src || null, h.utm_content || h.src || 'direct', now, KST(now),
               f.name || '', f.phone || '', normPhone(f.phone), f.gender || '', f.birth_year || '', f.school || '', f.source || '', f.device || '', f.intent || '', f.intent_other || '', f.consent || '', buddyVal(f.buddy), h.plan || '', f.buddy_room || ''),
           // 방문 기록이 먼저 못 들어온 경우(비콘 유실 등)에도 제출이 지표에서 빠지지 않게 행을 먼저 만듦
-          env.DB.prepare(`INSERT OR IGNORE INTO sessions (sid, path, city, src, channel, ua, device, in_app, is_bot, first_ts, last_ts, started, started_ts, max_page)
+          ...(noSess ? [] : [env.DB.prepare(`INSERT OR IGNORE INTO sessions (sid, path, city, src, channel, ua, device, in_app, is_bot, first_ts, last_ts, started, started_ts, max_page)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9, ?9, 1, ?9, 3)`)
             .bind(String(b.sid || id).slice(0, 64), p, h.city || null, h.src || null, h.utm_content || h.src || 'direct', String(b.ua || '').slice(0, 300), device(String(b.ua || '')), inApp(String(b.ua || '')), now),
           env.DB.prepare('UPDATE sessions SET submitted = 1, submitted_ts = ?3, application_id = ?4, max_page = 3, last_ts = ?3 WHERE sid = ?1 AND path = ?2')
-            .bind(String(b.sid || id).slice(0, 64), p, now, id),
+            .bind(String(b.sid || id).slice(0, 64), p, now, id)]),
         ]);
         dbOk = true;
       }
@@ -285,7 +290,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
       const user = { country: [await sha256('kr')] };
       if (ph) user.ph = [await sha256(ph)];
       if (f.gender === '여성' || f.gender === '남성') user.ge = [await sha256(f.gender === '여성' ? 'f' : 'm')];
-      waitUntil(capiEvent(request, b, 'Lead', b.lead_eid, user, { channel: h.utm_content || h.src || 'direct', city: h.city || '', content_name: h.utm_content || h.src || 'direct', content_category: form.plan === 'prealert' ? 'prealert' : 'paid' }).then((ev) => capiSend(env, ev)));
+      // 알림 신청(lite, 10/11)은 신청이 아니라서 Lead 대신 AlertSignup (메타 리드/최적화에 안 섞이게). 브라우저 픽셀도 같은 이름, 같은 eventID
+      const evName = form.lite ? 'AlertSignup' : 'Lead';
+      waitUntil(capiEvent(request, b, evName, b.lead_eid, user, { channel: h.utm_content || h.src || 'direct', city: h.city || '', content_name: h.utm_content || h.src || 'direct', content_category: form.lite ? 'alert' : form.plan === 'prealert' ? 'prealert' : 'paid' }).then((ev) => capiSend(env, ev)));
     }
     return json({ ok: true, id, application_id: id });
   }

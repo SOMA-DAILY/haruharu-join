@@ -4,7 +4,7 @@
 <title>하루하루 소개팅 5기 신청폼 💕</title>
 <meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 서울 대학생 모집.">
 <meta property="og:title" content="하루하루 소개팅 5기 신청폼 💕">
-<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 220명 참여, 매칭률 43.3% 🎉">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여, 매칭률 38.2% 🎉">
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
@@ -114,7 +114,7 @@ input:focus{border-color:#1a1a1a}
 <section class="page on" data-page="1">
 <!-- 신청폼 랜딩 v2 (10/8). 개선판 폼(등록부 variant: 'v2')에만 build-v2.sh 가 옛 P1~P4 자리 + 참여 흐름/정보 안내 글자 블록 자리에 끼움.
      순서: 첫 화면 → 진행 과정 → 걱정과 기능(하루 문답) → 성과 → 후기 → 신청 안내 → 바로 첫 문항. 트랙별 문구는 build-v2.sh 의 __LD_*__
-     실적 숫자(220명, 43.3%)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
+     실적 숫자(250명+, 38.2%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
      폼 문항/버튼 모양도 여기 style 에서 덮어씀 (랜딩 없는 3기/축제 폼은 그대로)
      성별 판: 링크에 g=f 면 여성용(남성 참가자가 보임), g=m 이면 남성용(여성 참가자가 보임), 없으면 섞인 기본판. 바뀌는 곳은 진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화. 프로필 사진은 public/img/L_p_*.webp(흐림), L_pc_*.webp(1:1 대화용) -->
 <script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
@@ -167,6 +167,26 @@ input:focus{border-color:#1a1a1a}
 .ld-if dd{padding:10px 14px;border:1.5px solid var(--hh-blue);border-radius:0 12px 12px 12px;background:#fff;font-size:15px;font-weight:700;line-height:1.4}
 .ld-if dd small{display:block;margin-top:3px;font-size:13px;font-weight:500;line-height:1.45;color:var(--hh-ink2)}
 .ld-if dd small b{font-weight:700;color:var(--hh-ink)}
+.ld-if dd s{margin-right:4px;font-weight:500;color:var(--hh-mute)}
+/* 다음 기수 알림 (10/11): 첫 화면 안내 칸 아래 작은 링크 → 그 자리에서 성별, 번호, 동의만 받음. 입력칸에 name 이 없어서 신청서 값/부분 저장에 안 섞임 */
+.ld-al{margin-top:14px}
+.ld-al-open{display:block;width:100%;padding:6px 0;border:0;background:none;font:inherit;font-size:14.5px;font-weight:600;color:#3C5A86;text-align:center;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ld-al-box{margin-top:8px;padding:16px;border-radius:18px;background:#fff;box-shadow:0 6px 18px rgba(26,52,92,.08)}
+.ld-al-box[hidden],.ld-al-done[hidden],.ld-al-open[hidden]{display:none}
+.closed .ld-al{margin-top:18px;text-align:left}
+.ld-al-t{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.ld-al-s{margin-top:3px;font-size:13.5px;color:var(--hh-ink2)}
+.ld-al-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ld-al-g button{height:46px;border:1.5px solid var(--hh-line);border-radius:12px;background:#fff;font:inherit;font-size:15px;font-weight:600;color:var(--hh-ink);cursor:pointer}
+.ld-al-g button.on{border-color:var(--hh-blue);background:#F2F8FF;color:#1F5FA9}
+.ld-al-box input[type=tel],.ld-al-box input[type=text]{display:block;width:100%;margin-top:8px;padding:13px 14px;border:1.5px solid var(--hh-line);border-radius:12px;font:inherit;font-size:16px;color:var(--hh-ink);outline:none;background:#fff}
+.ld-al-box input[type=tel]:focus,.ld-al-box input[type=text]:focus{border-color:var(--hh-blue)}
+.ld-al-c{display:flex;gap:9px;align-items:flex-start;margin-top:10px;font-size:13px;line-height:1.5;color:var(--hh-ink2);cursor:pointer}
+.ld-al-c input{flex:none;width:18px;height:18px;margin:1px 0 0;accent-color:var(--hh-blue)}
+.ld-al-go{display:block;width:100%;height:48px;margin-top:12px;border:0;border-radius:12px;background:var(--hh-blue);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.ld-al-go:disabled{background:#B9CDE6;cursor:default}
+.ld-al-done{margin-top:8px;padding:16px;border-radius:18px;background:#fff;text-align:center;font-size:15px;font-weight:700}
+.ld-al-done span{display:block;margin-top:4px;font-size:13.5px;font-weight:500;color:var(--hh-ink2)}
 
 /* 구역 공통 */
 .ld-sec{padding-top:56px}
@@ -424,13 +444,14 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 <section class="ld-sec" id="ld-record" data-sec="record">
 <h2 class="ld-vh">그동안의 성과</h2>
 <div class="ld-stats ld-fx">
-<div class="ld-stat"><b><span data-n="220">220</span><small>명</small></b><span>지금까지 참여</span></div>
-<div class="ld-stat"><b><span data-n="43.3">43.3</span><small>%</small></b><span>매칭률</span></div>
+<div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>
+<div class="ld-stat"><b><span data-n="38.2">38.2</span><small>%</small></b><span>매칭률</span></div>
 </div>
 <ul class="ld-co ld-fx">
 <li><p><b>앱 1기</b><span>9월 15일 ~ 17일</span></p><em>매칭률<strong>53.3%</strong></em></li>
 <li><p><b>앱 2기</b><span>9월 20일 ~ 22일</span></p><em>매칭률<strong>44.4%</strong></em></li>
-<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em class="ing">진행 중</em></li>
+<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em>매칭률<strong>32.1%</strong></em></li>
+<li><p><b>앱 4기</b><span>10월 11일 ~ 13일</span></p><em class="ing">진행 중</em></li>
 </ul>
 </section>
 
@@ -450,7 +471,8 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 <section class="ld-sec" id="ld-guide" data-sec="guide">
 <p class="ld-k">신청 안내</p>
 <h2>신청부터 방 입장까지</h2>
-<dl class="ld-if"><div><dt>신청 마감</dt><dd>10월 14일(수) 18:00</dd></div><div><dt>참가 안내</dt><dd>신청 마감일까지 참가 확정 문자를&nbsp;보내드려요</dd></div></dl>
+<dl class="ld-if"><div><dt>신청 마감</dt><dd>10월 14일(수) 18:00</dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>친구랑 같이 신청하면 둘 다 <b>5,900원</b></small></dd></div><div><dt>참가 안내</dt><dd>신청 마감일까지 참가 확정 문자를&nbsp;보내드려요</dd></div></dl>
+<div class="ld-al"><button type="button" class="ld-al-open" id="ldAlOpen">지금은 말고, 다음 기수 알림만 받을래요</button><div class="ld-al-box" id="ldAlBox" hidden><p class="ld-al-t">다음 기수, 가장 먼저 알려드릴게요</p><p class="ld-al-s">모집이 열리면 문자 한 통만 보내요.</p><div class="ld-al-g"><button type="button" data-g="여성">여성</button><button type="button" data-g="남성">남성</button></div><input type="text" id="ldAlBirth" inputmode="numeric" placeholder="출생년도 (2003)" maxlength="4"><input type="tel" id="ldAlPhone" inputmode="numeric" placeholder="전화번호 (01012345678)" maxlength="13" autocomplete="tel" class="mp-sensitive"><label class="ld-al-c"><input type="checkbox" id="ldAlAgree">모집 알림 문자를 보내기 위해 성별, 출생년도, 전화번호를 받아요. 알림을 보낸 뒤 6개월이 지나면 지워요.</label><button type="button" class="ld-al-go" id="ldAlGo" disabled>알림 받기</button></div><p class="ld-al-done" id="ldAlDone" hidden>알림 신청이 끝났어요 🙌<span>모집이 열리면 문자로 먼저 알려드릴게요.</span></p></div>
 <ol class="ld-steps"><li>이 폼을 작성하고 제출해요.</li><li>방이 열리면 초대 코드를 문자로 보내드려요.</li><li>앱에 코드를 넣으면 시작이에요.</li></ol>
 <div class="ld-gn"><p>궁금한 점은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
 </section>
@@ -762,9 +784,11 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  function ck(n){ var m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)')); return m?decodeURIComponent(m[1]):''; }
  function fbIds(){ var fbc=ck('_fbc'); if(!fbc && hidden.fbclid) fbc='fb.1.'+T0+'.'+hidden.fbclid; return {fbp:ck('_fbp'), fbc:fbc}; }
  function eid(name){ return name+'.'+sid+'.'+Date.now().toString(36); }
- function fb(name,params,std,id){ if(LOCAL_PREVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
+ // 메타 광고 검토 크롤러(fbclid + facebook.com 리퍼러 + 인앱 아님)는 메타 이벤트를 안 보냄 → LandingEngaged 학습 오염 방지. 서버 /capi 도 같은 규칙으로 거름
+ var META_REVIEW=!!hidden.fbclid&&/^https?:\/\/([a-z0-9-]+\.)*facebook\.com(\/|$)/i.test(document.referrer)&&!/Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent);
+ function fb(name,params,std,id){ if(LOCAL_PREVIEW||META_REVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
   try{ if(window.fbq) fbq(std?'track':'trackCustom',name,p,{eventID:id}); }catch(e){}
-  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,custom_data:p},fbIds()),true); }
+  if(name!=='Lead'&&name!=='AlertSignup') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,ref:document.referrer,custom_data:p},fbIds()),true); }
  window.hhFb=fb;
 
  // 체류 측정 (10/7). iOS 인스타 인앱은 광고 누르기 전에 페이지를 숨긴 채 미리 열고, 보이게 돼도 visibilitychange 를 안 쏘는 경우가 있음
@@ -890,6 +914,28 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  document.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click',function(){ var from=curPage, to=Number(b.getAttribute('data-next')); if(!validate(from)) return; ev('page_next',{from:from,to:to,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); if(from===1) fb('Page1Complete'); show(to); partial(false); }); });
  document.querySelectorAll('[data-prev]').forEach(function(b){ b.addEventListener('click',function(){ var to=Number(b.getAttribute('data-prev')); ev('page_back',{from:curPage,to:to,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); show(to); }); });
  var payBtn=document.getElementById('pay'); if(payBtn) payBtn.addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; saveDraft(); partial(false); });
+ // 첫 화면의 [다음 기수 알림만] (10/11): 성별, 번호, 동의만 받아 다음 기수 사전알림 경로(등록부 alert)로 제출. 이번 기수 신청서는 그대로 쓸 수 있음
+ // 신청 ID 는 세션 ID 뒤에 -a (같은 세션이 이번 기수 신청을 내도 서로 덮어쓰지 않게). 이번 기수 세션엔 last_field=alert_submit 로만 남김
+ var ALERT_PATH='/alert/seoul/', alBox=document.getElementById('ldAlBox');
+ if(alBox && ALERT_PATH){
+  var alG='', alGo=document.getElementById('ldAlGo'), alPh=document.getElementById('ldAlPhone'), alBy=document.getElementById('ldAlBirth'), alC=document.getElementById('ldAlAgree');
+  function alByOk(){ var v=alBy.value.trim(); return /^(19|20)\d{2}$/.test(v) && Number(v)>=1990 && Number(v)<=2007; }   // 신청서와 같은 기준 (만 19세 이상)
+  function alOk(){ alGo.disabled=!(alG && alByOk() && /^01[016789]\d{7,8}$/.test(alPh.value.replace(/\D/g,'')) && alC.checked); }
+  document.getElementById('ldAlOpen').addEventListener('click',function(){ alBox.hidden=!alBox.hidden; ev('alert_open',{open:!alBox.hidden}); if(!alBox.hidden) alPh.focus({preventScroll:true}); });
+  [].forEach.call(alBox.querySelectorAll('[data-g]'),function(b){ b.addEventListener('click',function(){ alG=b.getAttribute('data-g'); [].forEach.call(alBox.querySelectorAll('[data-g]'),function(x){ x.classList.toggle('on',x===b); }); alOk(); }); });
+  alPh.addEventListener('input',alOk); alBy.addEventListener('input',alOk); alC.addEventListener('change',alOk);
+  alPh.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); if(!alGo.disabled) alGo.click(); } });
+  alGo.addEventListener('click',function(){
+   alGo.disabled=true; alGo.textContent='저장 중…'; ev('alert_submit_click',{});
+   var f={gender:alG, birth_year:alBy.value.trim(), phone:alPh.value.trim(), consent:'동의합니다'}, alEid=eid('AlertSignup');
+   var payload=Object.assign({sid:sid+'-a',path:ALERT_PATH,fields:f,hidden:Object.assign({},hidden,{from_path:location.pathname}),ua:ua,ref:document.referrer,ts:Date.now(),lead_eid:alEid,url:location.href},fbIds());
+   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){ return r.json().then(function(res){ if(!r.ok) throw new Error(res.error||'store'); return res; }); })
+    .then(function(res){ ev('alert_submit',{application_id:res.application_id||res.id, gender:alG, birth_year:f.birth_year}); fb('AlertSignup',{content_name:hidden.channel, content_category:'alert'},false,alEid); lastField='alert_submit'; partial(false);
+      alBox.hidden=true; document.getElementById('ldAlOpen').hidden=true; document.getElementById('ldAlDone').hidden=false; })
+    .catch(function(err){ ev('alert_submit_error',{reason:String(err&&err.message||err)}); alGo.disabled=false; alGo.textContent='저장이 안 됐어요. 다시 눌러 주세요'; });
+  });
+ }
 
  // ---------- 마감 ----------
  // 기수 마감 시각이 지나면 폼 대신 마감 안내. 서버(/api/submit)도 따로 거부함. 기기 시계가 틀려도 되게 서버 시각으로 맞춤
@@ -897,6 +943,8 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  function closeForm(){
   if(closed||submitted) return; closed=true;
   form.hidden=true; document.getElementById('prog').hidden=true; document.getElementById('closed').hidden=false;
+  // 마감 화면에도 다음 기수 알림 칸 (10/11): 랜딩이 폼 안에 있어 같이 숨으니, 알림 칸만 마감 안내 아래로 옮기고 펼쳐 둠
+  var al=document.querySelector('.ld-al'); if(al){ document.getElementById('closed').appendChild(al); var ab=document.getElementById('ldAlBox'), ao=document.getElementById('ldAlOpen'), ad=document.getElementById('ldAlDone'); if(ab&&ad&&ad.hidden){ ab.hidden=false; if(ao) ao.hidden=true; } }
   window.scrollTo({top:0}); ev('cohort_closed_view',{});
  }
  function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }

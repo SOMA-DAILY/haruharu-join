@@ -101,7 +101,9 @@ def gen(path, f):
         ld_rows, ld_notes = [], ['사전 알림 신청자에게 먼저 안내 문자를 보내드려요.', '사전 알림 신청자는 참가비 할인 혜택이 있어요.']
     else:
         # 1페이지에는 참가비를 드러내지 않음(10/8 사용자: 1페이지 이탈과 2페이지 이탈을 견줘 참가비가 적절한지 보려고). 금액, 송금, 환불 문구는 2페이지 참가비 안내에서 처음 나옴
-        ld_rows = [('신청 마감', deadline_ko), ('참가 안내', '신청 마감일까지 참가 확정 문자를&nbsp;보내드려요')]   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
+        ld_rows = [('신청 마감', deadline_ko), ('참가 안내', '신청 마감일까지 참가 확정 문자를&nbsp;보내드려요')]
+        if f.get('feeFirst'):   # 10/11 사용자: 참가비는 첫 화면 말고 신청 안내에만 (12,900 → 7,900), 그 바로 아래 다음 기수 알림. 결제 페이지에서 금액을 처음 보고 나가는 이탈 때문에 10/8 숨김 결정을 바꿈
+            ld_rows.insert(1, ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
         ld_notes = []
     ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
     ld_flow = flow if prealert else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭)
@@ -127,6 +129,15 @@ def gen(path, f):
         '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
         '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
+        '__ALERT_PATH__': f.get('alert', ''),
+        '__LD_ALERT__': ('<div class="ld-al"><button type="button" class="ld-al-open" id="ldAlOpen">지금은 말고, 다음 기수 알림만 받을래요</button>'
+                         '<div class="ld-al-box" id="ldAlBox" hidden><p class="ld-al-t">다음 기수, 가장 먼저 알려드릴게요</p><p class="ld-al-s">모집이 열리면 문자 한 통만 보내요.</p>'
+                         '<div class="ld-al-g"><button type="button" data-g="여성">여성</button><button type="button" data-g="남성">남성</button></div>'
+                         '<input type="text" id="ldAlBirth" inputmode="numeric" placeholder="출생년도 (2003)" maxlength="4">'
+                         '<input type="tel" id="ldAlPhone" inputmode="numeric" placeholder="전화번호 (01012345678)" maxlength="13" autocomplete="tel" class="mp-sensitive">'
+                         '<label class="ld-al-c"><input type="checkbox" id="ldAlAgree">모집 알림 문자를 보내기 위해 성별, 출생년도, 전화번호를 받아요. 알림을 보낸 뒤 6개월이 지나면 지워요.</label>'
+                         '<button type="button" class="ld-al-go" id="ldAlGo" disabled>알림 받기</button></div>'
+                         '<p class="ld-al-done" id="ldAlDone" hidden>알림 신청이 끝났어요 🙌<span>모집이 열리면 문자로 먼저 알려드릴게요.</span></p></div>\n' if f.get('alert') else ''),
     }.items():
         t = t.replace(k, v)
     # P4 이미지 자리: 3기는 기존 이미지(값이 박혀 있음), 4기부터는 글자 카드 (기수값은 HTML 에만)
@@ -228,7 +239,7 @@ def gen(path, f):
             t = t[:d1] + '\n' + APP_GET.rstrip('\n') + t[d1:]
         if not prealert:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄
             page1 = t.split('data-page="1"', 1)[1].split('data-page="3"', 1)[0]
-            for word in ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ()):
+            for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ())):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
         for v in 'fm':   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
             assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 앱 화면 이미지 없음: L_store_feed_{v}.webp'
