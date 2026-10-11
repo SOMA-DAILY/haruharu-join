@@ -342,7 +342,7 @@ function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackO
 // 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
 function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
   if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
-function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return (cohortOf(r)==='alert'?'':' <span class="badge blue">사전알림</span>')+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
+function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return cohortOf(r)==='alert'?(joinedBefore(r)?' <span class="badge green">참여한 적 있음</span>':''):' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
 //   원격 D1 에 0009 가 아직 없어 열이 비면 친구 문항으로 추정함(같은 판정 함수). 친구 쌍은 불러온 목록 안에서 전화번호로 맞춤
 /*FRIEND_FN*/
@@ -357,7 +357,9 @@ function friendBadge(r){var s=friendState(r);return s?' <span class="badge '+(s.
 function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),w=function(n){return n.toLocaleString('ko-KR')+'원'},who=s.pal?s.pal.name+' ('+(s.pal.status||'미처리')+')':'';
   return s.k==='ok'?w(friendPaid(r))+' 송금 대상. 친구 '+who:s.k==='refund'?'정가 '+w(f.fee)+' 송금 대상. 친구 '+who+' 확인되면 '+w(f.fee-f.friendFee)+' 환급':w(friendPaid(r))+' 송금 대상인데 친구가 아직 신청 안 함. 끝까지 안 하면 연락해서 '+w(f.fee-f.friendFee)+' 더 받기'}
 // 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
-function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&(regOf(x.path)||{}).plan!=='prealert'&&(c==='alert'?(x.submitted_ts||0)>(r.submitted_ts||0):cohortOf(x)===c)})}   // 다음 기수 알림은 기수 상관없이 그 뒤 유료 제출이면 결제함
+function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
+// 알림 신청(10/11): 3기 자체폼부터 받은 신청 중 같은 번호가 있으면(시점, 기수 무관, 송금확인 안됨 제외) [참여한 적 있음]
+function joinedBefore(r){return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits&&x.phone_digits===r.phone_digits&&cohortOf(x)!=='alert'&&(regOf(x.path)||{}).plan!=='prealert'&&x.status!=='송금확인 안됨'})}
 function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';if(cohortOf(r)==='alert')return '<span class="badge violet" title="'+esc(r.path)+'">알림 신청</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
 // 개선판 배지는 같은 기수에 기존판이 같이 있을 때만 (4기 A/B). 5기부터는 폼이 하나라 배지 없음
 function hasBase(p){var f=regOf(p);return !!f&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}
