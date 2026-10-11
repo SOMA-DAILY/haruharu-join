@@ -330,7 +330,8 @@ function regOf(path){return REG.FORMS[path]||null}
 function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);return r.cohort||(f&&f.cohort)||'3'}
 function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
 var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인',festival:'전남대 축제'};
-function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c+'기'}
+// 폼이 전부 사전알림인 기수(다음 기수 알림, 10/11)는 탭 이름에 사전알림을 붙임
+function cohortKo(c){if(c==='jnu-festival')return '전남대 축제';var ps=Object.keys(REG.FORMS).filter(function(p){return REG.FORMS[p].cohort===c});return c+'기'+(ps.length&&ps.every(function(p){return REG.FORMS[p].plan==='prealert'})?' 사전알림':'')}
 function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){var x=Number(a),y=Number(b);if(isNaN(x)&&isNaN(y))return 0;if(isNaN(x))return 1;if(isNaN(y))return -1;return y-x})}   // 최근 기수부터, 축제 같은 이벤트는 맨 뒤 (10/10)
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
@@ -641,7 +642,7 @@ function shareOf(p){var f=REG.FORMS[p];
   return [f.label,fee+(REG.DEADLINE_KO[f.cohort]?', '+REG.DEADLINE_KO[f.cohort]+' 마감':''),p+'?src='+src,!!f.variant,rejoinLinks]}
 function shareCohorts(){if(/^cohort:/.test(S.path))return [S.path.slice(7)];var f=regOf(S.path);if(f)return [f.cohort];return S.path?[]:cohortList()}
 function renderShare(){var cs=shareCohorts();
-  var list=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return cs.indexOf(f.cohort)>=0&&!f.rejoin&&(f.cohort!=='3'||SHARE3[f.plan])})
+  var list=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return cs.indexOf(f.cohort)>=0&&!f.rejoin&&!f.noPage&&(f.cohort!=='3'||SHARE3[f.plan])})
     .sort(function(a,b){return cs.indexOf(REG.FORMS[a].cohort)-cs.indexOf(REG.FORMS[b].cohort)}).map(shareOf);
   // 개선판 폼은 남녀 화면이 따로 있어서(주소 끝 g=f / g=m) 카드 아래에서 여자/남자 링크를 바로 복사
   $('shareLinks').innerHTML=list.map(function(x){var card='<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>';

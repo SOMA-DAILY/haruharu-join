@@ -4,6 +4,7 @@
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
 export const CURRENT_COHORT = '5';
+export const NEXT_COHORT = String(Number(CURRENT_COHORT) + 1);   // 다음 기수 알림(/alert/seoul/)이 쌓이는 기수
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -57,8 +58,12 @@ export const FORMS = {
   '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
 
   // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 폼 하나씩. 화면은 4기 A/B 에서 이긴 개선판(B) 그대로 (variant 'v2' = build-v2.sh 로 만든다는 뜻)
-  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, landing: true, variant: 'v2', entry: '/seoul/student/' },
-  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
+  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/seoul/student/', alert: '/alert/seoul/' },
+  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
+
+  // ---- 다음 기수 알림 (10/11~): 기수 폼 첫 화면의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 번호, 동의만 = lite).
+  // 경로는 기수와 무관하게 고정, 기수 값은 CURRENT_COHORT + 1 로 자동 (6기를 열면 7기 알림으로 쌓임). 화면 없이 API 로만 받음(build 대상 아님), 마감 없음
+  '/alert/seoul/':          { ...S3, cohort: NEXT_COHORT, plan: 'prealert', fee: 0, pay: '', label: '다음 기수 서울 학생 알림 (폼 첫 화면에서)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
 };
 
 // 고정 링크 (10/10~): 광고와 바이오는 이 주소만 씀. 서버(functions/{경로}/index.js)가 그때 열려 있는 기수 폼으로 302 (쿼리 그대로).

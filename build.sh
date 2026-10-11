@@ -140,7 +140,7 @@ def gen(path, f):
     print('built', path, cohort, plan, fee, len(t))
 
 for path, f in FORMS.items():
-    if f.get('festival'): continue
+    if f.get('festival') or f.get('noPage'): continue   # noPage: 화면 없이 API 로만 받는 경로 (다음 기수 알림 /alert/seoul/, 10/11)
     gen(path, f)
 
 # 지역 선택 페이지 (루트): 현재 기수의 listed 폼만 버튼으로
