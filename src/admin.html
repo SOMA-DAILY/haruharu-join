@@ -330,8 +330,8 @@ function regOf(path){return REG.FORMS[path]||null}
 function cohortOf(r){if(isFest(r))return 'jnu-festival';var f=regOf(r.path);return r.cohort||(f&&f.cohort)||'3'}
 function trackOf(r){if(isFest(r))return 'festival';var f=regOf(r.path);return r.track||(f&&f.track)||(r.city==='gwangju'?'gwangju-student':'seoul-student')}
 var TRACK_KO={'seoul-student':'서울 학생','gwangju-student':'광주 학생','seoul-work':'수도권 직장인',festival:'전남대 축제'};
-// 폼이 전부 사전알림인 기수(다음 기수 알림, 10/11)는 탭 이름에 사전알림을 붙임
-function cohortKo(c){if(c==='jnu-festival')return '전남대 축제';var ps=Object.keys(REG.FORMS).filter(function(p){return REG.FORMS[p].cohort===c});return c+'기'+(ps.length&&ps.every(function(p){return REG.FORMS[p].plan==='prealert'})?' 사전알림':'')}
+// 다음 기수 알림(cohort 'alert', 10/11)은 기수 없이 [사전알림] 탭 하나
+function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c==='alert'?'사전알림':c+'기'}
 function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){var x=Number(a),y=Number(b);if(isNaN(x)&&isNaN(y))return 0;if(isNaN(x))return 1;if(isNaN(y))return -1;return y-x})}   // 최근 기수부터, 축제 같은 이벤트는 맨 뒤 (10/10)
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
@@ -353,7 +353,7 @@ function friendBadge(r){var s=friendState(r);return s?' <span class="badge '+(s.
 function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),w=function(n){return n.toLocaleString('ko-KR')+'원'},who=s.pal?s.pal.name+' ('+(s.pal.status||'미처리')+')':'';
   return s.k==='ok'?w(friendPaid(r))+' 송금 대상. 친구 '+who:s.k==='refund'?'정가 '+w(f.fee)+' 송금 대상. 친구 '+who+' 확인되면 '+w(f.fee-f.friendFee)+' 환급':w(friendPaid(r))+' 송금 대상인데 친구가 아직 신청 안 함. 끝까지 안 하면 연락해서 '+w(f.fee-f.friendFee)+' 더 받기'}
 // 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
-function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
+function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&(regOf(x.path)||{}).plan!=='prealert'&&(c==='alert'?(x.submitted_ts||0)>(r.submitted_ts||0):cohortOf(x)===c)})}   // 다음 기수 알림은 기수 상관없이 그 뒤 유료 제출이면 결제함
 function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
 // 개선판 배지는 같은 기수에 기존판이 같이 있을 때만 (4기 A/B). 5기부터는 폼이 하나라 배지 없음
 function hasBase(p){var f=regOf(p);return !!f&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}

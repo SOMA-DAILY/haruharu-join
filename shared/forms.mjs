@@ -4,7 +4,6 @@
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
 export const CURRENT_COHORT = '5';
-export const NEXT_COHORT = String(Number(CURRENT_COHORT) + 1);   // 다음 기수 알림(/alert/seoul/)이 쌓이는 기수
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -61,9 +60,9 @@ export const FORMS = {
   '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/seoul/student/', alert: '/alert/seoul/' },
   '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
 
-  // ---- 다음 기수 알림 (10/11~): 기수 폼 첫 화면의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 번호, 동의만 = lite).
-  // 경로는 기수와 무관하게 고정, 기수 값은 CURRENT_COHORT + 1 로 자동 (6기를 열면 7기 알림으로 쌓임). 화면 없이 API 로만 받음(build 대상 아님), 마감 없음
-  '/alert/seoul/':          { ...S3, cohort: NEXT_COHORT, plan: 'prealert', fee: 0, pay: '', label: '다음 기수 서울 학생 알림 (폼 첫 화면에서)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
+  // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
+  // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자). 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
+  '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '다음 기수 알림 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
 };
 
 // 고정 링크 (10/10~): 광고와 바이오는 이 주소만 씀. 서버(functions/{경로}/index.js)가 그때 열려 있는 기수 폼으로 302 (쿼리 그대로).
