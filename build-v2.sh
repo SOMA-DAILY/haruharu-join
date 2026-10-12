@@ -41,6 +41,11 @@ FOLD_TAIL = """<script>
   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('friend_toggle_open',{path:location.pathname}); }catch(e){} });
  setTimeout(function(){ var r=document.querySelector('input[name="buddy_room"]:checked'); if(r){ m.hidden=false; b.hidden=true; } },800);   // 저장해 둔 입력을 되살렸으면 펼친 채로
 })();
+(function(){ var c=document.getElementById('acctCopy'); if(!c) return; var s=c.querySelector('span'), t0=s.textContent, n=c.getAttribute('data-acct');
+ function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} }
+ function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=n; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,n.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) done(); else s.textContent=n; }
+ c.addEventListener('click',function(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(n).then(done,old); else old(); });
+})();
 </script>
 """
 
@@ -288,7 +293,12 @@ def gen(path, f):
                 t = t.replace(mb2.group(0), '', 1).replace(name_end, name_end + '\n\n' + bd2 + '\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
-            if f.get('twoPage'): t = t.replace(foot, FOLD_TAIL + foot, 1)
+            if f.get('twoPage'):
+                # 계좌번호 복사 버튼 (10/12 사용자: 토스 말고 계좌 복사도). 토스 버튼 바로 아래, 계좌는 템플릿 안내 글자에서 읽음
+                ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S)
+                assert ac and pay_a, f'{path} 계좌/송금 버튼을 못 찾음'
+                t = t.replace(pay_a.group(0), pay_a.group(0) + f' <button type="button" class="acct-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>토스뱅크 {ac.group(1)} 계좌번호 복사</span></button>\n', 1)
+                t = t.replace(foot, FOLD_TAIL + foot, 1)
             p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
             if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
             assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if f.get('twoPage') else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
