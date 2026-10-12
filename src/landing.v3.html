@@ -1,4 +1,4 @@
-<!-- 신청폼 랜딩 A안 (10/12). landing.v2.html 에서 갈라 나옴: 첫 화면에 훅/실적/일정/참가비 칩/실사진/버튼, 버튼은 신청서로 바로 전환(안내 카드가 신청서 맨 위), 후기 3개가 버튼 아래, 앱 목업 대신 집행된 광고 그리드(성별판), 걱정 문답 5개, 기수 매칭률 올림 정수(10/12 사용자). 등록부 landingA 폼만 build-v2.sh 가 씀.
+<!-- 신청폼 랜딩 3판 (10/12). landing.v2.html 에서 갈라 나옴: 첫 화면에 훅/실적/일정/참가비 칩/실사진/버튼, 버튼은 신청서로 바로 전환(안내 카드가 신청서 맨 위), 후기 3개가 버튼 아래, 앱 목업 대신 집행된 광고 그리드(성별판), 걱정 문답 5개, 기수 매칭률 올림 정수(10/12 사용자). 등록부 landingV3 폼(5기 서울/광주)만 build-v2.sh 가 씀.
      원본 주석: 개선판 폼(등록부 variant: 'v2')에만 build-v2.sh 가 옛 P1~P4 자리 + 참여 흐름/정보 안내 글자 블록 자리에 끼움.
      순서: 첫 화면 → 진행 과정 → 걱정과 기능(하루 문답) → 성과 → 후기 → 신청 안내 → 바로 첫 문항. 트랙별 문구는 build-v2.sh 의 __LD_*__
      실적 숫자(250명+, 약 40%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89 = 38.2% 를 10/12 운영자가 어림수 약 40% 로)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
@@ -239,7 +239,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 .done{padding:56px 0 40px}
 .done:before{content:"";display:block;width:112px;height:81px;margin:0 auto 14px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='10 5 197 142'%3E%3Cpath d='M123.7 8.6C125.2 8.3 130.3 8.7 131.8 8.8C143.8 10.3 154.8 16.5 162.2 26C169 34.4 172.2 45.2 171 55.9C178.1 57.5 185.7 61.8 190.9 67C199.3 75.4 204 86.8 204.1 98.7C204.1 110.3 199.2 122.8 190.9 131C184.7 137.1 176.9 141.1 168.4 143C162.5 144.3 157.8 144.1 151.9 144.1L137.7 144.1L90.4 144.1L75.8 144.1C71.8 144.1 68 144.2 64 143.7C58.8 142.9 53.7 141.4 48.9 139.2C34.4 132.7 23.1 120.8 17.4 105.9C11.9 91.2 12.7 76.6 19.3 62.4C27.7 44.2 44.7 29.3 65.2 27.8C72.4 27.4 78.4 29.2 84.8 32.2C94.6 18.3 106.4 9.9 123.7 8.6Z' fill='%23F6F7F8' stroke='%235ABAFF'/%3E%3Cpath d='M128 84.5C128 85 123.3 101.8 120 91C119.5 89.5 118.4 84.8 118.7 84C118.7 83.9 118.8 83.7 118.9 83.6C120.1 83.3 120.8 83.1 122.1 83.6C123.4 84.2 126.2 84.6 127.4 83.4C127.9 83.2 128 84 128 84.5Z' fill='%238DBDF9'/%3E%3Cpath d='M122.1 101.1C123.1 99.8 123.7 99 125.1 98C129.9 94.6 137 95.6 140 100.7C134.1 104.2 130.3 110.8 132.1 117.3C131 117.6 123.8 122.1 122 123C120.5 122.1 113 117.5 112 117.3C113.5 110.4 110 104.4 104 100.6C106.6 97.9 107.7 96.2 112.1 96C116.6 95.8 119.6 97.9 122.1 101.1Z' fill='%23D4E8FB'/%3E%3Cpath d='M88 131C93.3 133.1 112.4 126.3 112.5 115.6C112.5 112.3 112.6 111.5 111 108C108.3 103.5 107 102.5 104.5 101C97.9 98.6 94.4 103.2 92.5 104.5' fill='none' stroke='%235ABAFF' stroke-linecap='round'/%3E%3Cpath d='M156.5 130C151.2 132.1 132.2 126 132 115.3C132 112 131.9 111.2 133.5 107.7C136.2 103.1 137.5 102.2 140 100.7C146.6 98.3 150.1 101.7 152 103' fill='none' stroke='%235ABAFF' stroke-linecap='round'/%3E%3Cpath d='M108 69C108 69 119.5 75 118 75C116.5 75 108 75 108 75' fill='none' stroke='%23096EE3' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M139.1 69C139.1 69 127.6 75 129.1 75C130.7 75 139.2 75 139.1 75' fill='none' stroke='%23096EE3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat}
 .done h2{letter-spacing:-.02em;color:var(--hh-ink)}
-/* ---- A안 (10/12) ---- */
+/* ---- 랜딩 3판 (10/12) ---- */
 .ld-hero-a{padding-bottom:26px}
 .ld-hero-a .ld-h1 b{color:#1F5FA9}
 .ld-statline{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:7px 12px;border-radius:999px;background:#fff;font-size:14px;font-weight:800;color:#1F5FA9;box-shadow:0 2px 8px rgba(26,52,92,.08)}
@@ -293,8 +293,8 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 <header class="ld-band ld-hero ld-hero-a">
 <div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>__LD_BADGE__<b id="ldDday"></b></span></div>
-<p class="ld-eye">__LD_WHO__ 3일 소개팅</p>
-<h1 class="ld-h1">서울 대학생끼리,<br><b>3일이면 아는 사이</b></h1>
+<p class="ld-eye">__LD_CITY_KO__ 대학생 3일 소개팅</p>
+<h1 class="ld-h1">__LD_CITY_KO__ 대학생끼리,<br><b>3일이면 아는 사이</b></h1>
 <p class="ld-sub">3일 동안 서로의 하루를 보고, 마지막 날 서로를 골라요.<br>서로 고르면 1:1 대화가 열려요.</p>
 <span class="ld-statline">250명+ 참여, 매칭률 40%</span>
 <div class="ld-chips"><span class="ld-chip">__LD_PERIOD__</span><span class="ld-chip">마감 __LD_DEADLINE__</span><span class="ld-chip fee">참가비 __LD_FEE__원</span></div>
@@ -314,9 +314,9 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <section class="ld-life ld-band ld-life-a ld-fx" id="ld-life" data-sec="life">
 <h2>서로의 일상이<br>대화 소재로</h2>
 <div class="ld-life-media">
-<img class="ld-life-img" id="ldAdGrid" width="900" height="842" data-img="L_adgrid" src="/img/L_adgrid_m.jpg" decoding="async" alt="참가자들의 하루 6칸: 09:00 운동 하러, 12:00 시험공부, 14:00, 16:00 쉬러 왔어요, 18:00 노을, 22:00 저녁에 뛰면 좋아요">
+<img class="ld-life-img" id="ldAdGrid" width="900" height="842" data-img="L_adgrid" data-life="__LD_LIFE__" src="/img/L_adgrid_m.jpg" decoding="async" alt="참가자들의 하루 6칸: 09:00 운동 하러, 12:00 시험공부, 14:00, 16:00 쉬러 왔어요, 18:00 노을, 22:00 저녁에 뛰면 좋아요">
 </div>
-<script>(function(){ document.getElementById('ldAdGrid').src='/img/L_adgrid_'+(HH_G==='f'?'f':'m')+'.jpg'; })();</script>
+<script>(function(){ var im=document.getElementById('ldAdGrid'), g=(HH_G==='f'?'f':'m'); if(im.getAttribute('data-life')==='feed'){ im.src='/img/L_store_feed_'+g+'.webp'; im.setAttribute('data-img','L_feed'); } else im.src='/img/L_adgrid_'+g+'.jpg'; })();</script>
 </section>
 
 <section class="ld-sec" id="ld-flow" data-sec="flow">
@@ -474,7 +474,7 @@ __LD_ALERT__<ol class="ld-steps">__LD_STEPS__</ol>
  function target(){ return document.querySelector('.q[data-name="gender"]'); }
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
   mp('landing_cta',{where:b.getAttribute('data-cta')});
-  // A안: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
+  // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
   document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0});
   var fc=document.querySelector('.ld-fcard .ld-fcard-rows'); if(fc){ fc.classList.remove('ld-flash'); setTimeout(function(){ fc.classList.add('ld-flash'); },calm?0:250); }
  }); });
