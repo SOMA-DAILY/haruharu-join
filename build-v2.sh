@@ -40,6 +40,7 @@ FOLD_TAIL = """<script>
  b.addEventListener('click',function(){ m.hidden=false; b.hidden=true; b.setAttribute('aria-expanded','true');
   try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('friend_toggle_open',{path:location.pathname}); }catch(e){} });
  setTimeout(function(){ var r=document.querySelector('input[name="buddy_room"]:checked'); if(r){ m.hidden=false; b.hidden=true; } },800);   // 저장해 둔 입력을 되살렸으면 펼친 채로
+ document.addEventListener('change',function(e){ if(e.target&&e.target.name==='buddy_room'&&m.hidden){ m.hidden=false; b.hidden=true; } });   // 접힌 채로 친구 선택지가 골라지면(키보드 a~e 단축키, 복원) 펼침. 안 그러면 친구 번호 칸이 안 보인 채 검사에 걸림
 })();
 (function(){ var c=document.getElementById('acctCopy'); if(!c) return; var s=c.querySelector('span'), t0=s.textContent, n=c.getAttribute('data-acct');
  function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} }
