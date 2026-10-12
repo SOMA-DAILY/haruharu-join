@@ -20,6 +20,7 @@ TPL=open('src/form.v2.template.html',encoding='utf-8').read()
 CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.v2.html',encoding='utf-8').read()
+LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 # 친구 할인 조각(src/friend-discount.html)과 판정 함수(shared/friend-discount.mjs, export 만 떼고 관리 화면에 그대로 끼움)
 _fr=open('src/friend-discount.html',encoding='utf-8').read()
@@ -33,6 +34,22 @@ assert FRIEND_FN.startswith('function friendFee(')
 APP_GET=re.sub(r'^<!--.*?-->\n', '', open('src/app-install.html',encoding='utf-8').read(), count=1, flags=re.S)
 assert APP_GET.startswith('<div class="ap-get">') and APP_GET.count('class="ap-btn"') == 2
 BAD='·「」①②③④⑤'
+# 랜딩 3판(twoPage) 2페이지의 접힌 친구 문항 펼치기 (모양은 landing.v3.html 의 .fr-mini .fr-toggle .fr-more)
+FOLD_TAIL = """<script>
+(function(){ var b=document.querySelector('.fr-toggle'), m=document.querySelector('.fr-more'); if(!b||!m) return;
+ b.addEventListener('click',function(){ m.hidden=false; b.hidden=true; b.setAttribute('aria-expanded','true');
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('friend_toggle_open',{path:location.pathname}); }catch(e){} });
+ setTimeout(function(){ var r=document.querySelector('input[name="buddy_room"]:checked'); if(r){ m.hidden=false; b.hidden=true; } },800);   // 저장해 둔 입력을 되살렸으면 펼친 채로
+ document.addEventListener('change',function(e){ if(e.target&&e.target.name==='buddy_room'&&m.hidden){ m.hidden=false; b.hidden=true; } });   // 접힌 채로 친구 선택지가 골라지면(키보드 a~e 단축키, 복원) 펼침. 안 그러면 친구 번호 칸이 안 보인 채 검사에 걸림
+})();
+(function(){ var c=document.getElementById('acctCopy'); if(!c) return; var s=c.querySelector('span'), t0=s.textContent, n=c.getAttribute('data-acct');
+ function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} }
+ function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=n; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,n.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) done(); else s.textContent=n; }
+ c.addEventListener('click',function(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(n).then(done,old); else old(); });
+})();
+</script>
+"""
+
 
 def NEWGEN(c): return str(c).isdigit() and int(c) >= 4   # 4기부터 쓰는 화면(실적 220명판 P1, 완료 설문). 5기 이후도 같음
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
@@ -64,7 +81,7 @@ def gen(path, f):
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
     phone_only = bool(f.get('phoneOnly'))   # 5기 재참여: 전화번호만 받음 (지난 신청 정보는 서버가 가져옴)
-    lastp = '1' if phone_only else '3'      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지)
+    lastp = '1' if phone_only else ('2' if f.get('twoPage') else '3')      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지, 랜딩 3판은 2페이지)
     fee = f"{f['fee']:,}"
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
@@ -112,12 +129,17 @@ def gen(path, f):
             ld_rows.insert(1, ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
         ld_notes = []
     ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
-    ld_flow = flow if prealert else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭)
+    ld_flow = flow if (prealert or f.get('landingV3')) else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭). 랜딩 3판은 송금을 다시 넣음 (10/12)
     ld_steps = ''.join('<li>' + re.sub(r'^\d+\.\s*', '', s) + '</li>' for s in ld_flow.split('\n'))
+    if f.get('landingV3'): ld_steps = ld_steps.replace('참가비를 송금한 뒤', f'참가비 <b>{fee}원</b>을 송금한 뒤')
+    # 랜딩 3판 안내 카드 다섯 줄 + 첫 화면 칩 (짧은 날짜)
+    short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
+    rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
+              ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     t = TPL
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
-        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: LANDING, t, flags=re.S)
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
         t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
     else:
@@ -126,6 +148,8 @@ def gen(path, f):
         '__LD_BADGE__': f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
         '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
+        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
+        '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
         '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'),
@@ -189,7 +213,12 @@ def gen(path, f):
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
         for need in ('data-cta="sticky"', 'data-engage'):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
-        if not prealert:
+        if not prealert and f.get('twoPage'):   # 랜딩 3판(10/12): 템플릿의 2페이지(전화, 동의, 참가비) 그대로. 동의 전엔 임시 저장에 연락처를 안 넣는 것은 3페이지판과 같게
+            pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
+            assert t.count(pf) == 1, f'{path} 임시 저장 함수를 못 찾음'
+            t = t.replace(pf, "function partial(beacon){ if(submitted) return; var pfields=data(); if(!pfields.consent){ delete pfields.phone; delete pfields.name; delete pfields.buddy; }\n  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,")
+            assert 'data-page="3"' not in t and t.count('<div class="q" data-name="phone">') == 1, f'{path} 랜딩 3판은 2페이지여야 함'
+        if not prealert and not f.get('twoPage'):
             # 전화번호와 개인정보 동의 문항만 따로 2페이지로 떼고, 원래 2페이지(친구 문항, 참가비 안내)는 3페이지로 (10/8 사용자: 어디서 나가는지 자세히 보려고).
             #   1페이지 이탈 = 기본 문항, 2페이지 이탈 = 연락처와 동의, 3페이지 이탈 = 참가비 반응. 템플릿 스크립트는 페이지 수와 버튼의 data-next/data-prev 를 읽어서 움직임
             m = re.search(r'<div class="q" data-name="phone">.*?<div class="q" data-name="consent">.*?</div>\n\n', t, flags=re.S)
@@ -252,11 +281,29 @@ def gen(path, f):
                 assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
                 blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
                 t = t[:a0] + blk + t[a1:]
+            if f.get('twoPage') and not share_only:
+                # 랜딩 3판(10/12): 친구 문항을 송금자 이름 아래로 내리고 한 줄 + 버튼으로 접음 (5기 3페이지 미제출 32명 중 16명이 친구 문항에서 멈춤). 아무것도 안 고르면 혼자(정가)
+                mb2 = re.search(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t, flags=re.S)
+                bd = mb2.group(0).rstrip('\n'); hk = frfill(FR_HOOK); sh = re.search(r'<button type="button" class="fr-share">.*?</button>', hk, flags=re.S)
+                o0 = bd.index('<div class="opts">'); o1 = bd.index('<p class="err">친구 전화번호를 확인해 주세요</p>')
+                assert sh and bd.count(hk) == 1 and o0 < o1, f'{path} 랜딩 3판 친구 문항을 못 접음'
+                mini = (f'<div class="fr-mini"><p>친구랑 같이 신청하면<br><b>둘 다 {won(f["friendFee"])}원</b></p>'
+                        '<button type="button" class="fr-toggle" aria-expanded="false">친구랑 신청해요</button></div>')
+                bd2 = bd[:o0].replace(hk, mini, 1) + '<div class="fr-more" hidden>\n ' + bd[o0:o1].rstrip() + '\n ' + sh.group(0) + '</div>\n ' + bd[o1:]
+                name_end = '<p class="err">송금자 이름을 입력해 주세요</p></div>'
+                assert t.count(name_end) == 1, f'{path} 송금자 이름 칸을 못 찾음'
+                t = t.replace(mb2.group(0), '', 1).replace(name_end, name_end + '\n\n' + bd2 + '\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
+            if f.get('twoPage'):
+                # 계좌번호 복사 버튼 (10/12 사용자: 토스 말고 계좌 복사도). 토스 버튼 바로 아래, 계좌는 템플릿 안내 글자에서 읽음
+                ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S)
+                assert ac and pay_a, f'{path} 계좌/송금 버튼을 못 찾음'
+                t = t.replace(pay_a.group(0), pay_a.group(0) + f' <button type="button" class="acct-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>토스뱅크 {ac.group(1)} 계좌번호 복사</span></button>\n', 1)
+                t = t.replace(foot, FOLD_TAIL + foot, 1)
             p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
             if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
-            assert p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">') and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
+            assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if f.get('twoPage') else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
         if f.get('listFee'):
             # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'

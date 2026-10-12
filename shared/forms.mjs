@@ -58,8 +58,9 @@ export const FORMS = {
   '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
 
   // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 폼 하나씩. 화면은 4기 A/B 에서 이긴 개선판(B) 그대로 (variant 'v2' = build-v2.sh 로 만든다는 뜻)
-  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/seoul/student/', alert: '/alert/seoul/' },
-  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
+  // 10/12 사용자: 5기 서울/광주 폼을 새 랜딩(landingV3, src/landing.v3.html)과 2페이지(twoPage)로 교체. 주소/광고 링크/서버는 그대로. 남녀는 ?g=f / ?g=m (광고 src 로 자동 판별)
+  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, twoPage: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, twoPage: true, entry: '/gwangju/student/' },
 
   // 5기 재참여 (10/11~, 메시지로만 보냄): 지난 참가자는 전화번호만 적음(phoneOnly). 성별/출생년도/학교는 서버가 같은 번호의 지난 신청에서 가져옴.
   //   친구에게 보내는 링크는 기본 문항이 있는 친구 초대 폼(friendForm)으로 열림. 둘 다 재참여 할인 5,900원 고정(송금 /b/), 추가 친구 할인 없음
