@@ -59,6 +59,8 @@ export const FORMS = {
 
   // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 폼 하나씩. 화면은 4기 A/B 에서 이긴 개선판(B) 그대로 (variant 'v2' = build-v2.sh 로 만든다는 뜻)
   '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/seoul/student/', alert: '/alert/seoul/' },
+  // A안 (10/12 사용자): 첫 화면 훅/실적/일정/참가비 칩/실사진/버튼, 버튼은 신청서로 전환, 2페이지(전화, 동의, 참가비 한 장, 친구 할인은 송금자 이름 아래 접힘). 화면은 src/landing.a.html, 남녀는 ?g=f / ?g=m. 기존 /5/seoul/ 는 그대로
+  '/5/seoul/a/':            { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생 - A안', feeFirst: true, landing: true, variant: 'v2', landingA: true, twoPage: true, alert: '/alert/seoul/' },
   '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
 
   // 5기 재참여 (10/11~, 메시지로만 보냄): 지난 참가자는 전화번호만 적음(phoneOnly). 성별/출생년도/학교는 서버가 같은 번호의 지난 신청에서 가져옴.
