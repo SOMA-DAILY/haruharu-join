@@ -4,7 +4,7 @@
 <title>하루하루 소개팅 4기 신청폼 💕</title>
 <meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 광주 대학생 모집.">
 <meta property="og:title" content="하루하루 소개팅 4기 신청폼 💕">
-<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여, 매칭률 38.2% 🎉">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여, 매칭률 약 40% 🎉">
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
@@ -114,7 +114,7 @@ input:focus{border-color:#1a1a1a}
 <section class="page on" data-page="1">
 <!-- 신청폼 랜딩 v2 (10/8). 개선판 폼(등록부 variant: 'v2')에만 build-v2.sh 가 옛 P1~P4 자리 + 참여 흐름/정보 안내 글자 블록 자리에 끼움.
      순서: 첫 화면 → 진행 과정 → 걱정과 기능(하루 문답) → 성과 → 후기 → 신청 안내 → 바로 첫 문항. 트랙별 문구는 build-v2.sh 의 __LD_*__
-     실적 숫자(250명+, 38.2%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
+     실적 숫자(250명+, 약 40%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89 = 38.2% 를 10/12 운영자가 어림수 약 40% 로)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
      폼 문항/버튼 모양도 여기 style 에서 덮어씀 (랜딩 없는 3기/축제 폼은 그대로)
      성별 판: 링크에 g=f 면 여성용(남성 참가자가 보임), g=m 이면 남성용(여성 참가자가 보임), 없으면 섞인 기본판. 바뀌는 곳은 진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화. 프로필 사진은 public/img/L_p_*.webp(흐림), L_pc_*.webp(1:1 대화용) -->
 <script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
@@ -268,6 +268,7 @@ input:focus{border-color:#1a1a1a}
 .ld-stat{padding:18px 16px;border-radius:18px;background:var(--hh-sky)}
 .ld-stat b{display:block;font-size:36px;line-height:1.1;font-weight:800;letter-spacing:-.03em;color:var(--hh-blue);font-variant-numeric:tabular-nums}
 .ld-stat b small{margin-left:2px;font-size:18px;font-weight:800;color:var(--hh-ink)}
+.ld-stat b small.ld-abt{margin:0 4px 0 0}
 .ld-stat>span{display:block;margin-top:7px;font-size:13.5px;font-weight:600;color:var(--hh-ink2)}
 /* 앱 기수별 매칭률: 운영 DB 에서 운영/테스트 계정을 뺀 실참가자 기준 (서로 고른 사람 수 / 실참가자 수). 1기 8/15, 2기 8/18. 3기는 결과가 나오면 숫자로 바꿈 */
 .ld-co{margin-top:10px;padding:2px 18px;border-radius:18px;background:var(--hh-sky)}
@@ -445,7 +446,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 <h2 class="ld-vh">그동안의 성과</h2>
 <div class="ld-stats ld-fx">
 <div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>
-<div class="ld-stat"><b><span data-n="38.2">38.2</span><small>%</small></b><span>매칭률</span></div>
+<div class="ld-stat"><b><small class="ld-abt">약</small><span data-n="40">40</span><small>%</small></b><span>매칭률</span></div>
 </div>
 <ul class="ld-co ld-fx">
 <li><p><b>셋로그</b><span>앱 출시 전 기수</span></p><em>140명 참여<strong>23쌍 매칭</strong></em></li>
