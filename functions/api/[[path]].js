@@ -39,6 +39,21 @@ function cleanHidden(h) {
   return o;
 }
 function normPhone(p) { return (p || '').replace(/\D/g, ''); }
+// 전화번호만 받는 재참여 폼(등록부 phoneOnly): 같은 번호의 지난 신청에서 성별/출생년도/학교/기기를 가져옴 (칸마다 가장 최근에 적은 값).
+//   못 찾아도 접수는 받음(번호가 등록돼 있는지 화면으로 알 수 없게). 그때는 칸이 빈 채로 남고 관리 화면에 [이전 기록 없음]
+const PRIOR_FIELDS = ['gender', 'birth_year', 'school', 'device'];
+async function priorProfile(env, digits) {
+  const out = {};
+  if (!env.DB || !digits) return out;
+  try {
+    const rows = await env.DB.prepare('SELECT application_id, gender, birth_year, school, device FROM submissions WHERE phone_digits = ?1 ORDER BY submitted_ts DESC LIMIT 20').bind(digits).all();
+    for (const r of rows.results || []) {
+      if (!out.from) out.from = r.application_id;
+      for (const k of PRIOR_FIELDS) if (!out[k] && r[k]) out[k] = r[k];
+    }
+  } catch (e) {}
+  return out;
+}
 // 친구 칸: 전화번호면 숫자만 저장. 옛 화면에서 이름으로 들어온 값은 그대로 둠
 function buddyVal(v) { const d = normPhone(v); return /^01\d{8,9}$/.test(d) ? d : (v || ''); }
 function normPath(p, city) {
@@ -198,8 +213,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const preRegistration = form && form.plan === 'early';
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
-    const required = festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
-    if (!preRegistration && !festival && !prealert) {
+    const phoneOnly = !!(form && form.phoneOnly);
+    const required = phoneOnly ? ['phone', 'name'] : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       required.push('device');
     }
@@ -211,6 +227,17 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (capture.error === 'capture_missing') miss.push('capture');
     }
     if (miss.length) return json({ ok: false, error: 'missing', miss }, 400);
+    // 전화번호만 받는 재참여: 화면에 없는 문항 값은 버리고 지난 신청에서 채움. 기기는 지금 접속한 폰이 먼저
+    let priorFrom = null;
+    if (phoneOnly) {
+      for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'consent']) delete f[k];   // 동의 체크 문항 없음 (이용 안내만)
+      const prior = await priorProfile(env, normPhone(f.phone));
+      for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
+      const ua = String(b.ua || '');
+      const dv = /iphone|ipad|ipod/i.test(ua) ? 'iPhone' : /android/i.test(ua) ? 'Android' : '';
+      if (dv) f.device = dv;
+      priorFrom = prior.from || '';
+    }
     if (capture && capture.error) return json({ ok: false, error: capture.error }, capture.error === 'capture_too_large' ? 413 : 400);
     if (festival) f.avoid_same_major = AVOID_MAJOR_VALUES.includes(f.avoid_same_major) ? f.avoid_same_major : '';
     // 신청 ID = 세션 UUID (랜딩부터 앱까지 한 사람을 잇는 키). Mixpanel distinct_id, 초대 코드 옆에 저장, 앱 identify 에 씀
@@ -233,6 +260,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // 친구 할인: 안내받은 금액을 서버가 등록부와 친구 문항으로 정해서 남김 (클라이언트 값 안 믿음). 대상 폼이 아니면 칸 자체를 안 만듦
     const ff = form && form.friendFee ? friendFee(form, f) : null;
     if (ff != null) rec.friend_fee = ff;
+    if (priorFrom != null) rec.prior_from = priorFrom;   // 가져온 지난 신청 ID ('' = 못 찾음)
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러

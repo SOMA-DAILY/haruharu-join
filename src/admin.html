@@ -336,7 +336,9 @@ function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var 
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
 // 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
 function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
-  if(plan==='prealert')return '사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
+  if(plan==='prealert')return '사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.invite)return '친구 초대 '+won;if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
+// 전화번호만 받는 재참여 폼: 같은 번호의 지난 신청을 못 찾아 성별이 빈 사람 (번호가 바뀌었거나 처음 온 사람). 연락해서 확인
+function noPriorBadge(r){var f=regOf(r.path);return f&&f.phoneOnly&&!r.gender?' <span class="badge amber">이전 기록 없음</span>':''}
 function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return ' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
 //   원격 D1 에 0009 가 아직 없어 열이 비면 친구 문항으로 추정함(같은 판정 함수). 친구 쌍은 불러온 목록 안에서 전화번호로 맞춤
@@ -620,7 +622,7 @@ function renderAppSummary(){
 }
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('appEmpty').classList.toggle('hidden',rs.length>0);
   $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+formBadge(r)+'</td>'+
-    '<td><b>'+esc(r.name||'(사전알림)')+'</b>'+feeBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
+    '<td><b>'+esc(r.name||'(사전알림)')+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+STATUSES.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+(s||'미처리')+'</option>'}).join('')+'</select>'+
     (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
@@ -635,8 +637,8 @@ function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자
 var SHARE3={regular:'msg',discount:'discount',early:'early'};   // 3기는 위 규칙 전에 쓴 코드 그대로 (h3-msg-seoul 등)
 function shareOf(p){var f=REG.FORMS[p];
   var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
-  var rejoin=f.plan==='regular'&&f.variant?Object.keys(REG.FORMS).filter(function(q){var r=REG.FORMS[q];return r.rejoin&&r.cohort===f.cohort&&r.track===f.track&&r.variant===f.variant})[0]:null;
-  var rejoinLinks=rejoin?['f','m'].map(function(g){return rejoin+'?src=h'+f.cohort+'-rejoin-'+f.track+'-'+g+'-'+f.variant+'&g='+g}):null;
+  var rejoin=f.plan==='regular'&&f.variant?Object.keys(REG.FORMS).filter(function(q){var r=REG.FORMS[q];return r.rejoin&&!r.invite&&r.cohort===f.cohort&&r.track===f.track&&r.variant===f.variant})[0]:null;
+  var rejoinLinks=rejoin?['f','m'].map(function(g){return rejoin+'?src=h'+f.cohort+'-rejoin-'+f.track+'-'+g+'-'+f.variant+'&g='+g}).concat([REG.FORMS[rejoin].fee.toLocaleString('ko-KR')+'원'+(REG.FORMS[rejoin].phoneOnly?', 전화번호만':'')]):null;
   var src=f.cohort==='3'?'h3-'+SHARE3[f.plan]+'-'+f.city:p===FEST_PATH?'jnu-fest-msg':'h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:'');
   return [f.label,fee+(REG.DEADLINE_KO[f.cohort]?', '+REG.DEADLINE_KO[f.cohort]+' 마감':''),p+'?src='+src,!!f.variant,rejoinLinks]}
 function shareCohorts(){if(/^cohort:/.test(S.path))return [S.path.slice(7)];var f=regOf(S.path);if(f)return [f.cohort];return S.path?[]:cohortList()}
@@ -645,7 +647,7 @@ function renderShare(){var cs=shareCohorts();
     .sort(function(a,b){return cs.indexOf(REG.FORMS[a].cohort)-cs.indexOf(REG.FORMS[b].cohort)}).map(shareOf);
   // 개선판 폼은 남녀 화면이 따로 있어서(주소 끝 g=f / g=m) 카드 아래에서 여자/남자 링크를 바로 복사
   $('shareLinks').innerHTML=list.map(function(x){var card='<button type="button" data-copy="'+esc(HOST+x[2])+'"><b>'+esc(x[0])+'</b><span class="fee">'+esc(x[1])+'</span><span class="u">'+esc((HOST+x[2]).replace('https://',''))+'</span></button>';
-    var rejoin=x[4]?'<span class="fee rejoin-fee">재참여 4,900원</span><div class="sgb"><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][0])+'">여자 재참여</button><button type="button" title="재참여 4,900원" data-copy="'+esc(HOST+x[4][1])+'">남자 재참여</button></div>':'';
+    var rejoin=x[4]?'<span class="fee rejoin-fee">재참여 '+esc(x[4][2])+'</span><div class="sgb"><button type="button" title="재참여 '+esc(x[4][2])+'" data-copy="'+esc(HOST+x[4][0])+'">여자 재참여</button><button type="button" title="재참여 '+esc(x[4][2])+'" data-copy="'+esc(HOST+x[4][1])+'">남자 재참여</button></div>':'';
     return x[3]?'<div class="sg">'+card+'<div class="sgb"><button type="button" data-copy="'+esc(HOST+x[2]+'&g=f')+'">여자 링크 복사</button><button type="button" data-copy="'+esc(HOST+x[2]+'&g=m')+'">남자 링크 복사</button></div>'+rejoin+'</div>':card}).join('')||'<div class="muted">이 폼은 메시지 링크 없음</div>'}
 renderShare();
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});

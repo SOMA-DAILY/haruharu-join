@@ -4,7 +4,7 @@
 <title>하루하루 소개팅 4기 신청폼 💕</title>
 <meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 광주 대학생 모집.">
 <meta property="og:title" content="하루하루 소개팅 4기 신청폼 💕">
-<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 220명 참여, 매칭률 43.3% 🎉">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 254명 참여, 매칭률 43.3% 🎉">
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
@@ -114,7 +114,7 @@ input:focus{border-color:#1a1a1a}
 <section class="page on" data-page="1">
 <!-- 신청폼 랜딩 v2 (10/8). 개선판 폼(등록부 variant: 'v2')에만 build-v2.sh 가 옛 P1~P4 자리 + 참여 흐름/정보 안내 글자 블록 자리에 끼움.
      순서: 첫 화면 → 진행 과정 → 걱정과 기능(하루 문답) → 성과 → 후기 → 신청 안내 → 바로 첫 문항. 트랙별 문구는 build-v2.sh 의 __LD_*__
-     실적 숫자(220명, 43.3%)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
+     실적 숫자(254명, 43.3%)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
      폼 문항/버튼 모양도 여기 style 에서 덮어씀 (랜딩 없는 3기/축제 폼은 그대로)
      성별 판: 링크에 g=f 면 여성용(남성 참가자가 보임), g=m 이면 남성용(여성 참가자가 보임), 없으면 섞인 기본판. 바뀌는 곳은 진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화. 프로필 사진은 public/img/L_p_*.webp(흐림), L_pc_*.webp(1:1 대화용) -->
 <script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
@@ -424,13 +424,14 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 <section class="ld-sec" id="ld-record" data-sec="record">
 <h2 class="ld-vh">그동안의 성과</h2>
 <div class="ld-stats ld-fx">
-<div class="ld-stat"><b><span data-n="220">220</span><small>명</small></b><span>지금까지 참여</span></div>
+<div class="ld-stat"><b><span data-n="254">254</span><small>명</small></b><span>지금까지 참여</span></div>
 <div class="ld-stat"><b><span data-n="43.3">43.3</span><small>%</small></b><span>매칭률</span></div>
 </div>
 <ul class="ld-co ld-fx">
 <li><p><b>앱 1기</b><span>9월 15일 ~ 17일</span></p><em>매칭률<strong>53.3%</strong></em></li>
 <li><p><b>앱 2기</b><span>9월 20일 ~ 22일</span></p><em>매칭률<strong>44.4%</strong></em></li>
-<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em class="ing">진행 중</em></li>
+<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em>매칭률<strong>32.1%</strong></em></li>
+<li><p><b>앱 4기</b><span>10월 11일 ~ 13일</span></p><em class="ing">진행 중</em></li>
 </ul>
 </section>
 
@@ -742,9 +743,11 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  function ck(n){ var m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)')); return m?decodeURIComponent(m[1]):''; }
  function fbIds(){ var fbc=ck('_fbc'); if(!fbc && hidden.fbclid) fbc='fb.1.'+T0+'.'+hidden.fbclid; return {fbp:ck('_fbp'), fbc:fbc}; }
  function eid(name){ return name+'.'+sid+'.'+Date.now().toString(36); }
- function fb(name,params,std,id){ if(LOCAL_PREVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
+ // 메타 광고 검토 크롤러(fbclid + facebook.com 리퍼러 + 인앱 아님)는 메타 이벤트를 안 보냄 → LandingEngaged 학습 오염 방지. 서버 /capi 도 같은 규칙으로 거름
+ var META_REVIEW=!!hidden.fbclid&&/^https?:\/\/([a-z0-9-]+\.)*facebook\.com(\/|$)/i.test(document.referrer)&&!/Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent);
+ function fb(name,params,std,id){ if(LOCAL_PREVIEW||META_REVIEW) return; var p=Object.assign({channel:hidden.channel,city:CITY},params||{}); id=id||eid(name);
   try{ if(window.fbq) fbq(std?'track':'trackCustom',name,p,{eventID:id}); }catch(e){}
-  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,custom_data:p},fbIds()),true); }
+  if(name!=='Lead') post('/capi',Object.assign({event_name:name,event_id:id,sid:sid,path:location.pathname,url:location.href,ref:document.referrer,custom_data:p},fbIds()),true); }
  window.hhFb=fb;
 
  // 체류 측정 (10/7). iOS 인스타 인앱은 광고 누르기 전에 페이지를 숨긴 채 미리 열고, 보이게 돼도 visibilitychange 를 안 쏘는 경우가 있음
