@@ -26,6 +26,7 @@ _fr=open('src/friend-discount.html',encoding='utf-8').read()
 FR_HOOK, _fr = _fr.split('<!--HOOK-->\n',1)[1].split('<!--BANNER-->\n',1)
 FR_BANNER, FR_TAIL = _fr.split('<!--TAIL-->\n',1)
 REJOIN_HOOK=open('src/rejoin-friend.html',encoding='utf-8').read()
+REJOIN_SHARE=re.sub(r'^<!--.*?-->\n', '', open('src/rejoin-share.html',encoding='utf-8').read(), count=1, flags=re.S)
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -62,6 +63,8 @@ def gen(path, f):
     os.makedirs(outdir, exist_ok=True)
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
+    phone_only = bool(f.get('phoneOnly'))   # 5기 재참여: 전화번호만 받음 (지난 신청 정보는 서버가 가져옴)
+    lastp = '1' if phone_only else '3'      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지)
     fee = f"{f['fee']:,}"
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
@@ -81,13 +84,16 @@ def gen(path, f):
         done_title, done_body = '사전 알림이 접수됐어요 💌', '일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.'
         consent = '성별, 출생연도, 전화번호, 하시는 일'
     else:
-        fee_note = (f'재참여하시는 분과 초대받은 친구 모두 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin')
+        fee_note = (f'친구 초대 할인으로 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('invite')
+                    else f'재참여 할인으로 참가비는 {fee}원이에요. 초대받은 친구도 같은 금액이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin') and cohort != '4'
+                    else f'재참여하시는 분과 초대받은 친구 모두 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin')
                     else f'사전 알림을 신청해 주신 분은 {fee}원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.' if plan in ('early','discount')
                     else f'참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.')
         flow = '1. 이 폼을 작성하고 참가비를 송금한 뒤 제출해요.\n2. 방이 열리면 초대 코드를 문자로 보내드려요.\n3. 앱에 코드를 넣으면 시작이에요.'
         done_title, done_body = '신청이 접수됐어요 💌', '방이 열리면 초대 코드를 문자로 보내드려요.'
         consent = ('성별, 출생연도, 전화번호, 하시는 일, 신청자 확인용 이름, 함께 신청한 친구의 전화번호' if work
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
+        if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -126,7 +132,7 @@ def gen(path, f):
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
-        '__SCHOOL_Q__': school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
+        '__SCHOOL_Q__': '' if phone_only else school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
         '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
         '__ALERT_PATH__': f.get('alert', ''),
@@ -157,9 +163,13 @@ def gen(path, f):
         t = re.sub(r'<img class="img" data-img="P4"[^>]+>', lambda m: card, t)
     if f.get('rejoin'):
         # 재참여는 유입 경로와 신청 마음을 다시 묻지 않음. URL의 src/utm 추적은 유지.
-        for question in ('source', 'intent'):
+        for question in ('source', 'intent') + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
+    if phone_only:
+        # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호)으로
+        assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+        t = t.replace('.q[data-name="gender"]', '.q[data-name="phone"]')
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
         start = t.index('<div class="q" data-name="source">'); end = t.index('<div class="q" data-name="intent">', start)
@@ -185,19 +195,36 @@ def gen(path, f):
             m = re.search(r'<div class="q" data-name="phone">.*?<div class="q" data-name="consent">.*?</div>\n\n', t, flags=re.S)
             sec2 = '<section class="page" data-page="2">\n'; prev1 = '<button type="button" class="btn sec2" data-prev="1">← 이전</button>'
             nav3 = prev1 + '<button type="submit" class="btn" id="submit">제출하기</button>'
+            nav1 = '<div class="nav"><button type="button" class="btn" data-next="2">다음 페이지 →</button></div>\n'
             assert m and t.count(sec2) == 1 and t.count(nav3) == 1 and t.index(sec2) + len(sec2) == m.start(), f'{path} 전화번호/동의 문항 또는 2페이지 자리를 못 찾음'
-            nav2 = '<div class="nav">' + prev1 + '<button type="button" class="btn" data-next="3">다음 페이지 →</button></div>\n'
-            t = t.replace(nav3, nav3.replace('data-prev="1"', 'data-prev="2"'), 1)
-            t = t.replace(sec2 + m.group(0), sec2 + m.group(0).rstrip('\n') + '\n\n' + nav2 + '</section>\n\n<section class="page" data-page="3">\n', 1)
+            if phone_only:
+                # 한 페이지에 전부 (10/11 운영자: 다음 페이지 없이 한번에). 전화번호, 친구 문항, 참가비, 제출 버튼 순서, 그 아래 친구 추천 칸
+                join = nav1 + '</section>\n\n' + sec2
+                assert t.count(join) == 1, f'{path} 1페이지 다음 버튼을 못 찾음'
+                # 동의 체크 문항은 두지 않고(10/11 운영자), 전화번호 아래에 이용 안내 한 줄만. 지난 신청 정보를 다시 쓴다는 것도 여기서 밝힘
+                mc = re.search(r'<div class="q" data-name="consent">.*?</div>\n\n', m.group(0), flags=re.S)
+                assert mc, f'{path} 동의 문항을 못 찾음'
+                notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
+                t = t.replace(join + m.group(0), m.group(0).replace(mc.group(0), notice), 1)
+                t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
+            else:
+                nav2 = '<div class="nav">' + prev1 + '<button type="button" class="btn" data-next="3">다음 페이지 →</button></div>\n'
+                t = t.replace(nav3, nav3.replace('data-prev="1"', 'data-prev="2"'), 1)
+                t = t.replace(sec2 + m.group(0), sec2 + m.group(0).rstrip('\n') + '\n\n' + nav2 + '</section>\n\n<section class="page" data-page="3">\n', 1)
             # 동의에 체크하기 전에 적은 전화번호가 임시 저장(/partial)으로 나가지 않게, 동의 전에는 연락처를 빼고 보냄
             pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
             assert t.count(pf) == 1, f'{path} 임시 저장 함수를 못 찾음'
             t = t.replace(pf, "function partial(beacon){ if(submitted) return; var pfields=data(); if(!pfields.consent){ delete pfields.phone; delete pfields.name; delete pfields.buddy; }\n  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,")
-            p1, rest = t.split('data-page="1"', 1)[1].split('data-page="2"', 1)
-            p2, p3 = rest.split('data-page="3"', 1); p3 = p3.split('data-page="done"', 1)[0]
             qp, qc = '<div class="q" data-name="phone">', '<div class="q" data-name="consent">'   # 문항 블록으로 찾음 (랜딩의 스타일 선택자에도 data-name 이 나와서)
-            assert qp in p2 and qc in p2 and p2.count('<div class="q"') == 2 and qp not in p1 + p3 and qc not in p1 + p3, f'{path} 전화번호/동의 문항 위치가 다름'
-            assert 'data-next="2"' in p1 and 'data-prev="1"' in p2 and 'data-next="3"' in p2 and 'data-prev="2"' in p3 and 'id="submit"' in p3 and '<div class="q" data-name="name">' in p3, f'{path} 페이지 이동 버튼이 어긋남'
+            if phone_only:
+                p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
+                assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1, f'{path} 한 페이지 구성이 어긋남'
+                assert qc not in t and 'class="rj-privacy"' in p1 and p1.index(qp) < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 문항 순서가 다름'
+            else:
+                p1, rest = t.split('data-page="1"', 1)[1].split('data-page="2"', 1)
+                p2, p3 = rest.split('data-page="3"', 1); p3 = p3.split('data-page="done"', 1)[0]
+                assert qp in p2 and qc in p2 and p2.count('<div class="q"') == 2 and qp not in p1 + p3 and qc not in p1 + p3, f'{path} 전화번호/동의 문항 위치가 다름'
+                assert 'data-next="2"' in p1 and 'data-prev="1"' in p2 and 'data-next="3"' in p2 and 'data-prev="2"' in p3 and 'id="submit"' in p3 and '<div class="q" data-name="name">' in p3, f'{path} 페이지 이동 버튼이 어긋남'
         if f.get('friendFee') or f.get('rejoin'):
             # 친구 할인 (10/8): 친구 문항을 참가비 안내 위로 올리고, 제목을 할인 안내로 바꾸고, 친구 선택지를 고르면 금액과 송금 버튼이 할인 금액으로 바뀜. 친구 문항에는 공유 버튼
             won = lambda n: f'{n:,}'
@@ -205,8 +232,9 @@ def gen(path, f):
             off = won(f['fee'] - f.get('friendFee', f['fee']))
             frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])),
                    '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(f['listFee']) + '원</s> → ') if f.get('listFee') else '',
-                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_SRC__': f'h{cohort}-friend' + ('-rejoin' if share_only else ''),
-                   '__SHARE_TEXT__': (f'하루하루 소개팅 같이 신청하자! 이 링크로 신청하면 친구도 {fee}원이야. 신청서 친구 번호 칸에 서로 번호를 적어줘.' if share_only
+                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': f'h{cohort}-friend' + ('-rejoin' if share_only else ''),
+                   '__SHARE_TEXT__': (f'하루하루 소개팅 해 봐! 이 링크로 신청하면 {fee}원에 할인받을 수 있어.' if f.get('friendForm')
+                                      else f'하루하루 소개팅 같이 신청하자! 이 링크로 신청하면 친구도 {fee}원이야. 신청서 친구 번호 칸에 서로 번호를 적어줘.' if share_only
                                       else f'하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 {off}원 할인이래.')}
             def frfill(s):
                 for k, v in frv.items(): s = s.replace(k, v)
@@ -214,7 +242,7 @@ def gen(path, f):
             mb = re.search(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t, flags=re.S)
             name_open = '<div class="q" data-name="name">'; title = '<p class="t">친구랑 함께 신청하셨나요?</p>\n'; note = '친구도 신청서에 내 번호를 적어야 반영돼요.'
             assert mb and t.count(name_open) == 1 and mb.group(0).count(title) == 1 and mb.group(0).count(note) == 1, f'{path} 친구 문항/참가비 안내를 못 찾음'
-            hook = REJOIN_HOOK if share_only else FR_HOOK
+            hook = REJOIN_SHARE if phone_only else REJOIN_HOOK if share_only else FR_HOOK   # 전화번호만 받는 폼은 친구 추천과 방 배정을 한 문항으로
             buddy = mb.group(0).rstrip('\n').replace(title, frfill(hook), 1)
             if not share_only: buddy = buddy.replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
             t = t.replace(mb.group(0), '', 1).replace(name_open, buddy + '\n\n' + name_open, 1)
@@ -226,8 +254,9 @@ def gen(path, f):
                 t = t[:a0] + blk + t[a1:]
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
-            p3 = t.split('data-page="3"', 1)[1].split('data-page="done"', 1)[0]
-            assert p3.index('data-name="buddy_room"') < p3.index('data-name="name"') and '__FR' not in t and t.count('class="fr-share"') == 1, f'{path} 친구 할인 조각이 제대로 안 들어감'
+            p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
+            if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
+            assert p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">') and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
         if f.get('listFee'):
             # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
@@ -237,8 +266,8 @@ def gen(path, f):
             # 완료 화면: 완료 문구 바로 아래에 앱 설치 안내 (10/8 운영자). 무료 사전 알림 폼은 방이 아직 안 잡혀서 뺌
             d0 = t.index('<section class="page" data-page="done">'); d1 = t.index('</p>', d0) + 4
             t = t[:d1] + '\n' + APP_GET.rstrip('\n') + t[d1:]
-        if not prealert:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄
-            page1 = t.split('data-page="1"', 1)[1].split('data-page="3"', 1)[0]
+        if not prealert and not phone_only:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄. 한 페이지짜리 재참여 폼은 해당 없음
+            page1 = t.split('data-page="1"', 1)[1].split(f'data-page="{lastp}"', 1)[0]
             for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ())):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
         for v in 'fm':   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임

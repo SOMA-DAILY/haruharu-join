@@ -44,7 +44,7 @@
  // 친구에게 공유하기: 친구 문항의 버튼 (공유 창이 없으면 주소 복사). 친구도 같은 성별용 화면으로 열리게 g 를 붙임
  [].forEach.call(document.querySelectorAll('.fr-share'),function(share){ share.addEventListener('click',function(){
   var g={'여성':'g=f&','남성':'g=m&'}[picked('gender')]||'';
-  var url=location.origin+location.pathname+'?'+g+'src=__SHARE_SRC__';
+  var url=location.origin+__SHARE_PATH__+'?'+g+'src=__SHARE_SRC__';
   var text='__SHARE_TEXT__';
   var pg=share.closest('.page');
   mp('friend_invite_click',{claimed:!!on,page:pg?pg.getAttribute('data-page'):''});

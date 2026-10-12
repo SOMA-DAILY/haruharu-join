@@ -26,6 +26,7 @@ const S4 = { ...S3, cohort: '4' };
 const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
+const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
 export const FORMS = {
@@ -60,6 +61,12 @@ export const FORMS = {
   '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/seoul/student/', alert: '/alert/seoul/' },
   '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', entry: '/gwangju/student/' },
 
+  // 5기 재참여 (10/11~, 메시지로만 보냄): 지난 참가자는 전화번호만 적음(phoneOnly). 성별/출생년도/학교는 서버가 같은 번호의 지난 신청에서 가져옴.
+  //   친구에게 보내는 링크는 기본 문항이 있는 친구 초대 폼(friendForm)으로 열림. 둘 다 재참여 할인 5,900원 고정(송금 /b/), 추가 친구 할인 없음
+  '/5/seoul/rejoin/':          { ...S5, ...REJOIN5, label: '5기 서울 학생 재참여', phoneOnly: true, friendForm: '/5/seoul/rejoin/friend/' },
+  '/5/gwangju/rejoin/':        { ...G5, ...REJOIN5, label: '5기 광주 학생 재참여', phoneOnly: true, friendForm: '/5/gwangju/rejoin/friend/' },
+  '/5/seoul/rejoin/friend/':   { ...S5, ...REJOIN5, label: '5기 서울 학생 재참여 친구 초대', invite: true },
+  '/5/gwangju/rejoin/friend/': { ...G5, ...REJOIN5, label: '5기 광주 학생 재참여 친구 초대', invite: true },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -140,6 +147,7 @@ export function feeLabel(f) {
   if (f.plan === 'prealert') return '사전알림 (무료)';
   if (f.plan === 'jnu_festival') return '전남대 축제 4,900원';
   const won = f.fee.toLocaleString('ko-KR') + '원';
+  if (f.invite) return '친구 초대 ' + won;
   if (f.rejoin) return '재참여 ' + won;
   return f.plan === 'early' ? '사전알림 ' + won : f.plan === 'discount' ? '할인 ' + won : '일반 ' + won;
 }
