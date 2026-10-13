@@ -16,7 +16,7 @@ const KST = (ms) => new Date(ms + 9 * 3600 * 1000).toISOString().replace('T', ' 
 const EXPERIENCE_VALUES = ['dating_app', 'friend_intro', 'offline', 'setlog_haruharu', 'none'];   // src/done-survey.html 보기와 같음
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 // /api/export CSV 는 시트 IMPORTDATA 가 열 위치로 읽을 수 있음 → BASE_FIELDS 순서와 기존 열 위치는 바꾸지 말고, 새 입력값은 FESTIVAL_FIELDS 로 CSV 맨 끝에만 붙임
-const BASE_FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'name', 'buddy', 'buddy_room'];
+const BASE_FIELDS = ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'phone', 'consent', 'marketing', 'name', 'buddy', 'buddy_room'];   // marketing (10/14): 선택 동의 [할인, 모집 소식 문자 받기]. 임시 저장(sessions.fields)과 KV 정본의 fields 에만 남음 (D1 submissions 열 없음)
 const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
 // 4기 직장인 사전알림 문항. 하시는 일은 school 칸을 그대로 씀(라벨만 다름), 편한 진행 시기만 새 칸
 const WORK_FIELDS = ['schedule_pref'];

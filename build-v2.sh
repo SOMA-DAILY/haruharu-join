@@ -54,6 +54,32 @@ FOLD_TAIL = """<script>
 """
 
 
+# [모두 동의]: 누르면 두 항목을 같이 켜고 끔, 항목을 따로 바꾸면 모두 동의 표시가 따라감. 모양은 여기 style
+AGREE_TAIL = """<style>
+.q[data-name="consent"] .chk{align-items:center}
+.q[data-name="consent"] .ag-all{font-size:17px;font-weight:800}
+.q[data-name="consent"] .ag-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.q[data-name="consent"] .ag-item{flex:1;min-width:0;padding:10px 14px;border-color:transparent;background:none;font-size:15px;font-weight:600}
+.q[data-name="consent"] .ag-item.on{border-color:transparent;background:none}
+.q[data-name="consent"] .ag-more{flex:none;padding:8px 4px 8px 8px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--hh-mute);text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
+.q[data-name="consent"] .note[hidden]{display:none}
+.q[data-name="consent"] .ag-row+.note{margin:2px 0 6px}
+.q[data-name="consent"] .ag-item b{font-weight:800}
+</style>
+<script>
+(function(){ var all=document.getElementById('agAll'); if(!all) return; var items=[].slice.call(document.querySelectorAll('.q[data-name="consent"] input[name]'));
+ function sync(){ var on=items.every(function(x){ return x.checked; }); all.checked=on; all.closest('.chk').classList.toggle('on',on); }
+ all.addEventListener('change',function(){ var on=all.checked; items.forEach(function(x){ if(x.checked!==on){ x.checked=on; x.dispatchEvent(new Event('change',{bubbles:true})); } });
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('agree_all',{on:on,path:location.pathname}); }catch(e){} });
+ items.forEach(function(x){ x.addEventListener('change',sync); });
+ setTimeout(sync,900);   // 저장해 둔 입력을 되살린 뒤
+ // 안내문은 접어 두고 [자세히 보기]로 펼침 (10/14 운영자: 동의 칸이 너무 큼)
+ [].forEach.call(document.querySelectorAll('.q[data-name="consent"] .ag-more'),function(b){ b.addEventListener('click',function(){ var n=b.parentNode.nextElementSibling, open=n.hidden; n.hidden=!open; b.setAttribute('aria-expanded',open?'true':'false'); b.textContent=open?'접기':'자세히 보기'; }); });
+})();
+</script>
+"""
+
+
 def NEWGEN(c): return str(c).isdigit() and int(c) >= 4   # 4기부터 쓰는 화면(실적 220명판 P1, 완료 설문). 5기 이후도 같음
 def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
@@ -230,6 +256,23 @@ def gen(path, f):
         t = t.replace('<!--PAY_START-->', '').replace('<!--PAY_END-->', '')
     left = re.findall(r'__[A-Z0-9_]+__', t)
     assert not left, f'{path} placeholder 남음: {left}'
+    mkt = None
+    if f.get('marketing'):
+        # 동의 문항 (10/14 운영자): [모두 동의] 하나로 한번에, 아래에 (필수) 개인정보 수집 이용 + (선택) 할인, 모집 소식 문자 받기.
+        #   선택 동의는 필수와 따로 고를 수 있어야 하고(개인정보 보호법 22조), 광고 문자는 미리 수신 동의를 받아야 함(정보통신망법 50조). 쓰다 나간 사람에게 보내므로 그 점도 문구에 밝힘
+        #   페이지 나누기 등 아래 조립이 원래 동의 블록 모양을 찾으므로, 바꿔 끼우는 것은 맨 끝에서 (mkt)
+        mc = re.search(r'<div class="q" data-name="consent">(.*?)</div>\n', t, flags=re.S)
+        chk = ' <label class="chk"><input type="checkbox" name="consent" value="동의합니다" required>동의합니다</label><p class="err">동의가 필요해요</p>'
+        assert mc and mc.group(1).count(chk) == 1 and mc.group(1).count('<p class="note">') == 1, f'{path} 동의 문항을 못 찾음'
+        note = mc.group(1).split('<p class="note">', 1)[1].split('</p>', 1)[0]
+        mkt = (mc.group(0), '<div class="q" data-name="consent"><p class="t">약관 동의<span class="req">*</span></p>\n'
+               ' <label class="chk ag-all"><input type="checkbox" id="agAll">모두 동의</label>\n'
+               ' <span class="ag-row"><label class="chk ag-item"><input type="checkbox" name="consent" value="동의합니다" required><span><b>(필수)</b> 개인정보 수집 이용 동의</span></label><button type="button" class="ag-more" aria-expanded="false">자세히 보기</button></span>\n'
+               ' <p class="note" hidden>' + note + '</p>\n'
+               ' <span class="ag-row"><label class="chk ag-item"><input type="checkbox" name="marketing" value="동의합니다"><span><b>(선택)</b> 모집 소식 문자 받기</span></label><button type="button" class="ag-more" aria-expanded="false">자세히 보기</button></span>\n'
+               ' <p class="note" hidden>할인과 다음 기수 모집 소식을 문자로 보내드려요. 신청을 끝까지 마치지 않아도 적어 주신 번호로 안내할 수 있어요.\n'
+               '- 이용 항목 : 전화번호\n- 보유 : 동의일로부터 6개월, 언제든 수신 거부할 수 있어요.\n- 동의하지 않아도 신청할 수 있어요.</p>\n'
+               ' <p class="err">필수 항목에 동의가 필요해요</p></div>\n')
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
         for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"', 'data-engage')):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
@@ -363,6 +406,11 @@ def gen(path, f):
         for k in keys:
             assert os.path.exists(f'public/img/L_p_{k}.webp'), f'{path} 성별 판 프로필 사진 없음: L_p_{k}.webp'
             assert os.path.exists(f'public/img/L_pc_{k}.webp'), f'{path} 성별 판 프로필 사진(선명) 없음: L_pc_{k}.webp'
+    if mkt:
+        foot = '<p class="foot">'
+        assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
+        t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
+        assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
     bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):

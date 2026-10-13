@@ -321,7 +321,7 @@ function ageOf(y){var n=Number(y);return n>1900?(new Date(Date.now()+9*3600e3).g
 // 송금확인 안됨: 목록엔 남기고 신청자 관리 화면 집계(총 신청, 오늘, 성비, 처리 현황, 광고별)에서만 뺌
 var UNPAID='송금확인 안됨';
 function counted(r){return r.status!==UNPAID}
-var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
+var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',marketing:'문자 수신 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
 var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'cohort:'+REG.CURRENT,src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
 var $=function(id){return document.getElementById(id)};
@@ -594,6 +594,7 @@ function stepsHtml(r,L){if(L)return r.next_click?'<span class="badge green">'+es
   return '<span class="badge '+t[1]+'">'+t[0]+'</span>'}
 function filledSummary(r){if(!r.fields)return '<span class="muted">-</span>';var f=JSON.parse(r.fields),bits=[];
   ['name','phone','gender','birth_year','school','major','source','intent','buddy_room','buddy','avoid_same_major'].forEach(function(k){if(f[k])bits.push(esc(k==='phone'||k==='buddy'?fmtPhone(f[k]):f[k]))});
+  if(f.phone&&!r.submitted)bits.push(f.marketing?'<span class="badge green">문자 동의</span>':'<span class="badge">문자 동의 없음</span>');   // 쓰다 나간 사람에게 할인 문자를 보내도 되는지 (10/14 선택 동의)
   return bits.length?bits.join(' / '):'<span class="muted">-</span>'}
 function renderVisits(){var rs=S.visits,out=[],g={};
   // 입력 없이 나간 방문은 같은 광고, 같은 10분이면 한 줄로 묶음 (광고 심사 방문이 한꺼번에 몰림)
@@ -607,7 +608,7 @@ $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr'
   var info=[['폼',formName(r.path)+' '+r.path],['도착',kst(r.first_ts)],['마지막 활동',kst(r.last_ts)],['체류',dur(r.active_ms)],['스크롤',r.max_scroll?r.max_scroll+'%':'-'],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['광고명(utm)',r.utm_content||'-'],['캠페인',r.utm_campaign||'-'],['기기',(r.device||'')+(r.in_app?' / '+r.in_app:'')],['재방문',r.is_return?'예':'아니오'],['유입 페이지',r.ref||'-'],['마지막 문항',FL[r.last_field]||r.last_field||'-']];
   $('panel').innerHTML='<h2>'+(r.submitted?'제출한 방문':r.started?'쓰다 나감':'입력 없이 나감')+'</h2><div class="meta">세션 '+esc(r.sid.slice(0,8))+'</div><dl>'+info.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1])+'</dd>'}).join('')+'</dl>'+
     '<h4>입력한 내용</h4>'+(Object.keys(f).length?'<dl>'+Object.keys(f).map(function(k){return '<dt>'+esc(FL[k]||k)+'</dt><dd>'+esc(k==='phone'?fmtPhone(f[k]):f[k])+'</dd>'}).join('')+'</dl>':'<div class="muted">없음</div>')+
-    '<div class="acts">'+(f.phone&&!r.submitted?'<button class="btn ghost" id="vCopy">전화번호 복사</button>':'')+'<button class="btn ghost" id="vClose">닫기</button></div>';
+    '<div class="acts">'+(f.phone&&!r.submitted?'<button class="btn ghost" id="vCopy">전화번호 복사'+(f.marketing?'':' (문자 동의 없음)')+'</button>':'')+'<button class="btn ghost" id="vClose">닫기</button></div>';
   $('drawer').classList.remove('hidden');$('vClose').onclick=closeD;if($('vCopy'))$('vCopy').onclick=function(){copy(String(f.phone).replace(/\D/g,''))}});
 
 $('aCohortTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.cohort=b.dataset.c;S.track='';S.path='cohort:'+S.cohort;S.statsAt=0;renderShare();renderCohortTabs();renderApps()});
