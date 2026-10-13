@@ -63,6 +63,23 @@ test('화면: 남은 시간 표시, 7,900 → 4,900, 한 페이지 구성, 친�
 test('관리 화면 메시지 링크 카드는 자정 마감으로 표시하고 코드가 따로 잡힌다', () => {
   const admin = readFileSync(new URL('../public/admin/index.html', import.meta.url), 'utf8');
   assert.ok(admin.includes("f.deadlineKo?', '+f.deadlineKo+' 마감'"));
-  assert.ok(admin.includes("(f.comeback?'comeback':f.plan+(f.variant?'-'+f.variant:''))"));
+  assert.ok(admin.includes("(f.comeback?p.split('/').filter(Boolean).pop():f.plan+(f.variant?'-'+f.variant:''))"));
   assert.ok(admin.includes('"deadlineKo": "10월 13일(화) 자정"'));
+});
+
+test('낮 1시 마감 할인 폼: 주소만 다르고 10/14 13:00 에 닫힌다', async () => {
+  const END2 = Date.parse('2026-10-14T13:00:00+09:00');
+  for (const path of ['/5/seoul/lunch/', '/5/gwangju/lunch/']) {
+    const f = formOf(path);
+    assert.equal(f.fee, 4900); assert.equal(f.plan, 'discount'); assert.match(f.pay, /\/e\/$/);
+    assert.equal(formStatus(path, END2 - 1).open, true); assert.equal(formStatus(path, END2).open, false);
+    assert.equal(formStatus(path, END2).next, path.replace('lunch/', ''));
+    const html = read(path);
+    for (const need of ['DEADLINE=' + END2 + ',', '오늘 낮 1시까지만<br>', '1시가 지나면 다시 7,900원이에요', '10월 14일(수) 낮 1시 마감', '▶ 토스로 4,900원 송금하기', 'id="cbClock"'])
+      assert.ok(html.includes(need), path + ' 에 없음: ' + need);
+    assert.ok(!html.includes('자정') && !html.includes('__CB_'));
+  }
+  assert.ok(read('/5/seoul/comeback/').includes('오늘 자정까지만<br>'));   // 앞 폼 글자는 그대로
+  assert.equal((await submit('/5/seoul/lunch/', END2 - 1)).res.status, 200);
+  assert.equal((await submit('/5/seoul/lunch/', END2)).res.status, 409);
 });
