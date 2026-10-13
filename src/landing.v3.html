@@ -283,6 +283,12 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 .fr-more{margin-top:10px}
 .fr-more[hidden],.fr-toggle[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){.ld-grid.in i{opacity:0;transition:none}.ld-flash{animation:none}html[data-mode="form"] .ld-fcard{animation:none}}
+/* 첫 화면 담담판 (10/13 로컬 시안): 기존폼 문구와 배치 그대로, 하루하루 배경만. 점 달린 알약, 일정/참가비 칩 없음 */
+.ld-calm .ld-h1{font-size:clamp(22px,6.6vw,28px)}
+.ld-calm-chip{margin-top:16px;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,.72);font-size:15px;font-weight:700;color:var(--hh-ink)}
+.ld-calm-stat{margin-top:14px;font-size:15px;font-weight:700;color:var(--hh-ink)}
+.ld-calm .ld-cta{margin-top:18px}
+.ld-calm .ld-grid{margin-top:20px}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
 <symbol id="hh-cloud" viewBox="10 5 197 142"><path d="M123.73 8.59C125.25 8.34 130.28 8.66 131.79 8.84C143.81 10.31 154.76 16.48 162.24 26.01C169.03 34.42 172.16 45.19 170.96 55.93C178.15 57.54 185.73 61.84 190.94 67C199.31 75.44 204.03 86.83 204.08 98.73C204.12 110.3 199.16 122.81 190.93 130.96C184.74 137.09 176.9 141.14 168.43 143.03C162.54 144.35 157.78 144.1 151.85 144.1L137.72 144.1L90.37 144.11L75.83 144.11C71.83 144.1 68 144.23 64.01 143.68C58.78 142.91 53.69 141.41 48.89 139.2C34.41 132.72 23.1 120.75 17.42 105.93C11.94 91.21 12.73 76.56 19.32 62.35C27.67 44.19 44.73 29.25 65.24 27.85C72.43 27.35 78.37 29.25 84.79 32.19C94.58 18.28 106.44 9.93 123.73 8.59Z" fill="white" stroke="#83BDF0" stroke-width="1.4"/><path d="M99.26 83C104.53 82.88 105.33 92.42 100.27 93.97C99.82 94 99.38 93.95 98.96 93.8C95 92.44 94.93 84.94 99.26 83Z" fill="#096EE3"/><path d="M124.46 83C129.73 82.88 130.53 92.42 125.46 93.97C125.02 94 124.58 93.95 124.16 93.8C120.2 92.44 120.12 84.94 124.46 83Z" fill="#096EE3"/><path d="M116.4 100.56C119.66 101.25 114.14 107.07 108.15 102.92C107.58 102.38 107.36 101.98 107.6 101.13C107.62 101.06 107.77 100.83 107.85 100.81C109.06 100.42 110.22 102.18 111.42 102.41C114.06 103.11 114.39 101.84 116.31 100.6C116.34 100.59 116.37 100.57 116.4 100.56Z" fill="#448BD1"/></symbol>
@@ -291,15 +297,15 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 <div class="ld">
 
-<header class="ld-band ld-hero ld-hero-a">
-<div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>__LD_BADGE__<b id="ldDday"></b></span></div>
-<p class="ld-eye">__LD_CITY_KO__ 대학생 3일 소개팅</p>
-<h1 class="ld-h1">__LD_CITY_KO__ 대학생끼리,<br><b>3일이면 아는 사이</b></h1>
-<p class="ld-sub">3일 동안 서로의 하루를 보고, 마지막 날 서로를 골라요.<br>서로 고르면 1:1 대화가 열려요.</p>
-<span class="ld-statline">250명+ 참여, 매칭률 40%</span>
-<div class="ld-chips"><span class="ld-chip">__LD_PERIOD__</span><span class="ld-chip">마감 __LD_DEADLINE__</span><span class="ld-chip fee">참가비 __LD_FEE__원</span></div>
-<div class="ld-grid ld-fx" id="ldHero"><img width="600" height="485" data-img="L_grid" src="/img/L_haru_grid.jpg" fetchpriority="high" decoding="async" alt="지난 기수 참가자들이 올린 카페, 고양이, 학교, 러닝, 드럼, 점심 일상 영상 6장"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">__LD_CTA__</button><p class="ld-cta-note">인원이 안 맞아 방이 안 열리면 전액 돌려드려요</p></div>
+<header class="ld-band ld-hero ld-hero-a ld-calm">
+<div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span></div>
+<p class="ld-eye">하루하루 소개팅 __COHORT__기 신청</p>
+<h1 class="ld-h1">솔로인 __LD_WHO__을 모집합니다</h1>
+<p class="ld-sub">3일 동안 서로의 하루를 보고,<br>마지막 날 서로를 고르는 소개팅이에요.</p>
+<p class="ld-calm-chip">00년생~07년생 __LD_WHO__끼리 모여요 💕</p>
+<p class="ld-calm-stat">지금까지 250명+ 참여, 매칭률 40% 🎉</p>
+<div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">__LD_CTA__</button></div>
+<div class="ld-grid" id="ldHero"><img width="600" height="485" data-img="L_grid" src="/img/L_haru_grid.jpg" fetchpriority="high" decoding="async" alt="지난 기수 참가자들이 올린 카페, 고양이, 학교, 러닝, 드럼, 점심 일상 영상 6장"></div>
 </header>
 
 <section class="ld-sec ld-rv3" data-sec="review3">
@@ -419,7 +425,7 @@ __LD_ALERT__<ol class="ld-steps">__LD_STEPS__</ol>
 </section>
 
 </div>
-<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>__LD_BADGE__</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
+<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">__LD_BADGE__</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
 <div class="ld-sticky off" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">__LD_CTA__</button></div>
 <script>
 (function(){
