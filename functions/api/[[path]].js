@@ -154,6 +154,14 @@ async function trackSession(env, request, b) {
         num(b.page, 9) || 1, String(b.last_field || '').slice(0, 40), filled ? JSON.stringify(f) : null, filled,
         typeof b.next_click === 'string' ? b.next_click.slice(0, 40) : null),
   ]);
+  // 사람 단위 퍼널용 (migrations/0012). 기기 id 는 페이지당 첫 기록, 송금은 누른 뒤에만 와서 방문당 1~2줄만 더 씀. 열이 없으면 조용히 넘어감
+  const did = typeof b.did === 'string' && /^[\w-]{8,64}$/.test(b.did) ? b.did : null;
+  if (did || b.pay) {
+    try {
+      await env.DB.prepare('UPDATE sessions SET did = COALESCE(did, ?3), pay = MAX(COALESCE(pay, 0), ?4) WHERE sid = ?1 AND path = ?2')
+        .bind(String(b.sid).slice(0, 64), path, did, b.pay ? 1 : 0).run();
+    } catch (e) {}
+  }
 }
 
 export async function onRequest({ request, env, params, waitUntil }) {
@@ -465,6 +473,46 @@ async function landExpr(DB) {
   const paths = ['/', ...r.results.map((x) => x.path)].filter((x) => /^[\w\-\/.]+$/.test(x));
   return `(path IN (${paths.map((x) => `'${x}'`).join(', ')}))`;
 }
+// 사람 단위 퍼널 (10/13): 같은 사람의 여러 방문(인앱 브라우저는 광고를 누를 때마다 새 sid)을 한 사람으로 묶고, 시험 입력은 뺌.
+// 묶는 고리 = 기기 id(did) / 전화번호 / 성별+출생년도+학교. 단계는 그 사람이 간 가장 먼 단계로 셈(그 단계 이후까지 간 사람)
+// 단계: 1 도착, 2 스크롤 25%, 3 입력 시작, 4 1페이지 완료, 5 2페이지 완료, 6 송금 버튼(계좌 복사 포함), 7 제출. 2페이지짜리 폼은 5 = 제출과 같음
+const TEST_PHONE = '40658416';
+const isTestSchool = (x) => /테스트|^111$/.test(String(x || '').trim());
+async function personFunnel(DB, where, args, LAND) {
+  const cols = (extra) => `SELECT sid, first_ts, submitted, started, max_page, max_scroll, last_field, is_return${extra},
+      json_extract(fields, '$.phone') ph, json_extract(fields, '$.gender') g, json_extract(fields, '$.birth_year') byr, json_extract(fields, '$.school') sc
+    FROM sessions WHERE ${where} AND NOT ${LAND}`;
+  let rows;
+  try { rows = (await DB.prepare(cols(', did, pay')).bind(...args).all()).results; }
+  catch (e) { rows = (await DB.prepare(cols(', NULL did, 0 pay')).bind(...args).all()).results; }   // 0012 적용 전
+  const up = new Map(), find = (x) => { while (up.get(x) !== x) { up.set(x, up.get(up.get(x))); x = up.get(x); } return x; };
+  const add = (x) => { if (!up.has(x)) up.set(x, x); return find(x); };
+  const join = (a, b) => { const ra = add(a), rb = add(b); if (ra !== rb) up.set(ra, rb); };
+  rows.forEach((r) => {
+    const me = 's:' + r.sid; add(me);
+    if (r.did) join(me, 'd:' + r.did);
+    const ph = String(r.ph || '').replace(/\D/g, ''); if (ph.length >= 10) join(me, 'p:' + ph);
+    if (r.g && r.byr && r.sc) join(me, 'f:' + r.g + '|' + r.byr + '|' + String(r.sc).trim());
+    r.test = String(r.ph || '').replace(/\D/g, '').includes(TEST_PHONE) || isTestSchool(r.sc);
+    r.lv = r.submitted ? 7 : (r.pay || r.last_field === 'pay_click') ? 6 : r.max_page >= 3 ? 5 : r.max_page >= 2 ? 4 : r.started ? 3 : r.max_scroll >= 25 ? 2 : 1;
+  });
+  const P = new Map();
+  let merged = 0;
+  rows.forEach((r) => {
+    // 기기 id 가 없던 기록(0012 전): 다시 온 기기(is_return)의 입력 없는 방문은 앞 방문과 같은 사람으로 보고 뺌
+    if (!r.did && r.is_return && r.lv <= 2 && find('s:' + r.sid) === 's:' + r.sid) { merged++; return; }
+    const k = find('s:' + r.sid), p = P.get(k) || { lv: 0, t: Infinity, test: false };
+    p.lv = Math.max(p.lv, r.lv); p.t = Math.min(p.t, r.first_ts); p.test = p.test || r.test; P.set(k, p);
+  });
+  const total = [0, 0, 0, 0, 0, 0, 0], by = {};
+  let tests = 0;
+  P.forEach((p) => {
+    if (p.test) { tests++; return; }
+    const d = new Date(p.t + 9 * 3600e3).toISOString().slice(0, 10), row = by[d] || (by[d] = [0, 0, 0, 0, 0, 0, 0]);
+    for (let i = 0; i < p.lv; i++) { total[i]++; row[i]++; }
+  });
+  return { total, by_day: by, tests, merged, sessions: rows.length };
+}
 const METRICS = `COUNT(*) visits,
   SUM(started) starts,
   SUM(max_page >= 2 OR submitted) page2,
@@ -557,8 +605,9 @@ async function admin(sub, request, env, kv, url) {
       q(`SELECT COALESCE(NULLIF(in_app, ''), '일반 브라우저') k, COUNT(*) visits, SUM(submitted) submits FROM sessions WHERE ${where} GROUP BY k ORDER BY visits DESC`),
       DB.prepare('SELECT * FROM forms ORDER BY kind DESC, created_at'),
     ]);
+    const people = await personFunnel(DB, where, args, LAND);
     // 봇 수 COUNT 는 is_bot 인덱스가 없어 전체 스캔(하루 1M 행) → 뺌. 봇은 어차피 WHERE 에서 제외됨
-    return { total: tot.results[0], by_day: day.results, by_hour: hour.results, by_form: form.results, by_src: src.results, drop: drop.results, by_device: dev.results, by_app: app.results, forms: fset.results, bots: 0 };
+    return { people, total: tot.results[0], by_day: day.results, by_hour: hour.results, by_form: form.results, by_src: src.results, drop: drop.results, by_device: dev.results, by_app: app.results, forms: fset.results, bots: 0 };
   });
 
   // 방문 로그: state = all | bounce | partial | submitted
