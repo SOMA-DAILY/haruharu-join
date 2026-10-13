@@ -70,9 +70,9 @@ export const FORMS = {
   '/5/seoul/rejoin/friend/':   { ...S5, ...REJOIN5, label: '5기 서울 학생 재참여 친구 초대', invite: true },
   '/5/gwangju/rejoin/friend/': { ...G5, ...REJOIN5, label: '5기 광주 학생 재참여 친구 초대', invite: true },
   // 자정 마감 할인 (10/13, 메시지로만 보냄): 5기 폼을 쓰다 나간 사람에게 보내는 4,900원 폼. 10/13(화) 자정(= 10/14 00:00)에 이 폼만 닫힘(deadline, 기수 마감보다 이름).
-  //   소개는 짧은 판(comeback, src/landing.comeback.html) + 남은 시간 표시. 문항과 3페이지 구성은 5기 정가 폼과 같고 친구 할인은 없음. wasFee 는 줄 긋고 보여 주는 원래 참가비
-  '/5/seoul/comeback/':     { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', phonePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
-  '/5/gwangju/comeback/':   { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', phonePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
+  //   소개는 짧은 판(comeback, src/landing.comeback.html) + 남은 시간 표시. 문항은 5기 정가 폼과 같고 페이지를 나누지 않고 한 페이지에 전부(onePage, 10/13 운영자). 친구 할인은 없음. wasFee 는 줄 긋고 보여 주는 원래 참가비
+  '/5/seoul/comeback/':     { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
+  '/5/gwangju/comeback/':   { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },

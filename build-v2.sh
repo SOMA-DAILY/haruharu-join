@@ -84,7 +84,8 @@ def gen(path, f):
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
     phone_only = bool(f.get('phoneOnly'))   # 5기 재참여: 전화번호만 받음 (지난 신청 정보는 서버가 가져옴)
-    lastp = '1' if phone_only else ('2' if f.get('twoPage') else '3')      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지, 랜딩 3판은 2페이지)
+    one_page = bool(f.get('onePage'))       # 자정 마감 할인: 문항은 그대로 두고 페이지만 안 나눔 (10/13 운영자)
+    lastp = '1' if (phone_only or one_page) else ('2' if f.get('twoPage') else '3')      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지, 랜딩 3판은 2페이지)
     fee = f"{f['fee']:,}"
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
@@ -255,6 +256,12 @@ def gen(path, f):
                 notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
                 t = t.replace(join + m.group(0), m.group(0).replace(mc.group(0), notice), 1)
                 t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
+            elif one_page:
+                # 한 페이지에 전부: 1페이지 다음 버튼과 2페이지 경계만 없애고 문항 순서는 그대로 (기본 문항, 전화번호, 동의, 참가비, 친구, 제출)
+                join = nav1 + '</section>\n\n' + sec2
+                assert t.count(join) == 1, f'{path} 1페이지 다음 버튼을 못 찾음'
+                t = t.replace(join, '', 1)
+                t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
             else:
                 nav2 = '<div class="nav">' + prev1 + '<button type="button" class="btn" data-next="3">다음 페이지 →</button></div>\n'
                 t = t.replace(nav3, nav3.replace('data-prev="1"', 'data-prev="2"'), 1)
@@ -268,6 +275,10 @@ def gen(path, f):
                 p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
                 assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1, f'{path} 한 페이지 구성이 어긋남'
                 assert qc not in t and 'class="rj-privacy"' in p1 and p1.index(qp) < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 문항 순서가 다름'
+            elif one_page:
+                p1 = t.split('data-page="1"', 1)[1].split('<section class="page" data-page="done">', 1)[0]
+                assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1, f'{path} 한 페이지 구성이 어긋남'
+                assert p1.index('<div class="q" data-name="gender">') < p1.index(qp) < p1.index(qc) < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 문항 순서가 다름'
             else:
                 p1, rest = t.split('data-page="1"', 1)[1].split('data-page="2"', 1)
                 p2, p3 = rest.split('data-page="3"', 1); p3 = p3.split('data-page="done"', 1)[0]

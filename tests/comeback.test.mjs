@@ -46,16 +46,17 @@ test('서버는 자정 전 제출만 받고 그 뒤는 저장하지 않는다', 
   assert.equal(late.res.status, 409); assert.equal((await late.res.json()).error, 'cohort_closed'); assert.equal(late.record, null);
 });
 
-test('화면: 남은 시간 표시, 7,900 → 4,900, 3페이지 구성, 친구 할인 없음', () => {
+test('화면: 남은 시간 표시, 7,900 → 4,900, 한 페이지 구성, 친구 할인 없음', () => {
   for (const path of paths) {
     const html = read(path);
     assert.ok(html.includes('DEADLINE=' + END + ','));
     for (const need of ['id="cbBar"', 'id="cbClock"', '아직 고민 중이라면?', '<s>7,900원</s> <b>4,900원</b>', '<p class="fee-was"><s>7,900원</s> → <strong>4,900원</strong></p>', '▶ 토스로 4,900원 송금하기', 'haruharu-pay.pages.dev/e/', 'id="acctCopy"', '4,900원 할인이 끝났어요', 'href="' + path.replace('comeback/', '') + '?src=h5-'])
       assert.ok(html.includes(need), path + ' 에 없음: ' + need);
     for (const not of ['12,900', '5,900', 'class="fr-share"', 'class="fr-mini"', 'data-engage', 'id="ldSticky"']) assert.ok(!html.includes(not), path + ' 에 있으면 안 됨: ' + not);
-    assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 3);
-    const p2 = html.split('data-page="2"')[1].split('data-page="3"')[0];
-    assert.ok(p2.includes('data-name="phone"') && p2.includes('data-name="consent"') && !p2.includes('data-name="name"'));
+    assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 1);   // 페이지를 안 나눔
+    assert.ok(!html.includes('data-next=') && !html.includes('data-prev='));
+    const order = ['data-name="gender"', '<div class="q" data-name="phone">', '<div class="q" data-name="consent">', '<div class="q" data-name="name">', 'id="submit"'].map((k) => html.indexOf(k));
+    assert.ok(order.every((v, i) => v > 0 && (i === 0 || v > order[i - 1])), path + ' 문항 순서');
   }
 });
 

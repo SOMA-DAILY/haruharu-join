@@ -57,7 +57,7 @@ body{padding-top:38px}
 (function(){
  var end=DEADLINE, off=0, done=false;
  var bar=document.getElementById('cbBar'), barT=document.getElementById('cbBarT'), H=document.getElementById('cbH'), M=document.getElementById('cbM'), S=document.getElementById('cbS'), left=document.getElementById('cbLeft');
- document.body.appendChild(bar);   // 이 조각은 1페이지 안에 끼워지므로, 2/3페이지에서도 보이게 고정 줄만 body 로 옮김
+ document.body.appendChild(bar);   // 이 조각은 1페이지 안에 끼워지므로, 완료 화면 처리와 함께 다루게 고정 줄만 body 로 옮김
  function p2(n){ return (n<10?'0':'')+n; }
  function tick(){
   var ms=Math.max(0,end-(Date.now()+off)), s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60;
