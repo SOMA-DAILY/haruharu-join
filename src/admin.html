@@ -578,7 +578,7 @@ function srcName(s){if(!s)return '직접 들어옴';var l=linkOf(s);if(l&&l.labe
   var C={card3:{m:'옷가게 3장',f:'4분할 3장'},muhan:'무도짤',film4:'필름 4장',reel:'릴스'};
   var m=/^h[34]-(seoul|gwangju|work)-(m|f)-(.+)$/.exec(s);
   if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return (m[1]==='work'?'수도권 직장인':cityKo[m[1]])+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
-  m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':'');
+  m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':m[3]==='comeback'?' 자정 마감 할인':'');
   m=/^h(\d+)-rejoin-(seoul-student|gwangju-student)-(f|m)$/.exec(s);if(m)return m[1]+'기 '+TRACK_KO[m[2]]+' '+(m[3]==='f'?'여자':'남자')+' 재참여';
   m=/^h(\d+)-friend-rejoin$/.exec(s);if(m)return m[1]+'기 재참여 친구 초대';
   m=/^h(\d)-([a-z-]+)-from(\d|jnu-festival)$/.exec(s);if(m)return m[3]+'기 마감 화면 → '+m[1]+'기 '+(TRACK_KO[m[2]]||m[2]);
@@ -690,8 +690,8 @@ function shareOf(p){var f=REG.FORMS[p];
   var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
   var rejoin=f.plan==='regular'&&f.variant?Object.keys(REG.FORMS).filter(function(q){var r=REG.FORMS[q];return r.rejoin&&!r.invite&&r.cohort===f.cohort&&r.track===f.track&&r.variant===f.variant})[0]:null;
   var rejoinLinks=rejoin?['f','m'].map(function(g){return rejoin+'?src=h'+f.cohort+'-rejoin-'+f.track+'-'+g+'-'+f.variant+'&g='+g}).concat([REG.FORMS[rejoin].fee.toLocaleString('ko-KR')+'원'+(REG.FORMS[rejoin].phoneOnly?', 전화번호만':'')]):null;
-  var src=f.cohort==='3'?'h3-'+SHARE3[f.plan]+'-'+f.city:p===FEST_PATH?'jnu-fest-msg':'h'+f.cohort+'-msg-'+f.track+'-'+f.plan+(f.variant?'-'+f.variant:'');
-  return [f.label,fee+(REG.DEADLINE_KO[f.cohort]?', '+REG.DEADLINE_KO[f.cohort]+' 마감':''),p+'?src='+src,!!f.variant,rejoinLinks]}
+  var src=f.cohort==='3'?'h3-'+SHARE3[f.plan]+'-'+f.city:p===FEST_PATH?'jnu-fest-msg':'h'+f.cohort+'-msg-'+f.track+'-'+(f.comeback?'comeback':f.plan+(f.variant?'-'+f.variant:''));
+  return [f.label,fee+(f.deadlineKo?', '+f.deadlineKo+' 마감':REG.DEADLINE_KO[f.cohort]?', '+REG.DEADLINE_KO[f.cohort]+' 마감':''),p+'?src='+src,!!f.variant,rejoinLinks]}
 function shareCohorts(){if(/^cohort:/.test(S.path))return [S.path.slice(7)];var f=regOf(S.path);if(f)return [f.cohort];return S.path?[]:cohortList()}
 function renderShare(){var cs=shareCohorts();
   var list=Object.keys(REG.FORMS).filter(function(p){var f=REG.FORMS[p];return cs.indexOf(f.cohort)>=0&&!f.rejoin&&!f.noPage&&(f.cohort!=='3'||SHARE3[f.plan])})

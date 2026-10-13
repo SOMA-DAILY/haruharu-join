@@ -1,0 +1,80 @@
+<!-- 자정 마감 할인 폼의 짧은 소개 (10/13). 5기 폼을 쓰다 나간 사람에게 메시지로 보내는 폼(등록부 comeback)에만 build-v2.sh 가 끼움.
+     문항/버튼 모양은 랜딩 3판(src/landing.v3.html)의 style 을 build-v2.sh 가 이 조각 앞에 붙여 줌. 여기엔 남은 시간 표시와 짧은 소개만.
+     남은 시간: 위 고정 줄(#cbBar)과 첫 화면 시계(#cbClock)가 폼 마감(DEADLINE)까지를 1초마다 다시 그림. 기기 시계가 틀려도 되게 /api/cohort 의 서버 시각으로 맞춤.
+     0 이 되면 폼 스크립트가 마감 안내로 바꿈(서버도 /api/submit 을 거부). 금액은 등록부 fee / wasFee -->
+<style>
+body{padding-top:38px}
+.cb-bar{position:fixed;left:0;right:0;top:0;z-index:8;display:flex;align-items:center;justify-content:center;gap:7px;height:38px;background:var(--hh-ink);color:#fff;font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+.cb-bar b{min-width:66px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:#8EC5FF}
+.cb-bar[hidden]{display:none}
+.cb-hero{padding-bottom:26px}
+.cb-hero .ld-eye{margin-top:18px;font-size:15px}
+.cb-hero .ld-h1{font-size:clamp(26px,8vw,34px);line-height:1.28}
+.cb-hero .ld-h1 s{font-size:.62em;font-weight:600;color:var(--hh-mute);text-decoration-thickness:1.5px}
+.cb-hero .ld-h1 b{color:#1F5FA9}
+.cb-clock{display:flex;align-items:flex-start;justify-content:center;gap:8px;margin-top:20px;padding:18px 12px 14px;border-radius:20px;background:rgba(255,255,255,.78);box-shadow:0 8px 22px rgba(26,52,92,.1)}
+.cb-clock div{display:flex;flex-direction:column;align-items:center;gap:5px}
+.cb-clock b{display:block;min-width:74px;padding:8px 0;border-radius:14px;background:var(--hh-ink);color:#fff;text-align:center;font-size:38px;line-height:1.15;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cb-clock span{font-size:12.5px;font-weight:700;color:#3C5A86}
+.cb-clock i{margin-top:10px;font-style:normal;font-size:30px;line-height:1.15;font-weight:800;color:var(--hh-ink)}
+.cb-left{margin-top:12px;text-align:center;font-size:14px;font-weight:700;color:#1F4E8C}
+.cb-days{margin-top:22px;counter-reset:none}
+.cb-days li{padding-left:66px;font-size:15.5px;line-height:1.5;color:var(--hh-ink)}
+.cb-days li:before{content:attr(data-day);width:54px;height:26px;border-radius:13px;font-size:12px;letter-spacing:.02em}
+.cb-days li:not(:last-child):after{left:26px}
+.cb-days li small{display:block;margin-top:1px;font-size:13.5px;color:var(--hh-ink2)}
+.cb-stat{margin-top:22px;padding:13px 15px;border-radius:14px;background:var(--hh-sky);font-size:15px;font-weight:700;color:#1F4E8C;text-align:center}
+.cb-sec{padding-top:36px}
+.q[data-name="gender"]{scroll-margin-top:60px}
+@media(max-width:360px){.cb-clock b{min-width:64px;font-size:32px}.cb-clock i{font-size:26px}}
+</style>
+<div class="cb-bar" id="cbBar" role="timer" aria-label="할인 마감까지 남은 시간">할인 마감까지 <b id="cbBarT">00:00:00</b></div>
+<div class="ld">
+
+<header class="ld-band ld-hero cb-hero">
+<div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>__DEADLINE_KO__ 마감</span></div>
+<p class="ld-eye">아직 고민 중이라면?</p>
+<h1 class="ld-h1">오늘 자정까지만<br><s>__LD_WAS__원</s> <b>__LD_FEE__원</b></h1>
+<div class="cb-clock" id="cbClock" aria-hidden="true"><div><b id="cbH">00</b><span>시간</span></div><i>:</i><div><b id="cbM">00</b><span>분</span></div><i>:</i><div><b id="cbS">00</b><span>초</span></div></div>
+<p class="cb-left" id="cbLeft">자정이 지나면 다시 __LD_WAS__원이에요</p>
+<div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">__LD_FEE__원으로 신청하기</button></div>
+</header>
+
+<section class="ld-sec cb-sec" data-sec="guide">
+<p class="ld-k">__LD_CITY_KO__ 대학생 3일 소개팅 __COHORT__기</p>
+<h2>3일 동안 이렇게 해요</h2>
+<ol class="ld-steps cb-days">
+<li data-day="DAY 1">남녀가 한 방에 모여 일상을 공유해요<small>3초 영상 하나면 돼요</small></li>
+<li data-day="DAY 2">궁금한 사람에게 익명으로 질문해요</li>
+<li data-day="DAY 3">마음에 드는 한 사람을 골라요<small>서로 고르면 1:1 대화가 열려요</small></li>
+</ol>
+<p class="cb-stat">지금까지 250명+ 참여, 매칭률 약 40%</p>
+<dl class="ld-if">__LD_ROWS_A__</dl>
+</section>
+
+</div>
+<script>
+(function(){
+ var end=DEADLINE, off=0, done=false;
+ var bar=document.getElementById('cbBar'), barT=document.getElementById('cbBarT'), H=document.getElementById('cbH'), M=document.getElementById('cbM'), S=document.getElementById('cbS'), left=document.getElementById('cbLeft');
+ document.body.appendChild(bar);   // 이 조각은 1페이지 안에 끼워지므로, 완료 화면 처리와 함께 다루게 고정 줄만 body 로 옮김
+ function p2(n){ return (n<10?'0':'')+n; }
+ function tick(){
+  var ms=Math.max(0,end-(Date.now()+off)), s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60;
+  H.textContent=p2(h); M.textContent=p2(m); S.textContent=p2(sec); barT.textContent=p2(h)+':'+p2(m)+':'+p2(sec);
+  // 제출을 마쳤거나 마감 안내로 바뀌면 위 고정 줄은 치움
+  var dn=document.querySelector('.page[data-page="done"]'), cl=document.getElementById('closed');
+  bar.hidden=!!((dn&&dn.classList.contains('on'))||(cl&&!cl.hidden));
+  if(ms<=0&&!done){ done=true; left.textContent='할인이 끝났어요'; }
+ }
+ tick(); setInterval(tick,250);
+ fetch('/api/cohort?path='+encodeURIComponent(location.pathname),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
+  if(s&&s.deadline!=null&&isFinite(s.deadline)) end=Number(s.deadline);
+  if(s&&isFinite(s.serverNow)) off=Number(s.serverNow)-Date.now();
+  tick(); }).catch(function(){});
+ var cta=document.querySelector('button[data-cta="hero"]');
+ if(cta) cta.addEventListener('click',function(){
+  try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('landing_cta',{where:'hero',path:location.pathname}); }catch(e){}
+  var q=document.querySelector('.q[data-name="gender"]'); if(q) q.scrollIntoView({behavior:'smooth',block:'start'}); });
+})();
+</script>
