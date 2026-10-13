@@ -418,6 +418,8 @@ body{padding-top:38px}
 .cb-days li small{display:block;margin-top:1px;font-size:13.5px;color:var(--hh-ink2)}
 .cb-stat{margin-top:22px;padding:13px 15px;border-radius:14px;background:var(--hh-sky);font-size:15px;font-weight:700;color:#1F4E8C;text-align:center}
 .cb-sec{padding-top:36px}
+.cb-resume{margin:28px 0 -8px;padding:14px 15px;border-radius:14px;background:var(--hh-sky);font-size:14px;line-height:1.5;color:var(--hh-ink2)}
+.cb-resume b{display:block;margin-bottom:2px;font-size:16px;font-weight:800;color:var(--hh-ink)}
 .q[data-name="gender"]{scroll-margin-top:60px}
 @media(max-width:360px){.cb-clock b{min-width:64px;font-size:32px}.cb-clock i{font-size:26px}}
 </style>
@@ -869,9 +871,9 @@ body{padding-top:38px}
  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') leave(); });
  // 보관된 작성 내용 복원 (6시간 이내)
  try{ var transferred=sessionStorage.getItem('hh_transfer:'+location.pathname);
-  var dr=JSON.parse(transferred || localStorage.getItem(DKEY)||'null');
+  var dr=JSON.parse(transferred||'null'); if(!dr){ [DKEY,'hh_draft:/5/gwangju/','hh_draft:/5/gwangju/lunch/'].forEach(function(k){ try{ var x=JSON.parse(localStorage.getItem(k)||'null'); if(x&&x.f&&Object.keys(x.f).length&&(!dr||x.t>dr.t)) dr=x; }catch(e){} }); }
   if(transferred) sessionStorage.removeItem('hh_transfer:'+location.pathname);
-  if(dr && dr.f && Date.now()-dr.t<6*3600e3){
+  if(dr && dr.f && Date.now()-dr.t<7*864e5){
    Object.keys(dr.f).forEach(function(k){ var els=form.querySelectorAll('[name="'+k+'"]'); [].forEach.call(els,function(el){
     if(el.type==='radio'){ if(el.value===dr.f[k]){ el.checked=true; el.closest('.opt').classList.add('on'); if(el.getAttribute('data-other')){ var o=el.closest('.q').querySelector('.other'); if(o) o.classList.add('show'); } } }
     else if(el.type==='checkbox'){ el.checked=true; el.closest('.chk').classList.add('on'); }

@@ -75,11 +75,61 @@ test('낮 1시 마감 할인 폼: 주소만 다르고 10/14 13:00 에 닫힌다'
     assert.equal(formStatus(path, END2 - 1).open, true); assert.equal(formStatus(path, END2).open, false);
     assert.equal(formStatus(path, END2).next, path.replace('lunch/', ''));
     const html = read(path);
-    for (const need of ['DEADLINE=' + END2 + ',', '오늘 낮 1시까지만<br>', '1시가 지나면 다시 7,900원이에요', '10월 14일(수) 낮 1시 마감', '▶ 토스로 4,900원 송금하기', 'id="cbClock"'])
+    for (const gone of ['name="gender"', 'name="birth_year"', 'name="school"', 'name="source"', 'name="intent"']) assert.ok(!html.includes(gone), path + ' 에 남아 있음: ' + gone);
+    for (const need of ['class="cb-resume"', 'name="phone"', 'name="consent"', 'name="name"', 'DEADLINE=' + END2 + ',', '오늘 낮 1시까지만<br>', '1시가 지나면 다시 7,900원이에요', '10월 14일(수) 낮 1시 마감', '▶ 토스로 4,900원 송금하기', 'id="cbClock"'])
       assert.ok(html.includes(need), path + ' 에 없음: ' + need);
     assert.ok(!html.includes('자정') && !html.includes('__CB_'));
   }
   assert.ok(read('/5/seoul/comeback/').includes('오늘 자정까지만<br>'));   // 앞 폼 글자는 그대로
   assert.equal((await submit('/5/seoul/lunch/', END2 - 1)).res.status, 200);
   assert.equal((await submit('/5/seoul/lunch/', END2)).res.status, 409);
+});
+
+test('마감 할인 폼은 같은 브라우저에 남은 5기 정가 폼 작성 내용도 이어 쓴다 (7일 이내)', () => {
+  const html = read('/5/seoul/lunch/');
+  assert.ok(html.includes("[DKEY,'hh_draft:/5/seoul/','hh_draft:/5/seoul/comeback/'].forEach("));
+  assert.ok(html.includes('Date.now()-dr.t<7*864e5') && !html.includes('Date.now()-dr.t<6*3600e3'));
+  assert.ok(read('/5/gwangju/lunch/').includes("'hh_draft:/5/gwangju/'") && !read('/5/gwangju/lunch/').includes("'hh_draft:/5/seoul/'"));
+  assert.ok(read('/5/seoul/').includes('Date.now()-dr.t<6*3600e3'));   // 정가 폼은 그대로
+});
+
+test('빠른 신청: 전화번호, 동의, 이름만 받고 나머지는 같은 번호로 쓰다 만 기록에서 채운다', async () => {
+  const sessions = [
+    { sid: 'old', last_ts: 1, fields: JSON.stringify({ gender: '남성', birth_year: '2001', school: '옛학교', phone: '010-1234-5678' }) },
+    { sid: 'new', last_ts: 2, fields: JSON.stringify({ gender: '여성', birth_year: '2003', school: '서울대학교', source: '인스타그램 광고', intent: '기타', phone: '01012345678', consent: '동의합니다' }) },
+    { sid: 'other', last_ts: 3, fields: JSON.stringify({ gender: '남성', school: '남의학교', phone: '01099998888' }) },
+  ];
+  const DB = {
+    prepare: (sql) => ({ bind: (...a) => ({
+      all: async () => ({ results: /FROM sessions WHERE fields LIKE/.test(sql) ? sessions.filter((r) => a.some((pat) => r.fields.includes(pat.replace(/%/g, '')))).sort((x, y) => y.last_ts - x.last_ts) : [] }),
+      first: async () => null, run: async () => ({}) }) }),
+    batch: async () => [],
+  };
+  const real = Date.now; Date.now = () => Date.parse('2026-10-14T09:00:00+09:00');
+  try {
+    const post = async (fields) => {
+      const writes = [];
+      const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path: '/5/seoul/lunch/', fields, ua: 'Mozilla/5.0 (iPhone)' }) }), params: { path: ['submit'] }, env: { DB, APPLY_KV: { put: async (k, v) => writes.push([k, v]) } }, waitUntil: () => {} });
+      const rec = writes.find(([k]) => k.startsWith('s:'));
+      return { res, record: rec ? JSON.parse(rec[1]) : null };
+    };
+    const ok = await post({ phone: '01012345678', consent: '동의합니다', name: '홍길동', gender: '남성', school: '화면이 보낸 값' });
+    assert.equal(ok.res.status, 200);
+    const f = ok.record.fields;
+    assert.equal(f.gender, '여성'); assert.equal(f.birth_year, '2003'); assert.equal(f.school, '서울대학교'); assert.equal(f.source, '인스타그램 광고'); assert.equal(f.device, 'iPhone'); assert.equal(f.consent, '동의합니다');
+    assert.equal(ok.record.prior_from, 'session:new');
+    const body = await ok.res.clone().text();
+    assert.ok(!body.includes('서울대학교') && !body.includes('여성'));   // 응답에는 가져온 값이 안 나감
+    const none = await post({ phone: '01077776666', consent: '동의합니다', name: '김철수' });
+    assert.equal(none.res.status, 200); assert.equal(none.record.prior_from, ''); assert.equal(none.record.fields.gender, undefined);
+    assert.equal((await post({ phone: '01012345678', name: '홍길동' })).res.status, 400);   // 동의는 필수
+  } finally { Date.now = real; }
+});
+
+test('빌드된 마감 할인 폼의 스크립트는 문법 오류가 없다', () => {
+  for (const path of ['/5/seoul/lunch/', '/5/gwangju/lunch/', '/5/seoul/comeback/', '/5/gwangju/comeback/']) {
+    const scripts = [...read(path).matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    assert.ok(scripts.length >= 3);
+    for (const code of scripts) assert.doesNotThrow(() => new Function(code), path + ' 스크립트 문법');
+  }
 });

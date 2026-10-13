@@ -42,13 +42,27 @@ function normPhone(p) { return (p || '').replace(/\D/g, ''); }
 // 전화번호만 받는 재참여 폼(등록부 phoneOnly): 같은 번호의 지난 신청에서 성별/출생년도/학교/기기를 가져옴 (칸마다 가장 최근에 적은 값).
 //   못 찾아도 접수는 받음(번호가 등록돼 있는지 화면으로 알 수 없게). 그때는 칸이 빈 채로 남고 관리 화면에 [이전 기록 없음]
 const PRIOR_FIELDS = ['gender', 'birth_year', 'school', 'device'];
-async function priorProfile(env, digits) {
+// 이어 쓰기 폼(등록부 resume, 10/14): 제출 기록이 없으면 같은 번호로 쓰다 만 방문 기록(sessions.fields, 동의 뒤에만 번호가 들어감)에서도 가져옴. 유입 경로와 신청 마음까지
+const RESUME_FIELDS = [...PRIOR_FIELDS, 'source', 'intent', 'intent_other'];
+async function priorProfile(env, digits, withSessions) {
   const out = {};
   if (!env.DB || !digits) return out;
+  if (withSessions) {
+    try {
+      const hy = digits.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
+      const rows = await env.DB.prepare('SELECT sid, fields FROM sessions WHERE fields LIKE ?1 OR fields LIKE ?2 ORDER BY last_ts DESC LIMIT 20').bind('%"phone":"' + digits + '"%', '%"phone":"' + hy + '"%').all();
+      for (const r of rows.results || []) {
+        let v = null; try { v = JSON.parse(r.fields || 'null'); } catch (e) {}
+        if (!v || normPhone(v.phone) !== digits) continue;
+        if (!out.from) out.from = 'session:' + r.sid;
+        for (const k of RESUME_FIELDS) if (!out[k] && v[k]) out[k] = String(v[k]);
+      }
+    } catch (e) {}
+  }
   try {
     const rows = await env.DB.prepare('SELECT application_id, gender, birth_year, school, device FROM submissions WHERE phone_digits = ?1 ORDER BY submitted_ts DESC LIMIT 20').bind(digits).all();
     for (const r of rows.results || []) {
-      if (!out.from) out.from = r.application_id;
+      if (!out.from) out.from = r.application_id;   // 쓰다 만 기록이 더 최근 것이라 먼저 채우고, 빈 칸만 지난 신청으로
       for (const k of PRIOR_FIELDS) if (!out[k] && r[k]) out[k] = r[k];
     }
   } catch (e) {}
@@ -225,8 +239,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
-    const phoneOnly = !!(form && form.phoneOnly);
-    const required = phoneOnly ? ['phone', 'name'] : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    const resume = !!(form && form.resume);   // 이어 쓰기 폼: 전화번호, 동의, 이름만 받고 나머지는 서버가 채움
+    const phoneOnly = !!(form && form.phoneOnly) || resume;
+    const required = resume ? ['phone', 'consent', 'name'] : phoneOnly ? ['phone', 'name'] : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       required.push('device');
@@ -242,9 +257,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // 전화번호만 받는 재참여: 화면에 없는 문항 값은 버리고 지난 신청에서 채움. 기기는 지금 접속한 폰이 먼저
     let priorFrom = null;
     if (phoneOnly) {
-      for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'consent']) delete f[k];   // 동의 체크 문항 없음 (이용 안내만)
-      const prior = await priorProfile(env, normPhone(f.phone));
-      for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
+      for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other'].concat(resume ? [] : ['consent'])) delete f[k];   // 재참여는 동의 체크 문항 없음 (이용 안내만), 이어 쓰기 폼은 동의 문항 있음
+      const prior = await priorProfile(env, normPhone(f.phone), resume);
+      for (const k of (resume ? RESUME_FIELDS : PRIOR_FIELDS)) if (prior[k]) f[k] = prior[k];
       const ua = String(b.ua || '');
       const dv = /iphone|ipad|ipod/i.test(ua) ? 'iPhone' : /android/i.test(ua) ? 'Android' : '';
       if (dv) f.device = dv;
