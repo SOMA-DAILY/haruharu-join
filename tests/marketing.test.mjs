@@ -22,8 +22,9 @@ test('5기 정가 폼 동의 문항: 모두 동의 + 필수 개인정보 + 선�
     assert.ok(q.includes('id="agAll">모두 동의'));
     assert.ok(q.includes('<input type="checkbox" name="consent" value="동의합니다" required>'));
     assert.ok(q.includes('<input type="checkbox" name="marketing" value="동의합니다">'));   // 선택이라 required 없음
+    assert.equal((q.match(/<p class="note" hidden>/g) || []).length, 2); assert.equal((q.match(/class="ag-more"/g) || []).length, 2);   // 안내문은 접어 둠
     assert.ok(q.indexOf('id="agAll"') < q.indexOf('name="consent"') && q.indexOf('name="consent"') < q.indexOf('name="marketing"'));
-    for (const need of ['<b>(필수)</b> 개인정보 수집 이용 동의', '<b>(선택)</b> 할인, 모집 소식 문자 받기', '신청을 끝까지 마치지 않아도', '언제든 수신 거부', '동의하지 않아도 신청할 수 있어요', '동의하지 않으면 신청이 어렵습니다'])
+    for (const need of ['<b>(필수)</b> 개인정보 수집 이용 동의', '<b>(선택)</b> 모집 소식 문자 받기', '할인과 다음 기수 모집 소식을 문자로', '신청을 끝까지 마치지 않아도', '언제든 수신 거부', '동의하지 않아도 신청할 수 있어요', '동의하지 않으면 신청이 어렵습니다'])
       assert.ok(q.includes(need), path + ' 에 없음: ' + need);
     // 동의 문항은 여전히 2페이지(전화번호와 함께)
     const p2 = html.split('data-page="2"')[1].split('data-page="3"')[0];
