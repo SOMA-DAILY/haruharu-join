@@ -156,7 +156,7 @@ def gen(path, f):
         og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
         assert t.count(c0) == 1 and t.count(og) == 1, f'{path} 마감 안내/미리보기 제목 자리를 못 찾음'
         t = t.replace(c0, f'<h2>{fee}원 할인이 끝났어요</h2><p>__DEADLINE_KO__까지였던 할인 신청이 마감됐어요.<br>__COHORT__기 신청은 {DLKO.get(cohort, "")}까지 받고 있어요.<br>', 1)
-        t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? 오늘 자정까지 {fee}원">', 1)
+        t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
@@ -172,7 +172,7 @@ def gen(path, f):
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}",
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_AFTER__': f.get('afterKo', '자정이'),
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
