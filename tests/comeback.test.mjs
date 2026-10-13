@@ -8,11 +8,11 @@ const paths = ['/5/seoul/comeback/', '/5/gwangju/comeback/'];
 const END = Date.parse('2026-10-14T00:00:00+09:00');   // 10/13(화) 자정
 const read = (p) => readFileSync(new URL('../public' + p + 'index.html', import.meta.url), 'utf8');
 const fields = { gender: '여성', birth_year: '2003', school: '서울대학교', source: '그 외', device: 'iPhone', phone: '01012345678', consent: '동의합니다', name: '홍길동' };
-const submit = async (path, now) => {
+const submit = async (path, now, flds = fields) => {
   const real = Date.now; Date.now = () => now;
   try {
     const writes = [];
-    const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path, fields, ua: 'iPhone' }) }), params: { path: ['submit'] }, env: { APPLY_KV: { put: async (k, v) => writes.push([k, v]) } }, waitUntil: () => {} });
+    const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path, fields: flds, ua: 'iPhone' }) }), params: { path: ['submit'] }, env: { APPLY_KV: { put: async (k, v) => writes.push([k, v]) } }, waitUntil: () => {} });
     const rec = writes.find(([k]) => k.startsWith('s:'));
     return { res, record: rec ? JSON.parse(rec[1]) : null };
   } finally { Date.now = real; }
@@ -82,4 +82,17 @@ test('낮 1시 마감 할인 폼: 주소만 다르고 10/14 13:00 에 닫힌다'
   assert.ok(read('/5/seoul/comeback/').includes('오늘 자정까지만<br>'));   // 앞 폼 글자는 그대로
   assert.equal((await submit('/5/seoul/lunch/', END2 - 1)).res.status, 200);
   assert.equal((await submit('/5/seoul/lunch/', END2)).res.status, 409);
+});
+
+test('낮 1시 마감 폼은 유입 경로와 신청 마음 문항이 없고 서버도 요구하지 않는다', async () => {
+  for (const path of ['/5/seoul/lunch/', '/5/gwangju/lunch/']) {
+    const html = read(path);
+    for (const gone of ['name="source"', 'name="intent"', 'name="intent_other"', '어디서 보고 오셨나요', '어떤 마음으로 신청하시나요']) assert.ok(!html.includes(gone), path + ' 에 남아 있음: ' + gone);
+    for (const need of ['name="gender"', 'name="birth_year"', 'name="school"', 'name="phone"', 'name="consent"', 'name="name"']) assert.ok(html.includes(need), path + ' 에 없음: ' + need);
+  }
+  assert.ok(read('/5/seoul/').includes('name="source"') && read('/5/seoul/comeback/').includes('name="source"'));   // 다른 폼은 그대로
+  const END2 = Date.parse('2026-10-14T13:00:00+09:00');
+  const { source, ...noSource } = fields;
+  assert.equal((await submit('/5/seoul/lunch/', END2 - 1, noSource)).res.status, 200);
+  assert.equal((await submit('/5/seoul/comeback/', END - 1, noSource)).res.status, 400);   // 다른 폼은 여전히 필수
 });

@@ -228,7 +228,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const phoneOnly = !!(form && form.phoneOnly);
     const required = phoneOnly ? ['phone', 'name'] : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
-      if (!form.rejoin) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
+      if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       required.push('device');
     }
     if (form && form.occupation) required.push('schedule_pref');

@@ -232,7 +232,7 @@ def gen(path, f):
             card = (CARD.replace('__COHORT__', cohort).replace('__TARGET_KO__', target_ko).replace('__PERIOD__', info.get('period','추후 안내'))
                     .replace('__NOTICE__', notice).replace('__HOWTO__', howto).replace('__REFUND__', refund))
         t = re.sub(r'<img class="img" data-img="P4"[^>]+>', lambda m: card, t)
-    if f.get('rejoin'):
+    if f.get('rejoin') or f.get('noSource'):
         # 재참여는 유입 경로와 신청 마음을 다시 묻지 않음. URL의 src/utm 추적은 유지.
         for question in ('source', 'intent') + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
