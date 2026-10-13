@@ -309,6 +309,7 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - 관리 화면 메시지 링크 카드: 코드 `h5-msg-{트랙}-comeback`, 마감 표기는 `deadlineKo`. `LandingEngaged` 는 안 보냄(광고 유입이 아님)
 - 다시 쓸 때: 등록부 두 줄의 `deadline` `deadlineKo` 만 바꾸면 됨. 첫 화면의 `오늘 자정까지만` 과 링크 미리보기 제목은 자정 마감을 전제로 쓴 글자
 - **낮 1시 마감 판 (10/14):** `/5/seoul/lunch/` `/5/gwangju/lunch/`. 같은 화면에 주소와 마감(10/14 13:00)만 다름. 첫 화면 글자는 등록부 `untilKo`(오늘 낮 1시) / `afterKo`(1시가), 관리 화면 코드는 주소 끝 조각(`h5-msg-{트랙}-lunch`)
+- **(10/14 운영자) 낮 1시 마감 판은 `어디서 보고 오셨나요?` 와 `어떤 마음으로 신청하시나요?` 문항이 없음**(등록부 `noSource`, 서버도 `source` 필수 면제). 자정 마감 판과 정가 폼은 그대로
 - 테스트 `tests/comeback.test.mjs`
 
 ## 문자 수신 동의 (10/14~, 등록부 `marketing`, 5기 서울/광주 정가 폼)
