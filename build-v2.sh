@@ -43,7 +43,7 @@ FOLD_TAIL = """<script>
  document.addEventListener('change',function(e){ if(e.target&&e.target.name==='buddy_room'&&m.hidden){ m.hidden=false; b.hidden=true; } });   // 접힌 채로 친구 선택지가 골라지면(키보드 a~e 단축키, 복원) 펼침. 안 그러면 친구 번호 칸이 안 보인 채 검사에 걸림
 })();
 (function(){ var c=document.getElementById('acctCopy'); if(!c) return; var s=c.querySelector('span'), t0=s.textContent, n=c.getAttribute('data-acct');
- function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} }
+ function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} try{ document.dispatchEvent(new Event('hh-pay')); }catch(e){} }
  function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=n; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,n.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) done(); else s.textContent=n; }
  c.addEventListener('click',function(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(n).then(done,old); else old(); });
 })();
