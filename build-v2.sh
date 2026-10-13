@@ -281,7 +281,7 @@ def gen(path, f):
                 assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
                 blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
                 t = t[:a0] + blk + t[a1:]
-            if f.get('twoPage') and not share_only:
+            if (f.get('twoPage') or f.get('phonePage')) and not share_only:   # phonePage(10/13): 3페이지판에서도 친구 문항을 이름 아래로 접음
                 # 랜딩 3판(10/12): 친구 문항을 송금자 이름 아래로 내리고 한 줄 + 버튼으로 접음 (5기 3페이지 미제출 32명 중 16명이 친구 문항에서 멈춤). 아무것도 안 고르면 혼자(정가)
                 mb2 = re.search(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t, flags=re.S)
                 bd = mb2.group(0).rstrip('\n'); hk = frfill(FR_HOOK); sh = re.search(r'<button type="button" class="fr-share">.*?</button>', hk, flags=re.S)
@@ -295,7 +295,7 @@ def gen(path, f):
                 t = t.replace(mb2.group(0), '', 1).replace(name_end, name_end + '\n\n' + bd2 + '\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
-            if f.get('twoPage'):
+            if f.get('twoPage') or f.get('phonePage'):
                 # 계좌번호 복사 버튼 (10/12 사용자: 토스 말고 계좌 복사도). 토스 버튼 바로 아래, 계좌는 템플릿 안내 글자에서 읽음
                 ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S)
                 assert ac and pay_a, f'{path} 계좌/송금 버튼을 못 찾음'
@@ -303,7 +303,7 @@ def gen(path, f):
                 t = t.replace(foot, FOLD_TAIL + foot, 1)
             p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
             if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
-            assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if f.get('twoPage') else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
+            assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if (f.get('twoPage') or f.get('phonePage')) else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
         if f.get('listFee'):
             # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
