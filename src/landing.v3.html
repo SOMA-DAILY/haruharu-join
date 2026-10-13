@@ -481,10 +481,15 @@ __LD_ALERT__<ol class="ld-steps">__LD_STEPS__</ol>
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
   mp('landing_cta',{where:b.getAttribute('data-cta')});
   // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
+  // 10/13 사용자: 폰 뒤로가기가 페이지를 나가 버림 → 방문 기록을 하나 남겨 뒤로가기면 랜딩으로
+  if(document.documentElement.getAttribute('data-mode')!=='form'){ try{ history.pushState({hhForm:1},''); }catch(e){} }
   document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0});
   var fc=document.querySelector('.ld-fcard .ld-fcard-rows'); if(fc){ fc.classList.remove('ld-flash'); setTimeout(function(){ fc.classList.add('ld-flash'); },calm?0:250); }
  }); });
- var back=document.getElementById('ldBack'); if(back) back.addEventListener('click',function(){ document.documentElement.removeAttribute('data-mode'); mp('landing_back'); window.scrollTo({top:0}); });
+ var viaLink=false;
+ function toLanding(via){ document.documentElement.removeAttribute('data-mode'); mp('landing_back',{via:via}); window.scrollTo({top:0}); }
+ var back=document.getElementById('ldBack'); if(back) back.addEventListener('click',function(){ if(history.state&&history.state.hhForm){ viaLink=true; history.back(); return; } toLanding('link'); });
+ addEventListener('popstate',function(e){ if(document.documentElement.getAttribute('data-mode')==='form'&&!(e.state&&e.state.hhForm)) { toLanding(viaLink?'link':'history'); } viaLink=false; });
  // 신청 버튼은 아래 고정 하나뿐 (10/8 사용자). 처음부터 보이고, 신청서 구간에 들어간 뒤와 1페이지가 아닐 때는 숨김
  function upd(){
   var t=target(), p1=document.querySelector('.page[data-page="1"]');
