@@ -481,10 +481,26 @@ __LD_ALERT__<ol class="ld-steps">__LD_STEPS__</ol>
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
   mp('landing_cta',{where:b.getAttribute('data-cta')});
   // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
+  // 10/13 사용자: 폰 뒤로가기가 페이지를 나가 버림 → 방문 기록을 하나 남겨 뒤로가기면 랜딩으로
+  if(document.documentElement.getAttribute('data-mode')!=='form'&&!(history.state&&history.state.hhForm)){ try{ history.pushState({hhForm:1},''); }catch(e){} }
   document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0});
   var fc=document.querySelector('.ld-fcard .ld-fcard-rows'); if(fc){ fc.classList.remove('ld-flash'); setTimeout(function(){ fc.classList.add('ld-flash'); },calm?0:250); }
  }); });
- var back=document.getElementById('ldBack'); if(back) back.addEventListener('click',function(){ document.documentElement.removeAttribute('data-mode'); mp('landing_back'); window.scrollTo({top:0}); });
+ var viaLink=false;
+ function toLanding(via){ document.documentElement.removeAttribute('data-mode'); mp('landing_back',{via:via}); window.scrollTo({top:0}); }
+ var back=document.getElementById('ldBack'); if(back) back.addEventListener('click',function(){ if(history.state&&history.state.hhForm){ viaLink=true; history.back(); return; } toLanding('link'); });
+ // 새로고침하면 기록 칸(hhForm)은 남고 form 모드는 풀림 → 칸을 지워 버튼/링크/뒤로가기가 한 번씩 헛돌지 않게
+ try{ if(history.state&&history.state.hhForm&&document.documentElement.getAttribute('data-mode')!=='form') history.replaceState(null,''); }catch(e){}
+ addEventListener('popstate',function(e){
+  var mode=document.documentElement.getAttribute('data-mode')==='form', toForm=!!(e.state&&e.state.hhForm), fm=document.getElementById('f');
+  if(mode&&!toForm){
+   // 제출 뒤면 원래대로 나감. 2/3페이지면 한 페이지 앞으로 (랜딩은 1페이지 안에 있어서 모드만 풀면 화면이 그대로임)
+   if(fm&&fm.dataset.submitting==='true'){ viaLink=false; history.back(); return; }
+   var on=document.querySelector('.page.on'), pv=on&&on.getAttribute('data-page')!=='1'&&on.querySelector('[data-prev]');
+   if(pv){ try{ history.pushState({hhForm:1},''); }catch(x){} pv.click(); window.scrollTo({top:0}); viaLink=false; return; }
+   toLanding(viaLink?'link':'history');
+  } else if(!mode&&toForm){ document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0}); }   // 앞으로가기 = 신청서
+  viaLink=false; });
  // 신청 버튼은 아래 고정 하나뿐 (10/8 사용자). 처음부터 보이고, 신청서 구간에 들어간 뒤와 1페이지가 아닐 때는 숨김
  function upd(){
   var t=target(), p1=document.querySelector('.page[data-page="1"]');
