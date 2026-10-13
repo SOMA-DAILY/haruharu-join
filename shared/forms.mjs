@@ -69,6 +69,10 @@ export const FORMS = {
   '/5/gwangju/rejoin/':        { ...G5, ...REJOIN5, label: '5기 광주 학생 재참여', phoneOnly: true, friendForm: '/5/gwangju/rejoin/friend/' },
   '/5/seoul/rejoin/friend/':   { ...S5, ...REJOIN5, label: '5기 서울 학생 재참여 친구 초대', invite: true },
   '/5/gwangju/rejoin/friend/': { ...G5, ...REJOIN5, label: '5기 광주 학생 재참여 친구 초대', invite: true },
+  // 자정 마감 할인 (10/13, 메시지로만 보냄): 5기 폼을 쓰다 나간 사람에게 보내는 4,900원 폼. 10/13(화) 자정(= 10/14 00:00)에 이 폼만 닫힘(deadline, 기수 마감보다 이름).
+  //   소개는 짧은 판(comeback, src/landing.comeback.html) + 남은 시간 표시. 문항과 3페이지 구성은 5기 정가 폼과 같고 친구 할인은 없음. wasFee 는 줄 긋고 보여 주는 원래 참가비
+  '/5/seoul/comeback/':     { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', phonePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
+  '/5/gwangju/comeback/':   { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', phonePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -109,9 +113,27 @@ export function cohortDeadline(cohort, env) {
 export function formStatus(path, now = Date.now(), env) {
   const f = formOf(path);
   if (!f) return { open: false, unknown: true, deadline: null, serverNow: now, next: '/' };
-  const deadline = f.noDeadline ? null : cohortDeadline(f.cohort, env);
+  let deadline = f.noDeadline ? null : cohortDeadline(f.cohort, env);
+  const own = formDeadline(f, env);   // 폼 하나만 먼저 닫는 마감 (자정 마감 할인). 기수 마감과 견줘 이른 쪽
+  if (own != null && !f.noDeadline) deadline = deadline == null ? own : Math.min(deadline, own);
   const open = deadline == null ? true : now < deadline;
-  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan, next: open ? null : nextFormPath(f) };
+  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan, next: open ? null : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
+}
+// 폼 자체 마감 (등록부 deadline). 로컬 시험용 환경값 FORM_DEADLINE 은 자체 마감이 있는 폼에만 먹음 (ISO 문자열 또는 ms)
+export function formDeadline(f, env) {
+  if (!f || !f.deadline) return null;
+  if (env && env.FORM_DEADLINE) {
+    const v = String(env.FORM_DEADLINE);
+    const t = /^\d+$/.test(v) ? Number(v) : Date.parse(v);
+    if (Number.isFinite(t)) return t;
+  }
+  const t = Date.parse(f.deadline);
+  return Number.isFinite(t) ? t : null;
+}
+// 같은 기수 같은 트랙의 정가 폼 (자체 마감이 지난 할인 폼이 안내할 곳)
+export function regularFormPath(f) {
+  const cur = Object.keys(FORMS).filter((p) => FORMS[p].cohort === f.cohort && FORMS[p].track === f.track && FORMS[p].plan === 'regular');
+  return cur.find((p) => FORMS[p].entry) || cur[0] || null;
 }
 export function nextFormPath(f) {
   if (!f || f.cohort === CURRENT_COHORT) return null;

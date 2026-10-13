@@ -22,6 +22,9 @@ EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.v2.html',encoding='utf-8').read()
 LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+# 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
+COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
+V3_STYLE=re.search(r'<style>.*?</style>\n', LANDING_V3, flags=re.S).group(0)
 # 친구 할인 조각(src/friend-discount.html)과 판정 함수(shared/friend-discount.mjs, export 만 떼고 관리 화면에 그대로 끼움)
 _fr=open('src/friend-discount.html',encoding='utf-8').read()
 FR_HOOK, _fr = _fr.split('<!--HOOK-->\n',1)[1].split('<!--BANNER-->\n',1)
@@ -86,8 +89,9 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    deadline_iso = None if f.get('noDeadline') else DL.get(cohort); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
-    deadline_ko = DLKO.get(cohort, '')
+    comeback = bool(f.get('comeback'))   # 자정 마감 할인: 폼 자체 마감(deadline)이 기수 마감보다 이름
+    deadline_iso = None if f.get('noDeadline') else (f.get('deadline') or DL.get(cohort)); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
+    deadline_ko = f.get('deadlineKo') or DLKO.get(cohort, '')
     # 일정 문구
     if prealert:
         sched = f"- 진행 예정: {info.get('period','추후 안내')}\n- 사전 알림 신청자에게 먼저 안내 문자를 보내드려요\n- 사전 알림 신청자는 참가비 할인 혜택이 있어요"
@@ -101,7 +105,8 @@ def gen(path, f):
         done_title, done_body = '사전 알림이 접수됐어요 💌', '일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.'
         consent = '성별, 출생연도, 전화번호, 하시는 일'
     else:
-        fee_note = (f'친구 초대 할인으로 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('invite')
+        fee_note = (f'{deadline_ko}까지 신청하면 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if comeback
+                    else f'친구 초대 할인으로 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('invite')
                     else f'재참여 할인으로 참가비는 {fee}원이에요. 초대받은 친구도 같은 금액이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin') and cohort != '4'
                     else f'재참여하시는 분과 초대받은 친구 모두 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin')
                     else f'사전 알림을 신청해 주신 분은 {fee}원에 참여할 수 있어요. 송금까지 마쳐야 신청이 완료돼요.' if plan in ('early','discount')
@@ -136,10 +141,24 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+    if comeback:
+        confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
+        rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
+                  ('참가비', f"<s>{f['wasFee']:,}원</s> → {fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>"), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
+        reg = next((p for p, g in FORMS.items() if g['cohort'] == cohort and g.get('track') == f.get('track') and g['plan'] == 'regular' and g.get('entry')), None)
+        assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
+        next_link = f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
     t = TPL
+    if comeback:
+        # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
+        c0 = '<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>'
+        og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
+        assert t.count(c0) == 1 and t.count(og) == 1, f'{path} 마감 안내/미리보기 제목 자리를 못 찾음'
+        t = t.replace(c0, f'<h2>{fee}원 할인이 끝났어요</h2><p>__DEADLINE_KO__까지였던 할인 신청이 마감됐어요.<br>__COHORT__기 신청은 {DLKO.get(cohort, "")}까지 받고 있어요.<br>', 1)
+        t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? 오늘 자정까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
-        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
         t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
     else:
@@ -152,7 +171,7 @@ def gen(path, f):
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'),
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}",
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
@@ -211,7 +230,7 @@ def gen(path, f):
     left = re.findall(r'__[A-Z0-9_]+__', t)
     assert not left, f'{path} placeholder 남음: {left}'
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
-        for need in ('data-cta="sticky"', 'data-engage'):
+        for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"', 'data-engage')):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
         if not prealert and f.get('twoPage'):   # 랜딩 3판(10/12): 템플릿의 2페이지(전화, 동의, 참가비) 그대로. 동의 전엔 임시 저장에 연락처를 안 넣는 것은 3페이지판과 같게
             pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
@@ -304,6 +323,15 @@ def gen(path, f):
             p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
             if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
             assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if (f.get('twoPage') or f.get('phonePage')) else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
+        if comeback:
+            # 계좌번호 복사 버튼 (5기 정가 폼과 같은 것). 친구 할인이 없어 위 블록을 안 타므로 여기서 따로 끼움
+            ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S); foot = '<p class="foot">'
+            assert ac and pay_a and t.count(foot) == 1, f'{path} 계좌/송금 버튼을 못 찾음'
+            t = t.replace(pay_a.group(0), pay_a.group(0) + f' <button type="button" class="acct-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>토스뱅크 {ac.group(1)} 계좌번호 복사</span></button>\n', 1)
+            t = t.replace(foot, FOLD_TAIL + foot, 1)
+            ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
+            assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
         if f.get('listFee'):
             # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
@@ -317,10 +345,10 @@ def gen(path, f):
             page1 = t.split('data-page="1"', 1)[1].split(f'data-page="{lastp}"', 1)[0]
             for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ())):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
-        for v in 'fm':   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
+        for v in ('' if comeback else 'fm'):   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
             assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 앱 화면 이미지 없음: L_store_feed_{v}.webp'
-        keys = re.findall(r"(\w+):'", t.split('var P={', 1)[1].split('};', 1)[0])   # 스크립트 속 참가자 예시 목록(키 = 사진 파일 이름)
-        assert len(keys) >= 6, f'{path} 참가자 예시 목록을 못 읽음: {keys}'
+        keys = [] if comeback else re.findall(r"(\w+):'", t.split('var P={', 1)[1].split('};', 1)[0])   # 스크립트 속 참가자 예시 목록(키 = 사진 파일 이름)
+        assert comeback or len(keys) >= 6, f'{path} 참가자 예시 목록을 못 읽음: {keys}'
         for k in keys:
             assert os.path.exists(f'public/img/L_p_{k}.webp'), f'{path} 성별 판 프로필 사진 없음: L_p_{k}.webp'
             assert os.path.exists(f'public/img/L_pc_{k}.webp'), f'{path} 성별 판 프로필 사진(선명) 없음: L_pc_{k}.webp'

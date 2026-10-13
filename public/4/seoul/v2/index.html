@@ -836,7 +836,11 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
   return fetch(API+path,{method:'POST',headers:{'content-type':'application/json'},body:s,keepalive:true}).catch(function(){});
  }
  function partial(beacon){ if(submitted) return; var pfields=data(); if(!pfields.consent){ delete pfields.phone; delete pfields.name; delete pfields.buddy; }
-  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),max_scroll:maxScroll(),returning:returning},beacon); }
+  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),max_scroll:maxScroll(),returning:returning,did:didOnce(),pay:payHit},beacon); }
+ // 관리 화면 사람 단위 퍼널 (10/13): 기기 id 는 페이지당 첫 기록에만, 송금 버튼/계좌 복사는 누른 뒤 기록에 1. 서버는 둘 중 하나가 있을 때만 한 줄 더 씀
+ var didSent=false, payHit=0;
+ function didOnce(){ if(didSent) return undefined; didSent=true; try{ var d=localStorage.getItem('hh_did'); if(!d){ d=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2); localStorage.setItem('hh_did',d); } return d; }catch(e){ return undefined; } }
+ document.addEventListener('hh-pay',function(){ if(payHit) return; payHit=1; partial(false); });
  function goRegular(){
   var target='/'+CITY+'/';
   var fields=data();
@@ -914,7 +918,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  }
  document.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click',function(){ var from=curPage, to=Number(b.getAttribute('data-next')); if(!validate(from)) return; ev('page_next',{from:from,to:to,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); if(from===1) fb('Page1Complete'); show(to); partial(false); }); });
  document.querySelectorAll('[data-prev]').forEach(function(b){ b.addEventListener('click',function(){ var to=Number(b.getAttribute('data-prev')); ev('page_back',{from:curPage,to:to,seconds_on_page:Math.round((Date.now()-pageT0)/1000)}); show(to); }); });
- var payBtn=document.getElementById('pay'); if(payBtn) payBtn.addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; saveDraft(); partial(false); });
+ var payBtn=document.getElementById('pay'); if(payBtn) payBtn.addEventListener('click',function(){ ev('pay_click',{}); fb('PayButtonClick'); lastField='pay_click'; payHit=1; saveDraft(); partial(false); });
  // 첫 화면의 [다음 기수 알림만] (10/11): 성별, 번호, 동의만 받아 다음 기수 사전알림 경로(등록부 alert)로 제출. 이번 기수 신청서는 그대로 쓸 수 있음
  // 신청 ID 는 세션 ID 뒤에 -a (같은 세션이 이번 기수 신청을 내도 서로 덮어쓰지 않게). 이번 기수 세션엔 last_field=alert_submit 로만 남김
  var ALERT_PATH='', alBox=document.getElementById('ldAlBox');
