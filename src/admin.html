@@ -349,7 +349,7 @@ function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackO
 function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
   if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.invite)return '친구 초대 '+won;if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
 // 전화번호만 받는 재참여 폼: 같은 번호의 지난 신청을 못 찾아 성별이 빈 사람 (번호가 바뀌었거나 처음 온 사람). 연락해서 확인
-function noPriorBadge(r){var f=regOf(r.path);return f&&f.phoneOnly&&!r.gender?' <span class="badge amber">이전 기록 없음</span>':''}
+function noPriorBadge(r){var f=regOf(r.path);return f&&(f.phoneOnly||f.resume)&&!r.gender?' <span class="badge amber">이전 기록 없음</span>':''}
 function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(plan==='prealert')return cohortOf(r)==='alert'?(joinedBefore(r)?' <span class="badge green">참여한 적 있음</span>':''):' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
 //   원격 D1 에 0009 가 아직 없어 열이 비면 친구 문항으로 추정함(같은 판정 함수). 친구 쌍은 불러온 목록 안에서 전화번호로 맞춤

@@ -75,8 +75,9 @@ export const FORMS = {
   '/5/gwangju/comeback/':   { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 자정 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T00:00:00+09:00', deadlineKo: '10월 13일(화) 자정' },
   // 낮 1시 마감 할인 (10/14, 메시지로만 보냄): 위 자정 마감 폼과 같은 화면, 주소와 마감만 다름. 10/14(수) 13:00 에 이 폼만 닫힘.
   //   untilKo / afterKo 는 첫 화면 글자(오늘 낮 1시까지만 / 1시가 지나면), 없으면 자정 문구
-  '/5/seoul/lunch/':        { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T13:00:00+09:00', deadlineKo: '10월 14일(수) 낮 1시', untilKo: '오늘 낮 1시', afterKo: '1시가' },
-  '/5/gwangju/lunch/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T13:00:00+09:00', deadlineKo: '10월 14일(수) 낮 1시', untilKo: '오늘 낮 1시', afterKo: '1시가' },
+  //   resume (10/14 운영자: 다시 다 입력하지 않게): 전화번호, 동의, 송금자 이름만 받고 성별/출생년도/학교/유입 경로는 서버가 같은 번호로 쓰다 만 기록이나 지난 신청에서 채움
+  '/5/seoul/lunch/':        { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T13:00:00+09:00', deadlineKo: '10월 14일(수) 낮 1시', untilKo: '오늘 낮 1시', afterKo: '1시가', resume: true },
+  '/5/gwangju/lunch/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T13:00:00+09:00', deadlineKo: '10월 14일(수) 낮 1시', untilKo: '오늘 낮 1시', afterKo: '1시가', resume: true },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },

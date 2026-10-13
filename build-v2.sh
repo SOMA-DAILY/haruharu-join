@@ -335,6 +335,23 @@ def gen(path, f):
             if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
             assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if (f.get('twoPage') or f.get('phonePage')) else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
         if comeback:
+            # 이어 쓰기 (10/14 운영자): 같은 브라우저에 남아 있는 같은 트랙 폼(정가 폼, 다른 마감 할인 폼)의 작성 내용도 읽어 채움. 가장 최근 것, 7일 이내.
+            #   기존 템플릿은 자기 주소 것만, 6시간 이내만 되살림. 폰에 있던 것만 읽으므로 서버 조회 없음
+            alt = [p for p, g in FORMS.items() if p != path and g['cohort'] == cohort and g.get('track') == f.get('track') and (g.get('comeback') or (g['plan'] == 'regular' and g.get('variant')))]
+            d0 = "var dr=JSON.parse(transferred || localStorage.getItem(DKEY)||'null');"; d1 = "if(dr && dr.f && Date.now()-dr.t<6*3600e3){"
+            assert alt and t.count(d0) == 1 and t.count(d1) == 1, f'{path} 작성 내용 복원 자리를 못 찾음'
+            t = t.replace(d0, "var dr=JSON.parse(transferred||'null'); if(!dr){ [DKEY" + ''.join(f",'hh_draft:{p}'" for p in alt) + "].forEach(function(k){ try{ var x=JSON.parse(localStorage.getItem(k)||'null'); if(x&&x.f&&Object.keys(x.f).length&&(!dr||x.t>dr.t)) dr=x; }catch(e){} }); }", 1)
+            t = t.replace(d1, "if(dr && dr.f && Date.now()-dr.t<7*864e5){", 1)
+            if f.get('resume'):
+                # 빠른 신청: 기본 문항을 빼고 전화번호부터. 값은 서버가 같은 번호의 쓰다 만 기록/지난 신청에서 채움 (화면에는 안 보여 줌: 남의 번호로 알아낼 수 있는 게 없게)
+                for question in ('gender', 'birth_year', 'school', 'source', 'device', 'intent'):
+                    t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
+                    assert removed == 1, f'{path} 빠른 신청에서 뺄 문항을 못 찾음: {question}'
+                qp0 = '<div class="q" data-name="phone">'
+                assert t.count(qp0) == 1 and t.count('.q[data-name="gender"]') == 3, f'{path} 전화번호 문항/신청 버튼 기준을 못 찾음'
+                t = t.replace(qp0, '<p class="cb-resume"><b>전화번호만 적으면 돼요</b>전에 신청서를 쓰던 번호라면 나머지 정보는 그대로 이어져요.</p>\n' + qp0, 1)
+                t = t.replace('.q[data-name="gender"]', '.q[data-name="phone"]')
+                assert 'name="gender"' not in t and 'name="school"' not in t and 'name="source"' not in t
             # 계좌번호 복사 버튼 (5기 정가 폼과 같은 것). 친구 할인이 없어 위 블록을 안 타므로 여기서 따로 끼움
             ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S); foot = '<p class="foot">'
             assert ac and pay_a and t.count(foot) == 1, f'{path} 계좌/송금 버튼을 못 찾음'
