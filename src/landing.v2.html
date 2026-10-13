@@ -160,6 +160,8 @@
 .ld-co{margin-top:10px;padding:2px 18px;border-radius:18px;background:var(--hh-sky)}
 .ld-co li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0}
 .ld-co li+li{border-top:1px solid #D6E4F3}
+.ld-stats.ld-stats-1{grid-template-columns:1fr}
+.ld-co li>span{flex:none;margin:0;font-size:14.5px;font-weight:600}   /* 10/14 운영자: 매칭률과 인원은 빼고 앱을 진행한 날짜만 */
 .ld-co b{display:block;font-size:15.5px;font-weight:800}
 .ld-co span{display:block;margin-top:2px;font-size:13px;color:var(--hh-ink2)}
 .ld-co em{flex:none;display:flex;align-items:baseline;gap:7px;font-size:13px;font-style:normal;font-weight:600;color:var(--hh-ink2)}
@@ -330,16 +332,15 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 
 <section class="ld-sec" id="ld-record" data-sec="record">
 <h2 class="ld-vh">그동안의 성과</h2>
-<div class="ld-stats ld-fx">
+<div class="ld-stats ld-stats-1 ld-fx">
 <div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>
-<div class="ld-stat"><b><small class="ld-abt">약</small><span data-n="40">40</span><small>%</small></b><span>매칭률</span></div>
 </div>
 <ul class="ld-co ld-fx">
-<li><p><b>셋로그</b><span>앱 출시 전 기수</span></p><em>140명 참여<strong>23쌍 매칭</strong></em></li>
-<li><p><b>앱 1기</b><span>9월 15일 ~ 17일</span></p><em>15명 참여<strong>4쌍 매칭</strong></em></li>
-<li><p><b>앱 2기</b><span>9월 20일 ~ 22일</span></p><em>18명 참여<strong>4쌍 매칭</strong></em></li>
-<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em>56명 참여<strong>9쌍 매칭</strong></em></li>
-<li><p><b>앱 4기</b><span>10월 11일 ~ 13일</span></p><em class="ing">진행 중</em></li>
+<li><b>셋로그</b><span>앱 출시 전 기수</span></li>
+<li><b>앱 1기</b><span>9월 15일 ~ 17일</span></li>
+<li><b>앱 2기</b><span>9월 20일 ~ 22일</span></li>
+<li><b>앱 3기</b><span>10월 6일 ~ 8일</span></li>
+<li><b>앱 4기</b><span>10월 11일 ~ 13일</span></li>
 </ul>
 </section>
 
