@@ -116,7 +116,7 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    comeback = bool(f.get('comeback'))   # 자정 마감 할인: 폼 자체 마감(deadline)이 기수 마감보다 이름
+    comeback = bool(f.get('comeback')); cohort_end = False   # 자정 마감 할인: 폼 자체 마감(deadline)이 기수 마감보다 이름
     deadline_iso = None if f.get('noDeadline') else (f.get('deadline') or DL.get(cohort)); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = f.get('deadlineKo') or DLKO.get(cohort, '')
     # 일정 문구
@@ -175,14 +175,19 @@ def gen(path, f):
                   ('참가비', f"<s>{f['wasFee']:,}원</s> → {fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>"), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
         reg = next((p for p, g in FORMS.items() if g['cohort'] == cohort and g.get('track') == f.get('track') and g['plan'] == 'regular' and g.get('entry')), None)
         assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
-        next_link = f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
+        cohort_end = f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로
+        next_link = '' if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
     t = TPL
-    if comeback:
+    if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
         c0 = '<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>'
         og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
         assert t.count(c0) == 1 and t.count(og) == 1, f'{path} 마감 안내/미리보기 제목 자리를 못 찾음'
         t = t.replace(c0, f'<h2>{fee}원 할인이 끝났어요</h2><p>__DEADLINE_KO__까지였던 할인 신청이 마감됐어요.<br>__COHORT__기 신청은 {DLKO.get(cohort, "")}까지 받고 있어요.<br>', 1)
+
+    if comeback:
+        og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
+        assert t.count(og) == 1, f'{path} 미리보기 제목 자리를 못 찾음'
         t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
@@ -199,7 +204,7 @@ def gen(path, f):
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_AFTER__': f.get('afterKo', '자정이'),
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
