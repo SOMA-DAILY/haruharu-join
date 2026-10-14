@@ -85,9 +85,9 @@ def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
 def next_path(f):
     if f['cohort']==CUR: return None
-    for p,g in FORMS.items():
-        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular' and not g.get('variant'): return p
-    return '/'
+    cur=[p for p,g in FORMS.items() if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular']
+    # 서버 nextFormPath 와 같은 순서: 고정 링크가 가리키는 폼(entry) → 기존판 → 없으면 지역 선택 (10/14, 6기는 개선판만 있어서)
+    return next((p for p in cur if FORMS[p].get('entry')), None) or next((p for p in cur if not FORMS[p].get('variant')), None) or '/'
 
 # 트랙별 문구
 def school_q(f):
@@ -175,8 +175,8 @@ def gen(path, f):
                   ('참가비', f"<s>{f['wasFee']:,}원</s> → {fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>"), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
         reg = next((p for p, g in FORMS.items() if g['cohort'] == cohort and g.get('track') == f.get('track') and g['plan'] == 'regular' and g.get('entry')), None)
         assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
-        cohort_end = f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로
-        next_link = '' if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
+        cohort_end = (f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])) or cohort != CUR   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로. 다음 기수가 열렸으면(10/14) 기수 마감 안내 + 다음 기수 버튼
+        next_link = next_link if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
     t = TPL
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
@@ -194,6 +194,16 @@ def gen(path, f):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
         t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
+        # 마감 안내 (10/14 사용자, 6기~): 선택 동의 문항 없이 필수 동의 목적에 '신청 진행과 마감 안내(작성 중인 신청 포함)'.
+        #   이 목적으로 보내는 문자는 정보성만 (본인 신청의 마감 안내). 할인, 다음 기수 홍보를 넣으면 광고성이라 별도 수신 동의가 필요함
+        if f.get('remind'):
+            a = '- 목적 : 참가자 확인, 방 배정, 초대 코드와 일정 안내'
+            assert t.count(a) == 1, f'{path} 동의 목적 줄을 못 찾음'
+            t = t.replace(a, '- 목적 : 참가자 확인, 방 배정, 신청 진행과 마감 안내(작성 중인 신청 포함), 초대 코드와 일정 안내', 1)
+        # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
+        if f.get('landingV3') and f.get('noRecord'):
+            t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
+            assert n == 1, f'{path} 성과 구역을 못 찾음'
     else:
         t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
     for k, v in {

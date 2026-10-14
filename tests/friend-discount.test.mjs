@@ -14,7 +14,7 @@ async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { retur
 
 test('친구 할인은 개선판 정가 폼에만 있고 금액은 정가보다 2,000원 낮다', () => {
   const on = Object.keys(FORMS).filter((p) => FORMS[p].friendFee);
-  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/']);
+  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/', '/6/seoul/']);
   for (const p of on) {
     assert.equal(FORMS[p].plan, 'regular', p);
     assert.equal(FORMS[p].fee - FORMS[p].friendFee, 2000, p);
@@ -71,7 +71,7 @@ test('개선판은 새 주소 세 곳이고 이름은 기존 이름 뒤에 - 개
   // 5기부터는 개선판(B) 하나로 감 (10/10) → 지역 선택 버튼은 5기 개선판, 4기 개선판은 여전히 안 나옴
   const select = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.equal(select.includes('/4/seoul/v2/'), false, '지역 선택 화면');
-  assert.ok(select.includes('href="/5/seoul/"') && select.includes('href="/5/gwangju/"'), '5기 버튼');
+  assert.ok(select.includes('href="/6/seoul/"') && !select.includes('href="/5/'), '6기 버튼 (10/14: 6기 서울만, 광주 없음)');
 });
 
 test('기존 4기 폼에는 개선판 요소가 하나도 없다 (2페이지 구성 그대로)', () => {
