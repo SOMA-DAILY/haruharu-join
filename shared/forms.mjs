@@ -10,8 +10,9 @@ export const COHORT_DEADLINES = {
   '3': '2026-10-06T00:00:00+09:00', // 신청 마감 10/5(월) 밤
   '4': '2026-10-10T17:00:00+09:00', // 10/10 사용자: 직장인 사전알림 빼고 지금 닫고 5기로 이어지게 (원래 10/11 00:00). 진행 10/11(일)~10/13(화)
   '5': '2026-10-14T18:00:00+09:00', // 신청 마감 10/14(수) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
+  '6': '2026-10-18T18:00:00+09:00', // 진행 10/19(월)~10/21(수) (10/14 사용자). 마감은 5기처럼 시작 전날 18:00 (가안)
 };
-export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00' };
+export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
@@ -26,6 +27,7 @@ const S4 = { ...S3, cohort: '4' };
 const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
+const S6 = { ...S3, cohort: '6' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -82,6 +84,9 @@ export const FORMS = {
   // 저녁 6시 마감 할인 (10/14): 같은 화면, 마감이 5기 마감(18:00)과 같음. 그래서 마감 뒤엔 기수 마감 안내(정가 폼 버튼 없음), 첫 화면 줄은 leftKo
   '/5/seoul/evening/':        { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
   '/5/gwangju/evening/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
+  // ---- 6기 (10/14~): 서울 학생 정가 폼 하나만 (광주 없음, 10/14 사용자). 화면/문항/금액은 5기 서울 폼 그대로.
+  //   entry 를 안 달아서 고정 링크(/seoul/student/, 광고와 바이오)는 아직 6기로 안 넘어감 (10/14 사용자: 광고 url 은 그대로). 넘길 때 entry: '/seoul/student/' 추가 + CURRENT_COHORT '6'
+  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, alert: '/alert/seoul/' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -96,6 +101,7 @@ export const COHORT_INFO = {
   '3': { period: '10월 6일(화) ~ 10월 8일(목), 3일', deadlineKo: '10월 5일(월)' },
   '4': { period: '10월 11일(일) ~ 10월 13일(화), 3일', deadlineKo: '10월 10일(토)' },
   '5': { period: '10월 15일(목) ~ 10월 17일(토), 3일', deadlineKo: '10월 14일(수) 18:00' },
+  '6': { period: '10월 19일(월) ~ 10월 21일(수), 3일', deadlineKo: '10월 18일(일) 18:00' },
 };
 
 export function normalizePath(p) {
