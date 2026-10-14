@@ -96,3 +96,19 @@ test('낮 1시 마감 폼은 유입 경로와 신청 마음 문항이 없고 서
   assert.equal((await submit('/5/seoul/lunch/', END2 - 1, noSource)).res.status, 200);
   assert.equal((await submit('/5/seoul/comeback/', END - 1, noSource)).res.status, 400);   // 다른 폼은 여전히 필수
 });
+
+test('저녁 6시 마감 할인 폼: 5기 마감과 같이 닫히고, 마감 뒤엔 기수 마감 안내', async () => {
+  const END3 = Date.parse('2026-10-14T18:00:00+09:00');
+  for (const path of ['/5/seoul/evening/', '/5/gwangju/evening/']) {
+    const f = formOf(path);
+    assert.equal(f.fee, 4900); assert.equal(f.plan, 'discount'); assert.equal(f.noSource, true);
+    assert.equal(formStatus(path, END3 - 1).open, true); assert.equal(formStatus(path, END3).open, false);
+    const html = read(path);
+    for (const need of ['DEADLINE=' + END3 + ',', '오늘 저녁 6시까지만<br>', '저녁 6시에 5기 신청이 마감돼요', '10월 14일(수) 저녁 6시 마감', 'content="아직 고민 중이라면? 오늘 저녁 6시까지 4,900원"', '<h2>신청이 마감됐어요</h2>', '▶ 토스로 4,900원 송금하기'])
+      assert.ok(html.includes(need), path + ' 에 없음: ' + need);
+    for (const not of ['<h2>4,900원 할인이 끝났어요', '신청하러 가기 →', '지나면 다시', 'name="source"', 'name="intent"', '__CB_']) assert.ok(!html.includes(not), path + ' 에 있으면 안 됨: ' + not);
+  }
+  assert.ok(read('/5/seoul/lunch/').includes('1시가 지나면 다시 7,900원이에요') && read('/5/seoul/lunch/').includes('4,900원 할인이 끝났어요'));   // 앞 판은 그대로
+  assert.equal((await submit('/5/seoul/evening/', END3 - 1)).res.status, 200);
+  assert.equal((await submit('/5/seoul/evening/', END3)).res.status, 409);
+});
