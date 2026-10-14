@@ -194,6 +194,20 @@ def gen(path, f):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
         t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
+        # 매칭률 (10/14 사용자, 6기~): #48 에서 지운 매칭률을 rate 가 켜진 폼에만 되살림. 5기 모집 때 화면 그대로 + 앱 4기 결과(16/33 = 48.5% → 올림 49)
+        if f.get('landingV3') and f.get('rate'):
+            for a, b in [
+                ('<p class="ld-calm-stat">지금까지 250명+ 참여 🎉</p>', '<p class="ld-calm-stat">지금까지 250명+ 참여, 매칭률 40% 🎉</p>'),
+                ('<div class="ld-stats ld-stats-1 ld-fx">\n<div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>\n</div>',
+                 '<div class="ld-stats ld-fx">\n<div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>\n<div class="ld-stat"><b><span data-n="40">40</span><small>%</small></b><span>매칭률</span></div>\n</div>'),
+                ('<li><b>앱 1기</b><span>9월 15일 ~ 17일</span></li>', '<li><p><b>앱 1기</b><span>9월 15일 ~ 17일</span></p><em>매칭률<strong>55%</strong></em></li>'),
+                ('<li><b>앱 2기</b><span>9월 20일 ~ 22일</span></li>', '<li><p><b>앱 2기</b><span>9월 20일 ~ 22일</span></p><em>매칭률<strong>45%</strong></em></li>'),
+                ('<li><b>앱 3기</b><span>10월 6일 ~ 8일</span></li>', '<li><p><b>앱 3기</b><span>10월 6일 ~ 8일</span></p><em>매칭률<strong>33%</strong></em></li>'),
+                ('<li><b>앱 4기</b><span>10월 11일 ~ 13일</span></li>', '<li><p><b>앱 4기</b><span>10월 11일 ~ 13일</span></p><em>매칭률<strong>49%</strong></em></li>'),
+                ('지금까지 250명+ 참여 🎉">', '지금까지 250명+ 참여, 매칭률 40% 🎉">'),
+            ]:
+                assert t.count(a) == 1, f'{path} 매칭률 자리를 못 찾음: {a[:30]}'
+                t = t.replace(a, b, 1)
     else:
         t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
     for k, v in {

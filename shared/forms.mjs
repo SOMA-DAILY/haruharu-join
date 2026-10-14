@@ -85,8 +85,10 @@ export const FORMS = {
   '/5/seoul/evening/':        { ...S5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 서울 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
   '/5/gwangju/evening/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
   // ---- 6기 (10/14~): 서울 학생 정가 폼 하나만 (광주 없음, 10/14 사용자). 화면/문항/금액은 5기 서울 폼 그대로.
+  //   동의는 체크 하나 (10/14 사용자: [모두 동의] + 필수 + 선택 대신 하나로 통일 → marketing 끔)
+  //   rate (10/14 사용자): 5기 모집 때처럼 매칭률 표기 (#48 에서 지운 것을 이 폼만 되살림, build-v2.sh)
   //   entry 를 안 달아서 고정 링크(/seoul/student/, 광고와 바이오)는 아직 6기로 안 넘어감 (10/14 사용자: 광고 url 은 그대로). 넘길 때 entry: '/seoul/student/' 추가 + CURRENT_COHORT '6'
-  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, alert: '/alert/seoul/' },
+  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, rate: true, alert: '/alert/seoul/' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
