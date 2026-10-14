@@ -594,7 +594,7 @@ function stepsHtml(r,L){if(L)return r.next_click?'<span class="badge green">'+es
   return '<span class="badge '+t[1]+'">'+t[0]+'</span>'}
 function filledSummary(r){if(!r.fields)return '<span class="muted">-</span>';var f=JSON.parse(r.fields),bits=[];
   ['name','phone','gender','birth_year','school','major','source','intent','buddy_room','buddy','avoid_same_major'].forEach(function(k){if(f[k])bits.push(esc(k==='phone'||k==='buddy'?fmtPhone(f[k]):f[k]))});
-  if(f.phone&&!r.submitted)bits.push(f.marketing?'<span class="badge green">문자 동의</span>':'<span class="badge">문자 동의 없음</span>');   // 쓰다 나간 사람에게 할인 문자를 보내도 되는지 (10/14 선택 동의)
+  if(f.phone&&!r.submitted)bits.push(f.marketing?'<span class="badge green">문자 동의</span>':(regOf(r.path)||{}).remind?'<span class="badge blue">마감 안내만</span>':'<span class="badge">문자 동의 없음</span>');   // remind 폼(6기~): 필수 동의 목적에 마감 안내가 있어 정보성 마감 안내만 가능   // 쓰다 나간 사람에게 할인 문자를 보내도 되는지 (10/14 선택 동의)
   return bits.length?bits.join(' / '):'<span class="muted">-</span>'}
 function renderVisits(){var rs=S.visits,out=[],g={};
   // 입력 없이 나간 방문은 같은 광고, 같은 10분이면 한 줄로 묶음 (광고 심사 방문이 한꺼번에 몰림)

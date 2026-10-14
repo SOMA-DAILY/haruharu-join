@@ -194,6 +194,12 @@ def gen(path, f):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # 랜딩 v2: 참여 흐름/정보 안내/문의 글자 블록은 랜딩의 신청 안내 + 신청서 머리말이 대신함
         t = re.sub(r'<!--INFO_START-->.*?<!--INFO_END-->\n', '', t, flags=re.S)
+        # 마감 안내 (10/14 사용자, 6기~): 선택 동의 문항 없이 필수 동의 목적에 '신청 진행과 마감 안내(작성 중인 신청 포함)'.
+        #   이 목적으로 보내는 문자는 정보성만 (본인 신청의 마감 안내). 할인, 다음 기수 홍보를 넣으면 광고성이라 별도 수신 동의가 필요함
+        if f.get('remind'):
+            a = '- 목적 : 참가자 확인, 방 배정, 초대 코드와 일정 안내'
+            assert t.count(a) == 1, f'{path} 동의 목적 줄을 못 찾음'
+            t = t.replace(a, '- 목적 : 참가자 확인, 방 배정, 신청 진행과 마감 안내(작성 중인 신청 포함), 초대 코드와 일정 안내', 1)
         # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
         if f.get('landingV3') and f.get('noRecord'):
             t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
