@@ -294,7 +294,8 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  var depths={25:0,50:0,75:0,100:0}, imgSeen={};
  function onScroll(){
   var h=document.documentElement, pct=Math.round((h.scrollTop+innerHeight)/h.scrollHeight*100);
-  Object.keys(depths).forEach(function(d){ if(!depths[d] && pct>=d){ depths[d]=1; ev('landing_scroll',{depth:Number(d)}); } });
+  // 랜딩이 보일 때만 깊이를 찍음. form 모드(버튼으로 신청서만 띄운 상태)는 문서가 짧아져 25~100% 가 바로 찍히던 왜곡 (10/14)
+  if(h.getAttribute('data-mode')!=='form') Object.keys(depths).forEach(function(d){ if(!depths[d] && pct>=d){ depths[d]=1; ev('landing_scroll',{depth:Number(d)}); } });
   document.querySelectorAll('img[data-img]').forEach(function(im){ var id=im.getAttribute('data-img'); if(!imgSeen[id] && im.getBoundingClientRect().top<innerHeight){ imgSeen[id]=1; ev('image_seen',{image:id}); } });
  }
  addEventListener('scroll',onScroll,{passive:true}); setTimeout(onScroll,500);

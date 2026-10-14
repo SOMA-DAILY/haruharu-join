@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-var CITY='gwangju', CITY_KO='광주', COHORT='3', PLAN='regular', TRACK='gwangju-student', DEADLINE=1791212400000, PIXEL_ID='1144224341416623', PIXEL_OLD='1586422299864867', MIXPANEL_TOKEN='9ea143b4b80424841b7503415c84e95a';
+var CITY='gwangju', CITY_KO='광주', COHORT='3', PLAN='regular', TRACK='gwangju-student', DEADLINE=1791212400000, PIXEL_ID='1144224341416623', PIXEL_OLD='1586422299864867', MIXPANEL_TOKEN='dummy';
 </script>
 <!-- Meta 픽셀 -->
 <script>
@@ -298,7 +298,8 @@ input:focus{border-color:#1a1a1a}
  var depths={25:0,50:0,75:0,100:0}, imgSeen={};
  function onScroll(){
   var h=document.documentElement, pct=Math.round((h.scrollTop+innerHeight)/h.scrollHeight*100);
-  Object.keys(depths).forEach(function(d){ if(!depths[d] && pct>=d){ depths[d]=1; ev('landing_scroll',{depth:Number(d)}); } });
+  // 랜딩이 보일 때만 깊이를 찍음. form 모드(버튼으로 신청서만 띄운 상태)는 문서가 짧아져 25~100% 가 바로 찍히던 왜곡 (10/14)
+  if(h.getAttribute('data-mode')!=='form') Object.keys(depths).forEach(function(d){ if(!depths[d] && pct>=d){ depths[d]=1; ev('landing_scroll',{depth:Number(d)}); } });
   document.querySelectorAll('img[data-img]').forEach(function(im){ var id=im.getAttribute('data-img'); if(!imgSeen[id] && im.getBoundingClientRect().top<innerHeight){ imgSeen[id]=1; ev('image_seen',{image:id}); } });
  }
  addEventListener('scroll',onScroll,{passive:true}); setTimeout(onScroll,500);
