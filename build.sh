@@ -31,6 +31,9 @@ def next_path(f):
     if f['cohort']==CUR: return None
     for p,g in FORMS.items():
         if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular': return p
+    # 기존판이 없는 기수(6기~ 개선판만)는 고정 링크가 가리키는 폼으로 (10/14)
+    for p,g in ALL_FORMS.items():
+        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular' and g.get('entry'): return p
     return '/'
 
 # 트랙별 문구

@@ -85,9 +85,9 @@ def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
 def next_path(f):
     if f['cohort']==CUR: return None
-    for p,g in FORMS.items():
-        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular' and not g.get('variant'): return p
-    return '/'
+    cur=[p for p,g in FORMS.items() if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular']
+    # 서버 nextFormPath 와 같은 순서: 고정 링크가 가리키는 폼(entry) → 기존판 → 없으면 지역 선택 (10/14, 6기는 개선판만 있어서)
+    return next((p for p in cur if FORMS[p].get('entry')), None) or next((p for p in cur if not FORMS[p].get('variant')), None) or '/'
 
 # 트랙별 문구
 def school_q(f):
@@ -175,8 +175,8 @@ def gen(path, f):
                   ('참가비', f"<s>{f['wasFee']:,}원</s> → {fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>"), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
         reg = next((p for p, g in FORMS.items() if g['cohort'] == cohort and g.get('track') == f.get('track') and g['plan'] == 'regular' and g.get('entry')), None)
         assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
-        cohort_end = f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로
-        next_link = '' if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
+        cohort_end = (f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])) or cohort != CUR   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로. 다음 기수가 열렸으면(10/14) 기수 마감 안내 + 다음 기수 버튼
+        next_link = next_link if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
     t = TPL
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
