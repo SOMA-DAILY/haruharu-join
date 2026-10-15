@@ -22,6 +22,7 @@ CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.html',encoding='utf-8').read()
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+FOOTER=re.sub(r'^<!--.*?-->\n', '', open('src/footer.html',encoding='utf-8').read(), count=1, flags=re.S)   # 바닥글: 약관 링크와 사업자 정보 (10/16)
 BAD='·「」①②③④⑤'
 
 def NEWGEN(c): return str(c).isdigit() and int(c) >= 4   # 4기부터 쓰는 화면(실적 220명판 P1, 완료 설문). 5기 이후도 같음
@@ -133,6 +134,8 @@ def gen(path, f):
         t = t.replace('<script src="/early-offer.js"></script>', '')
     else:
         t = t.replace('<!--PAY_START-->', '').replace('<!--PAY_END-->', '')
+    assert t.count('</body>') == 1, f'{path} 바닥글 자리(</body>)가 하나가 아님'
+    t = t.replace('</body>', FOOTER + '</body>')
     left = re.findall(r'__[A-Z0-9_]+__', t)
     assert not left, f'{path} placeholder 남음: {left}'
     bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
@@ -156,6 +159,7 @@ def btn(p, f):   # 10/6: 직장인 사전알림도 선택 화면에. 금액 표�
     return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 대학생 소개팅 신청</b><span>{f["cityKo"]} 대학생</span></span><span class="ar">→</span></a>'
 btns = '\n'.join(btn(p, f) for p, f in listed)
 sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', (ms(DL[CUR]) if DL.get(CUR) else '9e15')).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
+assert sel.count('</body>') == 1; sel = sel.replace('</body>', FOOTER + '</body>')
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
 # 관리 페이지: 등록부 JSON 을 박아 넣음 (API 호출 없이 기수/트랙/라벨을 앎)
@@ -183,6 +187,8 @@ t=open('src/festival.template.html',encoding='utf-8').read()
 for k,v in {'__CITY__':'gwangju','__CITY_KO__':'광주','__COHORT__':'jnu-festival','__PLAN__':'jnu_festival','__DEADLINE_MS__':str(ms),'__DEADLINE_KO__':deadline_ko,
             '__FEE_NOTE__':f'참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.','__PAY_URL__':pay,'__FEE__':fee,'__FEE_ORIG__':fee_orig,'__MP__':mp}.items():
     t=t.replace(k,v)
+assert t.count('</body>')==1
+t=t.replace('</body>', re.sub(r'^<!--.*?-->\n', '', open('src/footer.html',encoding='utf-8').read(), count=1, flags=re.S)+'</body>')
 left=re.findall(r'__[A-Z0-9_]+__',t)
 assert not left, 'placeholder 남음: '+str(left)
 bad=[c for c in '·「」①②③④⑤' if c in t]

@@ -22,6 +22,7 @@ EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.v2.html',encoding='utf-8').read()
 LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+FOOTER=re.sub(r'^<!--.*?-->\n', '', open('src/footer.html',encoding='utf-8').read(), count=1, flags=re.S)   # 바닥글: 약관 링크와 사업자 정보 (10/16)
 # 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
 COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
 V3_STYLE=re.search(r'<style>.*?</style>\n', LANDING_V3, flags=re.S).group(0)
@@ -427,6 +428,8 @@ def gen(path, f):
         assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
         t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
         assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
+    assert t.count('</body>') == 1, f'{path} 바닥글 자리(</body>)가 하나가 아님'
+    t = t.replace('</body>', FOOTER + '</body>')
     bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
