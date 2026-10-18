@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '7';   // 10/17 사용자: 6기 마감(10/18 18:00) 뒤 광고/바이오/마감 안내 버튼을 7기 서울로
+export const CURRENT_COHORT = '7';   // 일반 7기 모집 전환용: 10/18 18:00 이후에만 main 병합/배포
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -11,7 +11,7 @@ export const COHORT_DEADLINES = {
   '4': '2026-10-10T17:00:00+09:00', // 10/10 사용자: 직장인 사전알림 빼고 지금 닫고 5기로 이어지게 (원래 10/11 00:00). 진행 10/11(일)~10/13(화)
   '5': '2026-10-14T18:00:00+09:00', // 신청 마감 10/14(수) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
   '6': '2026-10-18T18:00:00+09:00', // 진행 10/19(월)~10/21(수) (10/14 사용자). 마감은 5기처럼 시작 전날 18:00 (가안)
-  '7': '2026-10-21T18:00:00+09:00', // 진행 10/23(금)~10/25(일). 10/16 운영 규칙: 4일 간격, 신규 마감은 시작 2일 전 18:00
+  '7': '2026-10-21T18:00:00+09:00', // 10/18 사용자: 모든 7기 폼은 진행 10/23~25, 마감 10/21 18:00으로 통일
 };
 export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 21일(수) 18:00' };
 
@@ -30,6 +30,8 @@ const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
 const S7 = { ...S3, cohort: '7' };
+// 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
+const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -91,8 +93,20 @@ export const FORMS = {
   //   noRecord (10/14 사용자): 성과 구역(250명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 250명+ 참여' 줄은 그대로
   //   entry (10/14 사용자): 고정 링크 /seoul/student/ (광고 남녀, 바이오) 가 5기 마감 뒤 이 폼으로. 광주는 안 함 → /gwangju/student/ 는 5기 마감 안내 + 지역 선택 버튼
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
-  // ---- 7기 (10/17~): 6기 서울 폼 그대로, 기수/일정만 바꿈. 서울 학생만. entry 가 같아서 고정 링크는 6기 마감(10/18 18:00) 뒤에 저절로 7기로 (entryTarget: 열린 폼 중 마감이 이른 쪽)
+  // 7기 일반 신청폼: 일정/마감은 재참여와 같은 공통 설정을 사용
   '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
+  '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
+  // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
+  // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
+  //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
+  //   친구랑 같이 신청하면 2,000원 더 할인 3,900원(friendFee, 송금 /k/). 친구에게 보내는 링크는 고른 기수의 정가 폼(열려 있으면), 아니면 고정 링크(friendForm)에서 친구 할인 5,900원
+  //   joinFor (10/18 사용자): 6기 성비 때문에 여성은 6기, 남성은 7기. 링크의 g=f 면 6기, g=m 이면 7기만 보이고 g 가 없으면 둘 다. 닫힌 기수는 숨김(그 성별 기수가 닫히면 열린 쪽을 보임)
+  //   소개 없이 한 페이지. 전화번호만 받고 성별/출생년도/학교는 서버가 지난 신청에서 가져옴(phoneOnly). 기수 줄 둘은 화면 없음(noPage), 이 페이지가 고른 값으로 제출
+  '/rejoin/seoul/':         { ...S3, cohort: 'review', ...REJOIN_SV, noPage: false, label: '재참여 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true, friendForm: '/seoul/student/',
+                              joins: { '6기': '/6/seoul/rejoin/', '7기': '/7/seoul/rejoin/', '후기만': '/rejoin/seoul/' }, joinFor: { '6기': 'f', '7기': 'm' } },
+  '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
+  '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },

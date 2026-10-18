@@ -113,3 +113,35 @@ test('저녁 6시 마감 할인 폼: 5기 마감과 같이 닫히고, 마감 뒤
   assert.equal((await submit('/5/seoul/evening/', END3 - 1)).res.status, 200);
   assert.equal((await submit('/5/seoul/evening/', END3)).res.status, 409);
 });
+
+test('6기 낮 1시 할인은 5,900원 고정, 자체 마감은 13:00이며 7기 전환 뒤에는 7기를 안내한다', async () => {
+  const path = '/6/seoul/lunch/', end = Date.parse('2026-10-18T13:00:00+09:00');
+  const f = formOf(path);
+  assert.equal(f.cohort, '6'); assert.equal(f.fee, 5900); assert.equal(f.wasFee, 7900);
+  assert.equal(f.pay, 'https://haruharu-pay.pages.dev/b/');
+  assert.equal(f.friendFee, undefined); assert.equal(feeLabel(f), '할인 5,900원');
+  assert.ok(!listedForms().some(x => x.path === path));
+  assert.equal(formStatus(path, end - 1).open, true);
+  assert.equal(formStatus(path, end).open, false);
+  assert.equal(formStatus(path, Date.parse('2026-10-18T18:00:00+09:00')).next, '/7/seoul/');
+  assert.equal(formStatus('/6/seoul/', end).open, true);
+  const { source, ...noSource } = fields;
+  const ok = await submit(path, end - 1, noSource);
+  assert.equal(ok.res.status, 200); assert.equal(ok.record.hidden.cohort, '6');
+  assert.equal(ok.record.hidden.plan, 'discount'); assert.equal(ok.record.friend_fee || 0, 0);
+  const late = await submit(path, end, noSource);
+  assert.equal(late.res.status, 409); assert.equal(late.record, null);
+});
+
+test('6기 낮 1시 화면은 기존 한 페이지 구성에 6기 일정과 5,900원 송금 및 마감 안내를 보여준다', () => {
+  const html = read('/6/seoul/lunch/');
+  for (const need of ['오늘 낮 1시까지만<br>', '<s>7,900원</s> <b>5,900원</b>',
+    '10월 18일(일) 낮 1시 마감', '10월 19일(월) ~ 10월 21일(수)',
+    '▶ 토스로 5,900원 송금하기', 'haruharu-pay.pages.dev/b/', 'id="acctCopy"', 'id="cbBar"', 'id="cbClock"',
+    '<h2>신청이 마감됐어요</h2>', 'href="/7/seoul/?src=h7-seoul-student-from6"',
+    '신청 진행과 마감 안내(작성 중인 신청 포함)']) assert.ok(html.includes(need), need);
+  for (const gone of ['4,900', '12,900', 'name="source"', 'name="intent"', 'class="fr-share"', '__CB_', 'data-next=', 'data-prev='])
+    assert.ok(!html.includes(gone), gone);
+  assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 1);
+  assert.ok(read('/6/seoul/').includes('name="source"'));
+});
