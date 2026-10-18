@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '6';   // 10/14 사용자: 5기 마감 뒤 광고/바이오/마감 안내 버튼을 6기 서울로
+export const CURRENT_COHORT = '7';   // 10/18 18:00 6기 마감 뒤 병합: 지역 선택, 마감된 6기 폼의 다음 기수 버튼과 302 를 7기로
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
