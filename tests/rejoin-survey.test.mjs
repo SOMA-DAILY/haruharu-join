@@ -96,19 +96,22 @@ test('후기만: 이름과 참가비 없이 받고, cohort review / plan review 
   assert.deepEqual((await bad.res.json()).miss, ['phone']);
 });
 
-test('화면: 소개 없이 한 페이지에 후기, 바라는 점, 참여 고르기, 전화번호, 친구, 참가비, 제출', () => {
+test('화면: 소개 없이 한 페이지에 후기, 바라는 점, 전화번호, 다음 기수(기본 후기만, 네면 친구/참가비), 제출', () => {
   const html = read(PAGE), p1 = sec(html, 1);
   for (const w of ['data-page="2"', 'data-next=', 'data-prev=', '<div class="ld">', 'class="ld-hero', '소개팅 소개 다시 보기', '<input type="checkbox" name="consent"', 'dating_experience']) assert.equal(html.includes(w), false, w);
   assert.ok(html.includes('<html lang="ko" data-mode="form">') && html.includes('<title>하루하루 지난 기수 후기 💌</title>'));
   const at = (x) => { const i = p1.indexOf(x); assert.ok(i >= 0, x); return i; };
-  assert.ok(at('후기 남기고 참여하면 할인') < at('<div class="q sv-q" data-name="sv_review">'));
-  assert.ok(at('<div class="q sv-q" data-name="sv_review">') < at('<div class="q sv-q" data-name="sv_wish">') && at('<div class="q sv-q" data-name="sv_wish">') < at('<div class="q sv-q" data-name="sv_join">')
-    && at('<div class="q sv-q" data-name="sv_join">') < at('<div class="q" data-name="phone">') && at('<div class="q" data-name="phone">') < at('data-name="buddy_room"')
+  assert.ok(at('<h1 class="sv-h1">지난 기수, 어땠어요?</h1>') < at('<div class="q sv-q" data-name="sv_review">'));
+  assert.ok(at('<div class="q sv-q" data-name="sv_review">') < at('<div class="q sv-q" data-name="sv_wish">') && at('<div class="q sv-q" data-name="sv_wish">') < at('<div class="q" data-name="phone">')
+    && at('<div class="q" data-name="phone">') < at('<div class="q sv-q" data-name="sv_join">') && at('<div class="q sv-q" data-name="sv_join">') < at('data-name="buddy_room"')
     && at('data-name="buddy_room"') < at('<div class="q" data-name="name">') && at('<div class="q" data-name="name">') < at('id="submit"'));
-  const jq = p1.slice(at('<div class="q sv-q" data-name="sv_join">'), at('<div class="q" data-name="phone">'));
+  // 다음 기수: 날짜 안내 + [네, 신청할래요] / [아니요, 후기만 남길게요](처음부터 골라져 있음). 네를 누르면 할인 안내(sv-guide)와 친구/참가비 칸
+  const jq = p1.slice(at('<div class="q sv-q" data-name="sv_join">'), at('<div class="q" data-name="buddy_room">'));
   assert.deepEqual([...jq.matchAll(/name="sv_join" value="([^"]+)"/g)].map((m) => m[1]), ['6기', '7기', '후기만']);
+  assert.ok(jq.includes('name="sv_join" value="후기만" checked>') && jq.includes('아니요, 후기만 남길게요') && jq.includes('네, <span class="sv-c">6기 </span>신청할래요'));
   assert.ok(jq.includes('data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"') && jq.includes('data-path="/7/seoul/rejoin/" data-g="m" data-reg=""'));
-  assert.ok(jq.includes('6기 참여할게요<small>10/19(월) ~ 10/21(수) 진행, 10/18(일) 18:00 마감</small>') && jq.includes('7기 참여할게요<small>10/24(토) ~ 10/26(월) 진행, 10/22(목) 18:00 마감</small>') && jq.includes('이번엔 후기만 남길게요'));
+  assert.ok(jq.includes('<b>6기</b>10/19(월) ~ 10/21(수) 진행<small>신청 마감 10/18(일) 18:00</small>') && jq.includes('<b>7기</b>10/24(토) ~ 10/26(월) 진행<small>신청 마감 10/22(목) 18:00</small>'));
+  assert.ok(jq.includes('<p class="sv-guide" hidden>후기 남긴 분은 <s>7,900원</s> → <b>5,900원</b>이에요</p>'));
   for (const k of SURVEY_KEYS) assert.ok(p1.includes(`<textarea name="${k}"`) && p1.includes(`<input type="text" name="${k}_ok" value="" hidden required>`), k);
   const fq = p1.slice(at('<div class="q" data-name="buddy_room">'), at('<div class="q" data-name="name">'));
   assert.ok(/혼자 신청해요<\/span><b class="fr-p">5,900원/.test(fq) && /친구랑 같이 신청해요<small>친구는 5,900원<\/small><\/span><b class="fr-p">3,900원/.test(fq));

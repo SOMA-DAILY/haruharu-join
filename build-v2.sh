@@ -47,24 +47,28 @@ def survey_html():
     return out + '</div>\n\n'
 SURVEY_HTML = survey_html()
 def join_html(f):
-    # 재참여 후기 폼 (10/18 운영자): 재참여하지 않을 사람에게도 보내서 [N기 참여할게요] 와 [이번엔 후기만 남길게요] 를 고름. 값(sv_join)으로 서버가 기수 줄을 정함
+    # 다음 기수 문항 (10/18 운영자: 후기만 남기는 게 기본. 다음 기수가 언제인지 보여 주고 [네, 신청할래요] 를 누르면 그때 할인 안내와 친구/참가비 칸이 펼쳐짐)
+    #   값(sv_join)은 기수 이름 또는 '후기만'(처음부터 골라져 있음). 서버가 등록부 joins 로 접수할 기수 줄을 정함
     #   data-g: 그 성별 링크(g=f/m)에서만 보이는 기수 (joinFor), data-path: 마감 확인용 기수 줄, data-reg: 친구에게 보낼 그 기수 정가 폼(등록부에 있을 때만)
     E = lambda s: html.escape(str(s), quote=True)
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
-    rows = []
-    for i, (v, path) in enumerate(f['joins'].items()):
-        g = FORMS[path]
+    cos, yes, no = [], [], ''
+    for v, path in f['joins'].items():
         if path == f['path']:
-            rows.append(f'  <label class="opt fr-card"><span class="k">{chr(65+i)}</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">이번엔 후기만 남길게요</span></label>\n')
+            no = f'  <label class="opt fr-card"><span class="k">B</span><input type="radio" name="sv_join" value="{E(v)}" checked><span class="fr-l">아니요, 후기만 남길게요</span></label>\n'
             continue
+        g = FORMS[path]
         period = g.get('period') or INFO.get(g['cohort'], {}).get('period', '')
         dko = g.get('deadlineKo') or DLKO.get(g['cohort'], '')
         reg = next((q for q, x in FORMS.items() if x['cohort'] == g['cohort'] and x.get('track') == g.get('track') and x['plan'] == 'regular' and x.get('entry')), '')
         assert period and dko and g.get('fee') == f['fee'], f'{path} 일정/마감/금액이 없음'
-        rows.append(f'  <label class="opt fr-card" data-path="{path}" data-g="{f.get("joinFor", {}).get(v, "")}" data-reg="{reg}"><span class="k">{chr(65+i)}</span><input type="radio" name="sv_join" value="{E(v)}"'
-                    + (' required' if i == 0 else '') + f'><span class="fr-l">{E(v)} 참여할게요<small>{E(short(period))} 진행, {E(short(dko))} 마감</small></span><b class="fr-p">{g["fee"]:,}원</b></label>\n')
-    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수, 함께할까요?<span class="req">*</span></p>\n <div class="opts sv-join">\n' + ''.join(rows)
-            + ' </div><p class="err">선택해 주세요</p></div>\n\n')
+        at = f'data-path="{path}" data-g="{f.get("joinFor", {}).get(v, "")}" data-reg="{reg}"'
+        cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
+        yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
+    assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
+    guide = f' <p class="sv-guide" hidden>후기 남긴 분은 <s>{f["wasFee"]:,}원</s> → <b>{f["fee"]:,}원</b>이에요</p>\n'   # 친구 금액은 바로 아래 친구 문항 칸에
+    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n'
+            + ' <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n' + guide + '</div>\n\n')
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -212,8 +216,6 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
-    if survey:   # 지난 참가자라 대상/그룹 구성은 빼고 일정과 금액만. 참가비 칸은 후기 할인 금액 + 친구랑 같이 신청할 때 금액
-        rows_a = [('참가비', f"<s>{f['wasFee']:,}원</s> → {fee}원<small>후기 남기고 다음 기수에 참여하면. 친구랑 같이 신청하면 <b>{f['friendFee']:,}원</b></small>")]
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
         rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
@@ -254,7 +256,7 @@ def gen(path, f):
             assert n == 1, f'{path} 소개 구역을 못 찾음'
             off = f"{f['wasFee'] - f['fee']:,}"
             for a, b in (('<html lang="ko">', '<html lang="ko" data-mode="form">'),
-                         ('<p class="ld-k">신청 안내</p>', '<p class="ld-k">후기 남기고 참여하면 할인</p>'),
+                         ('<p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl>', '<h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p>'),   # 10/18: 후기가 먼저라 위에는 금액 카드 대신 제목
                          ('<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>', '<h2>신청이 마감됐어요</h2><p>'),   # 이 페이지는 마감이 없어 안 보이지만 기수 글자가 남지 않게
                          ('<title>하루하루 소개팅 __COHORT__기 신청폼 💕</title>', '<title>하루하루 지난 기수 후기 💌</title>'),
                          ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기 남기고 다음 기수에 참여하면 {f["wasFee"]:,}원 → {fee}원">'),
@@ -374,7 +376,7 @@ def gen(path, f):
                 mc = re.search(r'<div class="q" data-name="consent">.*?</div>\n\n', m.group(0), flags=re.S)
                 assert mc, f'{path} 동의 문항을 못 찾음'
                 notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 후기와 바라는 점은 방 구성과 진행을 고치는 데 써요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
-                t = t.replace(join + m.group(0), SURVEY_HTML + (join_html(f) if f.get('joins') else '') + m.group(0).replace(mc.group(0), notice), 1)
+                t = t.replace(join + m.group(0), SURVEY_HTML + m.group(0).replace(mc.group(0), notice) + (join_html(f) if f.get('joins') else ''), 1)
                 t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
             elif phone_only:
                 # 한 페이지에 전부 (10/11 운영자: 다음 페이지 없이 한번에). 전화번호, 친구 문항, 참가비, 제출 버튼 순서, 그 아래 친구 추천 칸

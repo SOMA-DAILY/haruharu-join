@@ -411,7 +411,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <symbol id="hh-mic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2F7BD6" stroke="#FFFFFF" stroke-width="2"/><g transform="translate(11.24 11.24) rotate(-45) scale(0.8)"><circle cx="0" cy="-5" r="3.7" fill="#FFFFFF"/><path d="M-3.38 -3.5H3.38L1.85 -0.5H-1.85Z" fill="#FFFFFF"/><path d="M-4.2 -3.7Q0 -2.1 4.2 -3.7" fill="none" stroke="#2F7BD6" stroke-width="1.15"/><path d="M-1.85 0.3H1.85L1.25 6.6A1.25 1.25 0 0 1 -1.25 6.6Z" fill="#FFFFFF"/><rect x="-0.55" y="1.7" width="1.1" height="2.8" rx="0.55" fill="#2F7BD6"/></g><path d="M15.6 15.6C16.4 17 17.4 18.3 18.6 17.3" fill="none" stroke="#FFFFFF" stroke-width="1.15" stroke-linecap="round"/></symbol>
 </defs></svg>
 
-<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">지난 참가자 전용</span></div><p class="ld-k">후기 남기고 참여하면 할인</p><dl class="ld-if ld-fcard-rows"><div><dt>참가비</dt><dd><s>7,900원</s> → 5,900원<small>후기 남기고 다음 기수에 참여하면. 친구랑 같이 신청하면 <b>3,900원</b></small></dd></div></dl></div>
+<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">지난 참가자 전용</span></div><h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p></div>
 <div class="ld-sticky off" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">설문 시작하기 💌</button></div>
 <script>
 (function(){
@@ -517,17 +517,23 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 </div>
 
-<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수, 함께할까요?<span class="req">*</span></p>
- <div class="opts sv-join">
-  <label class="opt fr-card" data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"><span class="k">A</span><input type="radio" name="sv_join" value="6기" required><span class="fr-l">6기 참여할게요<small>10/19(월) ~ 10/21(수) 진행, 10/18(일) 18:00 마감</small></span><b class="fr-p">5,900원</b></label>
-  <label class="opt fr-card" data-path="/7/seoul/rejoin/" data-g="m" data-reg=""><span class="k">B</span><input type="radio" name="sv_join" value="7기"><span class="fr-l">7기 참여할게요<small>10/24(토) ~ 10/26(월) 진행, 10/22(목) 18:00 마감</small></span><b class="fr-p">5,900원</b></label>
-  <label class="opt fr-card"><span class="k">C</span><input type="radio" name="sv_join" value="후기만"><span class="fr-l">이번엔 후기만 남길게요</span></label>
- </div><p class="err">선택해 주세요</p></div>
-
 <div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>
  <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive"><p class="err">010으로 시작하는 번호를 입력해 주세요</p></div>
 
 <p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 후기와 바라는 점은 방 구성과 진행을 고치는 데 써요. 기수 종료 6개월 뒤 파기합니다.</p>
+
+<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>
+ <div class="sv-cos">
+  <p class="sv-co" data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"><b>6기</b>10/19(월) ~ 10/21(수) 진행<small>신청 마감 10/18(일) 18:00</small></p>
+  <p class="sv-co" data-path="/7/seoul/rejoin/" data-g="m" data-reg=""><b>7기</b>10/24(토) ~ 10/26(월) 진행<small>신청 마감 10/22(목) 18:00</small></p>
+ </div>
+ <div class="opts sv-join">
+  <label class="opt fr-card" data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"><span class="k">A</span><input type="radio" name="sv_join" value="6기"><span class="fr-l">네, <span class="sv-c">6기 </span>신청할래요</span></label>
+  <label class="opt fr-card" data-path="/7/seoul/rejoin/" data-g="m" data-reg=""><span class="k">A</span><input type="radio" name="sv_join" value="7기"><span class="fr-l">네, <span class="sv-c">7기 </span>신청할래요</span></label>
+  <label class="opt fr-card"><span class="k">B</span><input type="radio" name="sv_join" value="후기만" checked><span class="fr-l">아니요, 후기만 남길게요</span></label>
+ </div>
+ <p class="sv-guide" hidden>후기 남긴 분은 <s>7,900원</s> → <b>5,900원</b>이에요</p>
+</div>
 
 <div class="q" data-name="buddy_room"><p class="t">친구랑 함께 신청하나요?</p>
  <p class="fr-sub">친구랑 같이 하면 2,000원 더 할인돼요</p>
@@ -683,8 +689,17 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
 .fr-body .other{margin-top:0}
 .fr-hint{margin:7px 2px 0;font-size:12.5px;line-height:1.5;color:var(--hh-mute)}
 .fr-body .fr-share{height:38px;margin-top:10px;font-size:14px}
-.sv-join .opt[hidden],.q[hidden]{display:none}
-.sv-join .fr-card .fr-l small{margin-top:2px}
+.sv-join .opt[hidden],.q[hidden],.sv-co[hidden],.sv-guide[hidden]{display:none}
+.sv-h1{margin:6px 0 4px;font-size:24px;line-height:1.3;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.sv-lead{margin:0 0 4px;font-size:14.5px;color:var(--hh-ink2)}
+.sv-cos{display:flex;flex-direction:column;gap:6px;margin:-2px 0 10px}
+.sv-co{margin:0;padding:12px 14px;border-radius:14px;background:var(--hh-sky);font-size:15.5px;font-weight:700;color:var(--hh-ink)}
+.sv-co b{margin-right:8px;color:#1F5FA9}
+.sv-co small{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--hh-ink2)}
+.sv-guide{margin:10px 0 0;padding:12px 14px;border:1.5px solid var(--hh-blue);border-radius:14px;background:#F5F9FE;font-size:15.5px;font-weight:700;color:var(--hh-ink)}
+.sv-guide s{font-weight:500;color:var(--hh-mute)}
+.sv-guide b{font-size:18px;color:#1F5FA9}
+.sv-guide small{display:block;margin-top:3px;font-size:13px;font-weight:500;color:var(--hh-ink2)}
 .fee-was b{display:block;margin-bottom:1px;font-size:13.5px;font-weight:800;color:var(--hh-blue)}
 .rj-privacy{margin:10px 2px 26px;font-size:12.5px;line-height:1.55;color:var(--hh-mute)}
 .rj-room{margin:16px 2px 10px;font-size:15px;font-weight:700;color:var(--hh-ink)}
@@ -698,34 +713,41 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    if(on&&!told){ told=true; try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('survey_answer',{path:location.pathname,q:ta.name}); }catch(e){} } }
   ta.addEventListener('input',sync); sync(); setTimeout(sync,0); setTimeout(sync,800);   // 저장해 둔 입력을 되살린 뒤 다시 확인
  });
- // 참여 고르기 (10/18 운영자): 재참여하지 않을 사람에게도 보냄. 6기는 여성, 7기는 남성 (링크 g). 그 성별 기수가 닫혔으면 열린 기수를 보임
+ // 다음 기수 문항 (10/18 운영자): 후기만이 기본. 다음 기수 날짜를 보여 주고 [네, 신청할래요] 를 누르면 할인 안내와 친구/참가비 칸이 펼쳐짐.
+ //   6기는 여성, 7기는 남성 (링크 g). 마감된 기수는 숨기고, 그 성별 기수가 닫혔으면 열린 기수를 보임. 열린 기수가 없으면 문항째 숨김
  var jq=form.querySelector('.q[data-name="sv_join"]');
  if(jq){
-  var G=window.HH_G||'x', opts=[].slice.call(jq.querySelectorAll('.opt[data-path]')), open={}, regOpen={};
+  var G=window.HH_G||'x', yes=[].slice.call(jq.querySelectorAll('.opt[data-path]')), open={}, regOpen={};
+  var no=jq.querySelector('input[value="후기만"]'), guide=jq.querySelector('.sv-guide');
   var payQ=[form.querySelector('.q[data-name="buddy_room"]'), form.querySelector('.q[data-name="name"]')], nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
   var dn=document.querySelector('.page[data-page="done"] .done'), dh=dn&&dn.querySelector('h2'), dp=dn&&dn.querySelector('p'), ap=dn&&dn.querySelector('.ap-get'), d0=dh&&[dh.textContent,dp.innerHTML];
+  function co(o){ return jq.querySelector('.sv-co[data-path="'+o.getAttribute('data-path')+'"]'); }
   function picked(){ var r=jq.querySelector('input:checked'); return r?r.value:''; }
   function sync(){ var v=picked(), join=!!v&&v!=='후기만', o=jq.querySelector('input:checked');
-   payQ.forEach(function(q){ if(q) q.hidden=!join; });
+   payQ.forEach(function(q){ if(q) q.hidden=!join; }); if(guide) guide.hidden=!join;
    if(nameIn){ if(join) nameIn.setAttribute('required',''); else nameIn.removeAttribute('required'); }
    if(!join){ var br=form.querySelectorAll('input[name="buddy_room"]:checked'); if(br.length){ [].forEach.call(br,function(r){ r.checked=false; r.closest('.opt').classList.remove('on'); }); var r0=form.querySelector('input[name="buddy_room"]'); if(r0) r0.dispatchEvent(new Event('change',{bubbles:true})); } }
-   window.HH_SV_REVIEW=v==='후기만';
-   var reg=o&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
-   if(btn&&form.dataset.submitting!=='true') btn.textContent=v==='후기만'?'후기 보내기':'제출하기';
-   if(dh){ dh.textContent=v==='후기만'?'후기 고마워요 💌':d0[0]; dp.innerHTML=v==='후기만'?'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수가 궁금하면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.':d0[1]; if(ap) ap.hidden=v==='후기만'; } }
-  function vis(){ var live=opts.filter(function(o){ return open[o.getAttribute('data-path')]!==false; });
+   window.HH_SV_REVIEW=!join;
+   var reg=join&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
+   if(btn&&form.dataset.submitting!=='true') btn.textContent=join?'신청하기':'후기 보내기';
+   if(dh){ dh.textContent=join?d0[0]:'후기 고마워요 💌'; dp.innerHTML=join?d0[1]:'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수 소식은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.'; if(ap) ap.hidden=!join; } }
+  function vis(){ var live=yes.filter(function(o){ return open[o.getAttribute('data-path')]!==false; });
    var mine=live.filter(function(o){ return G==='x'||!o.getAttribute('data-g')||o.getAttribute('data-g')===G; }), show=mine.length?mine:live;
-   opts.forEach(function(o){ var on=show.indexOf(o)>=0; o.hidden=!on; var r=o.querySelector('input'); if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); } });
+   yes.forEach(function(o){ var on=show.indexOf(o)>=0, c=co(o), r=o.querySelector('input'); o.hidden=!on; if(c) c.hidden=!on;
+    var tag=o.querySelector('.sv-c'); if(tag) tag.hidden=show.length<2;   // 기수가 둘 다 보일 때만 [네, 6기 신청할래요]
+    if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); if(no){ no.checked=true; no.closest('.opt').classList.add('on'); } } });
+   jq.hidden=!show.length;
+   if(!jq.querySelector('input:checked')&&no){ no.checked=true; no.closest('.opt').classList.add('on'); }
    sync(); }
-  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join') sync(); });
-  opts.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
+  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); if(picked()!=='후기만'&&guide) setTimeout(function(){ guide.scrollIntoView({behavior:'smooth',block:'nearest'}); },50); } });
+  yes.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
    fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
    if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });
-  setInterval(function(){ opts.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
-  // 제출했는데 고른 기수가 그새 마감됨 (서버 409): 페이지는 그대로 두고 그 칸만 숨김
-  window.hhSvClosed=function(){ var r=jq.querySelector('input:checked'); if(r) open[r.closest('.opt').getAttribute('data-path')]=false; vis();
-   if(btn){ btn.disabled=false; btn.textContent='제출하기'; }
-   alert('고른 기수 신청이 방금 마감됐어요. 다른 기수나 후기만 남기기를 골라 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.');
+  setInterval(function(){ yes.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
+  // 제출했는데 고른 기수가 그새 마감됨 (서버 409): 페이지는 그대로 두고 그 기수만 숨기고 다시 고르게 함
+  window.hhSvClosed=function(){ var r=jq.querySelector('input:checked'); if(r&&r.closest('.opt').getAttribute('data-path')) open[r.closest('.opt').getAttribute('data-path')]=false; vis();
+   if(btn) btn.disabled=false;
+   alert('고른 기수 신청이 방금 마감됐어요. 다른 기수를 고르거나 후기만 보내 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.');
    jq.scrollIntoView({behavior:'smooth',block:'center'}); };
   vis(); setTimeout(vis,0); setTimeout(vis,800);   // 저장해 둔 입력을 되살린 뒤
  }
