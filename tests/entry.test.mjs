@@ -28,6 +28,29 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
   // 실제 등록부: 5기(10/14 18:00 마감)와 6기(10/18 18:00 마감)가 같은 고정 링크
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-14T17:59:00+09:00')), '/5/seoul/');
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-14T18:01:00+09:00')), '/6/seoul/');
+  // 10/18: 7기(10/21 18:00 마감)를 올려도 g 없음/여자는 6기 마감 전까진 6기, 남자는 바로 7기. 6기 마감 뒤엔 모두 7기
+  const before6 = Date.parse('2026-10-18T17:59:00+09:00'), after6 = Date.parse('2026-10-18T18:01:00+09:00');
+  assert.equal(entryTarget('/seoul/student/', before6), '/6/seoul/');
+  assert.equal(entryTarget('/seoul/student/', before6, undefined, 'f'), '/6/seoul/');
+  assert.equal(entryTarget('/seoul/student/', before6, undefined, 'm'), '/7/seoul/');
+  assert.equal(entryTarget('/seoul/student/', after6), '/7/seoul/');
+  assert.equal(entryTarget('/seoul/student/', after6, undefined, 'f'), '/7/seoul/');
+  assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-21T18:01:00+09:00'), undefined, 'm'), '/7/seoul/');   // 7기도 닫히면 마감 안내
+});
+
+test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기, 여자 광고와 바이오는 6기 (10/18)', async () => {
+  const o = Date.now; Date.now = () => Date.parse('2026-10-18T15:00:00+09:00');
+  try {
+    assert.match((await go('/seoul/student/', '?src=ad-seoul-m-exhibit-2137')).loc, /^\/7\/seoul\/\?src=ad-seoul-m-exhibit-2137&g=m$/);
+    assert.match((await go('/seoul/student/', '?g=m')).loc, /^\/7\/seoul\/\?g=m$/);
+    assert.match((await go('/seoul/student/', '?src=ad-seoul-f-exhibit-1360')).loc, /^\/6\/seoul\/\?/);
+    assert.equal((await go('/seoul/student/', '?src=h6-seoul-insta-bio')).loc, '/6/seoul/?src=h6-seoul-insta-bio');
+    const { onRequest } = await import('../functions/_middleware.js');
+    const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
+    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-m-film-2137'), [302, '/7/seoul/?src=ad-seoul-m-film-2137&g=m']);   // 옛 기수 남자 광고 주소도 7기
+    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/6/seoul/?src=ad-seoul-f-film-1360&g=f']);
+    assert.equal((await hit('/6/seoul/?g=m'))[0], 200);   // 열린 6기 폼에 직접 온 건 그대로
+  } finally { Date.now = o; }
 });
 
 test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 302, 광주는 6기가 없어 마감 안내, 할인/재참여는 그대로', async () => {
@@ -35,7 +58,7 @@ test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 30
   const o = Date.now; Date.now = () => Date.parse('2026-10-10T18:00:00+09:00');
   const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
   try {
-    assert.deepEqual(await hit('/4/seoul/?src=h4t-stu-m-bike'), [302, '/6/seoul/?src=h4t-stu-m-bike&g=m']);
+    assert.deepEqual(await hit('/4/seoul/?src=h4t-stu-m-bike'), [302, '/7/seoul/?src=h4t-stu-m-bike&g=m']);   // 10/18: 남자는 7기 먼저
     assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/6/seoul/?src=h4t-stu-f-ieum&g=f']);
     assert.equal((await hit('/4/gwangju/'))[0], 200);
     assert.deepEqual(await hit('/seoul/'), [302, '/6/seoul/']);

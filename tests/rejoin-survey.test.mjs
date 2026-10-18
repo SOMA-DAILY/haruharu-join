@@ -119,7 +119,7 @@ test('화면: 소개 없이 한 페이지에 후기, 바라는 점, 다음 기�
   assert.deepEqual([...jq.matchAll(/name="sv_join" value="([^"]+)"/g)].map((m) => m[1]), ['6기', '7기', '후기만']);
   assert.ok(jq.includes('<label class="opt" hidden><input type="radio" name="sv_join" value="후기만" checked></label>') && !jq.includes('아니요') && jq.includes('네, <span class="sv-c">6기 </span>신청할래요'));
   assert.ok(jq.includes('재참여하면 <b>2,000원 할인</b>돼요<small><s>7,900원</s> → 5,900원</small>'));
-  assert.ok(jq.includes('data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"') && jq.includes('data-path="/7/seoul/rejoin/" data-g="m" data-reg=""'));
+  assert.ok(jq.includes('data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"') && jq.includes('data-path="/7/seoul/rejoin/" data-g="m" data-reg="/7/seoul/"'));
   assert.ok(jq.includes('<b>6기</b>10/19(월) ~ 10/21(수) 진행<small>신청 마감 10/18(일) 18:00</small>') && jq.includes('<b>7기</b>10/23(금) ~ 10/25(일) 진행<small>신청 마감 10/21(수) 18:00</small>'));
   for (const k of SURVEY_KEYS) assert.ok(p1.includes(`<textarea name="${k}"`) && p1.includes(`<input type="text" name="${k}_ok" value="" hidden required>`), k);
   const fq = p1.slice(at('<div class="q" data-name="buddy_room">'), at('<div class="q" data-name="name">'));

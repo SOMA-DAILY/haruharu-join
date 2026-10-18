@@ -14,7 +14,7 @@ async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { retur
 
 test('친구 할인은 개선판 정가 폼에만 있고 금액은 정가보다 2,000원 낮다', () => {
   const on = Object.keys(FORMS).filter((p) => FORMS[p].friendFee && !FORMS[p].survey);   // 재참여 설문 폼(설문 할인 + 친구 할인)은 rejoin-survey.test.mjs 에서 따로
-  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/', '/6/seoul/']);
+  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/', '/6/seoul/', '/7/seoul/']);
   for (const p of on) {
     assert.equal(FORMS[p].plan, 'regular', p);
     assert.equal(FORMS[p].fee - FORMS[p].friendFee, 2000, p);

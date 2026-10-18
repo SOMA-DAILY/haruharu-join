@@ -13,10 +13,10 @@ function genderOf(q) {
 export function entryHandler(entry) {
   return async function onRequestGet(context) {
     const url = new URL(context.request.url);
-    const to = entryTarget(entry, Date.now(), context.env);
-    if (!to) return new Response('not found', { status: 404 });
     const q = new URLSearchParams(url.search);
     const g = genderOf(q);
+    const to = entryTarget(entry, Date.now(), context.env, g);
+    if (!to) return new Response('not found', { status: 404 });
     if (g && !q.get('g') && FORMS[to] && FORMS[to].variant) q.set('g', g);
     const qs = q.toString();
     return new Response(null, { status: 302, headers: { location: to + (qs ? '?' + qs : ''), 'cache-control': 'no-store' } });

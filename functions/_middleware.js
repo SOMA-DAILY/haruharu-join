@@ -1,6 +1,6 @@
 // 마감된 기수의 정가 폼으로 오면 지금 기수 폼으로 바로 302 (10/10). 4기 광고 링크(/4/seoul/?src=…)도 끊기지 않고 5기로 이어짐.
 // 쿼리(src, fbclid) 그대로. 할인, 재참여, 사전알림, 축제 폼은 그대로 마감 안내. 갈 곳은 shared/forms.mjs 의 nextFormPath
-import { formOf, formStatus, FORMS } from '../shared/forms.mjs';
+import { formOf, formStatus, entryTarget, FORMS } from '../shared/forms.mjs';
 
 export async function onRequest(context) {
   const { request } = context;
@@ -12,7 +12,12 @@ export async function onRequest(context) {
   if (st.open || !st.next || st.next === '/' || st.next === f.path) return context.next();
   const q = new URLSearchParams(url.search);
   const m = /^(?:h\d+[a-z]*|ad)-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || '');
-  if (m && !q.get('g') && FORMS[st.next] && FORMS[st.next].variant) q.set('g', m[1].toLowerCase());
+  const g = (q.get('g') || (m ? m[1] : '')).toLowerCase();
+  // 그 성별이 먼저 가는 열린 폼(entryFirst, 10/18 남자는 7기 먼저)이 있으면 그쪽, 아니면 지금 기수
+  const first = g && FORMS[st.next] && FORMS[st.next].entry && entryTarget(FORMS[st.next].entry, Date.now(), context.env, g);
+  const next = first && FORMS[first].entryFirst === g && formStatus(first, Date.now(), context.env).open ? first : st.next;
+  if (next === f.path) return context.next();
+  if (m && !q.get('g') && FORMS[next] && FORMS[next].variant) q.set('g', m[1].toLowerCase());
   const qs = q.toString();
-  return new Response(null, { status: 302, headers: { location: st.next + (qs ? '?' + qs : ''), 'cache-control': 'no-store' } });
+  return new Response(null, { status: 302, headers: { location: next + (qs ? '?' + qs : ''), 'cache-control': 'no-store' } });
 }
