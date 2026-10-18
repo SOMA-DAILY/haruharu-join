@@ -69,6 +69,7 @@ def join_html(f):
     assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
     off = f"{f['wasFee'] - f['fee']:,}"
     return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n'
+            + ' <p class="sv-hint">이전에 만났던 분과는 다른 방으로 배정해 드려요.</p>\n'
             + f' <p class="sv-off">재참여하면 <b>{off}원 할인</b>돼요<small><s>{f["wasFee"]:,}원</s> → {f["fee"]:,}원</small></p>\n'
             + ' <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n</div>\n\n')
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
