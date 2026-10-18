@@ -9,13 +9,6 @@ export async function onRequest(context) {
   const f = formOf(url.pathname);
   if (!f || f.plan !== 'regular' || f.festival) return context.next();
   const st = formStatus(f.path, Date.now(), context.env);
-  // 열린 폼인데 링크 성별(g)이 다른 기수로 가야 하면 그쪽 (등록부 genderTo, 10/18 남자는 6기 대신 7기)
-  if (st.open && f.genderTo) {
-    const gq = new URLSearchParams(url.search), gv = (gq.get('g') || '').toLowerCase();
-    const to = f.genderTo[gv === 'm' ? '남성' : gv === 'f' ? '여성' : ''];
-    if (to && to !== f.path && formStatus(to, Date.now(), context.env).open)
-      return new Response(null, { status: 302, headers: { location: to + '?' + gq.toString(), 'cache-control': 'no-store' } });
-  }
   if (st.open || !st.next || st.next === '/' || st.next === f.path) return context.next();
   const q = new URLSearchParams(url.search);
   const m = /^(?:h\d+[a-z]*|ad)-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || '');

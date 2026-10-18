@@ -273,25 +273,6 @@ def gen(path, f):
             assert n == 1, f'{path} 성과 구역을 못 찾음'
     else:
         t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
-    # 성별 따라 다른 기수로 (10/18 사용자, 남자 풀 목적): 등록부 genderTo {성별: 경로}. 그 성별을 고르면 아래 문항과 다음 버튼을 숨기고 안내 칸만
-    if f.get('genderTo'):
-        gq = '<label class="opt"><span class="k">B</span><input type="radio" name="gender" value="남성">남성</label>\n </div><p class="err">선택해 주세요</p></div>'
-        assert t.count(gq) == 1, f'{path} 성별 문항 자리를 못 찾음'
-        cards = ''
-        for gv, to in f['genderTo'].items():
-            tc = FORMS[to]['cohort']; ti = INFO.get(tc, {})
-            cards += (f'<div class="gto" data-gto="{gv}" data-to="{to}" data-g="{"m" if gv == "남성" else "f"}" hidden><p class="gto-t">{gv}은 {tc}기로 신청받고 있어요</p>'
-                      f'<p class="gto-s">{tc}기 {short(ti.get("period", ""))} 진행<br>신청 마감 {short(DLKO.get(tc, ""))}</p>'
-                      f'<a class="btn gto-go" href="{to}">{tc}기 신청하러 가기 →</a></div>\n')
-        js = ('<style>.gto{margin:-4px 0 22px;padding:16px 16px 14px;border-radius:14px;background:#fff4f6;border:1px solid #ffd3dc}.gto-t{font-weight:700;margin:0 0 6px}.gto-s{margin:0 0 12px;font-size:14px;color:#666;line-height:1.5}.gto-go{display:flex;justify-content:center;text-decoration:none}'
-              'form.gto-on .page.on .q:not([data-name=gender]),form.gto-on .page.on .nav,form.gto-on .page.on .fr-hook{display:none!important}</style>\n'
-              '<script>(function(){var cards=document.querySelectorAll(".gto"),form=document.getElementById("f"),on=null;'
-              'function sync(){var v=(form.querySelector("input[name=gender]:checked")||{}).value;on=null;cards.forEach(function(c){var m=c.getAttribute("data-gto")===v;c.hidden=!m;if(m)on=c;});form.classList.toggle("gto-on",!!on);'
-              'if(on){var q=new URLSearchParams(location.search);q.set("g",on.getAttribute("data-g"));var a=on.querySelector("a");a.href=on.getAttribute("data-to")+"?"+q.toString();}}'
-              'form.addEventListener("change",function(e){if(e.target.name==="gender"){sync();if(on)try{mixpanel.track("gender_redirect_view",{to:on.getAttribute("data-to")});}catch(x){}}});'
-              'cards.forEach(function(c){c.querySelector("a").addEventListener("click",function(){try{mixpanel.track("gender_redirect_click",{to:c.getAttribute("data-to")});}catch(x){}});});'
-              'document.addEventListener("click",function(e){if(on&&e.target.closest&&e.target.closest("[data-next],button[type=submit]")){e.preventDefault();e.stopImmediatePropagation();}},true);sync();})();</script>\n')
-        t = t.replace(gq, gq + '\n' + cards + js, 1)
     for k, v in {
         '__LD_BADGE__': '지난 참가자 전용' if survey else f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
