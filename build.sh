@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu-FE/.env.production 2>/dev/null | cut -d= -f2 | tr -d '"\r')}"
 [ -n "$MP" ] || { echo "Mixpanel 토큰을 못 읽음"; exit 1; }
 # 등록부를 JSON 으로 (node 는 CI 에 있음)
-REG="$(node --input-type=module -e "import('./shared/forms.mjs').then(m=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO})))")"
+REG="$(node --input-type=module -e "Promise.all([import('./shared/forms.mjs'),import('./shared/rejoin-survey.mjs')]).then(([m,s])=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO,SURVEY:{SECTIONS:s.SURVEY_SECTIONS,Q:s.SURVEY}})))")"
 [ -n "$REG" ] || { echo "등록부를 못 읽음"; exit 1; }
 export MP REG
 python3 - <<'EOF'
@@ -159,7 +159,7 @@ sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)
 open('public/index.html', 'w', encoding='utf-8').write(sel); print('built select', len(sel), [p for p, _ in listed])
 # 관리 페이지: 등록부 JSON 을 박아 넣음 (API 호출 없이 기수/트랙/라벨을 앎)
-adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': ALL_FORMS, 'CURRENT': CUR, 'DEADLINES': DL, 'DEADLINE_KO': DLKO}, ensure_ascii=False))   # 관리 화면은 개선판 폼도 앎
+adm = open('src/admin.html', encoding='utf-8').read().replace('__FORMS_JSON__', json.dumps({'FORMS': ALL_FORMS, 'CURRENT': CUR, 'DEADLINES': DL, 'DEADLINE_KO': DLKO, 'SURVEY': R['SURVEY']}, ensure_ascii=False))   # 관리 화면은 개선판 폼도 앎. 재참여 설문 문항 글자도 (shared/rejoin-survey.mjs)
 assert '__FORMS_JSON__' not in adm
 # 친구 할인 판정 함수 (서버와 같은 것): shared/friend-discount.mjs 에서 주석과 export 만 떼고 그대로 끼움
 FRIEND_FN = re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs', encoding='utf-8').read(), flags=re.M), flags=re.M).strip()

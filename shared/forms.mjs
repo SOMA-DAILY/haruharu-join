@@ -28,6 +28,9 @@ const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
+const S7 = { ...S3, cohort: '7' };
+// 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
+const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -91,6 +94,16 @@ export const FORMS = {
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
+  // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
+  // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
+  //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
+  //   친구랑 같이 신청하면 2,000원 더 할인 3,900원(friendFee, 송금 /k/). 친구에게 보내는 링크는 고른 기수의 정가 폼(열려 있으면), 아니면 고정 링크(friendForm)에서 친구 할인 5,900원
+  //   joinFor (10/18 사용자): 6기 성비 때문에 여성은 6기, 남성은 7기. 링크의 g=f 면 6기, g=m 이면 7기만 보이고 g 가 없으면 둘 다. 닫힌 기수는 숨김(그 성별 기수가 닫히면 열린 쪽을 보임)
+  //   소개 없이 한 페이지. 전화번호만 받고 성별/출생년도/학교는 서버가 지난 신청에서 가져옴(phoneOnly). 기수 줄 둘은 화면 없음(noPage), 이 페이지가 고른 값으로 제출
+  '/rejoin/seoul/':         { ...S3, cohort: 'review', ...REJOIN_SV, noPage: false, label: '재참여 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true, friendForm: '/seoul/student/',
+                              joins: { '6기': '/6/seoul/rejoin/', '7기': '/7/seoul/rejoin/', '후기만': '/rejoin/seoul/' }, joinFor: { '6기': 'f', '7기': 'm' } },
+  '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
+  '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)', period: '10월 24일(토) ~ 10월 26일(월), 3일', deadline: '2026-10-22T18:00:00+09:00', deadlineKo: '10월 22일(목) 18:00' },   // 7기 기수 줄(COHORT_DEADLINES)이 아직 없어서 일정/마감을 이 줄에. 7기를 열면 둘 중 이른 마감
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },

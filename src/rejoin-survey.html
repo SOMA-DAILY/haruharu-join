@@ -1,0 +1,112 @@
+<!-- 재참여 설문 폼(등록부 survey) 조각 (10/17). 문항 글자는 shared/rejoin-survey.mjs, 문항 틀은 build-v2.sh 가 거기서 찍음.
+     FRIEND: 친구 문항 전체 (참가비 안내 위). 10/17 운영자: 큰 할인 안내 대신 언급은 살짝, 고르는 칸에서 금액을 보여 주기.
+       [혼자 5,900원] [친구랑 같이 3,900원] 두 칸. 친구 칸을 누르면 방 배정(라디오 같은 방/다른 방/상관없음, 처음엔 상관없음), 친구 번호, 할인 링크 공유가 펼쳐짐.
+       값은 기존 buddy_room 네 값 그대로라 서버, 관리 화면, 친구 할인 판정이 같음 / TAIL: 주관식 칸 모양, 글자 수 확인, 친구 칸 동작,
+       참여 고르기(sv_join, 10/18): 링크 성별(HH_G)에 맞는 기수만, 마감된 기수는 숨김, 후기만이면 친구/참가비 칸을 숨기고 이름 필수를 끔
+     글자 칸(textarea)은 템플릿 검사(validate)가 안 봐서, 숨긴 글자 칸(이름 끝 _ok)을 min 자 이상 적었을 때만 채워 검사에 태움 -->
+<!--FRIEND-->
+<div class="q" data-name="buddy_room"><p class="t">친구랑 함께 신청하나요?</p>
+ <p class="fr-sub">친구랑 같이 하면 __FR_OFF__원 더 할인돼요</p>
+ <div class="opts fr-pick">
+  <label class="opt fr-card"><span class="k">A</span><input type="radio" name="buddy_room" value="혼자"><span class="fr-l">혼자 신청해요</span><b class="fr-p">__FULL_FEE__원</b></label>
+  <div class="fr-with" id="frWith">
+   <button type="button" class="opt fr-card" id="frWithBtn" aria-expanded="false"><span class="k">B</span><span class="fr-l">친구랑 같이 신청해요<small>친구는 __PAL_FEE__원</small></span><b class="fr-p">__FRIEND_FEE__원</b></button>
+   <div class="fr-body" id="frBody" hidden>
+    <p class="fr-q">방 배정은요?</p>
+    <div class="fr-rooms">
+     <label class="opt"><span class="k">C</span><input type="radio" name="buddy_room" value="같은 방" data-other="buddy">같은 방</label>
+     <label class="opt"><span class="k">D</span><input type="radio" name="buddy_room" value="다른 방" data-other="buddy">다른 방</label>
+     <label class="opt"><span class="k">E</span><input type="radio" name="buddy_room" value="상관없음" data-other="buddy">상관없어요</label>
+    </div>
+    <div class="other" id="other-buddy"><p class="fr-q">친구 전화번호</p>
+     <input type="tel" name="buddy" inputmode="numeric" placeholder="ex) 01012345678" maxlength="20" class="mp-sensitive">
+     <p class="fr-hint">친구도 신청서 친구 칸에 내 번호를 적어야 할인돼요. 친구가 2명 이상이면 아무나 한&nbsp;명의 번호를 적어 주세요.</p>
+     <button type="button" class="fr-share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg><span>친구에게 할인 링크 보내기</span></button></div>
+   </div>
+  </div>
+ </div>
+ <p class="err">친구 전화번호를 확인해 주세요</p></div>
+<!--TAIL-->
+<style>
+.sv-q .sv-hint{margin:-4px 2px 10px;font-size:14px;color:var(--hh-ink2)}
+.sv-q textarea{box-sizing:border-box;display:block;width:100%;min-height:120px;padding:12px 14px;border:1.5px solid var(--hh-line);border-radius:14px;background:#fff;color:var(--hh-ink);font:inherit;font-size:16px;line-height:1.55;resize:vertical}
+.sv-q textarea:focus{outline:none;border-color:var(--hh-blue)}
+.sv-q.bad textarea{border-color:#E0457B}
+html[data-mode="form"] .ld-fcard{animation:none}   /* 처음부터 신청서라 안내 카드 등장 효과 없이 */
+.fr-sub{margin:-4px 2px 10px;font-size:14px;color:var(--hh-ink2)}
+.fr-card{width:100%;text-align:left;font:inherit;color:inherit}
+.fr-card .fr-l{flex:1;min-width:0;font-size:16px;font-weight:600;line-height:1.35}
+.fr-card .fr-l small{display:block;margin-top:1px;font-size:13px;font-weight:500;color:var(--hh-mute)}
+.fr-card .fr-p{flex:none;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--hh-ink)}
+.fr-card.on .fr-p{color:#1F5FA9}
+button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+.fr-with.on>.fr-card{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.fr-body{padding:12px 14px 14px;border:1.5px solid var(--hh-blue);border-top:0;border-radius:0 0 14px 14px;background:#F7FAFF}
+.fr-body[hidden]{display:none}
+.fr-q{margin:0 2px 7px;font-size:14px;font-weight:700;color:var(--hh-ink)}
+.fr-rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.fr-rooms .opt{justify-content:center;padding:10px 4px;font-size:14.5px;font-weight:600;background:#fff}
+.fr-rooms .opt .k{display:none}
+.fr-rooms .opt.on{background:#E8F1FD;color:#1F5FA9;border-color:var(--hh-blue)}
+.fr-body .other{margin-top:0}
+.fr-hint{margin:7px 2px 0;font-size:12.5px;line-height:1.5;color:var(--hh-mute)}
+.fr-body .fr-share{height:38px;margin-top:10px;font-size:14px}
+.sv-join .opt[hidden],.q[hidden]{display:none}
+.sv-join .fr-card .fr-l small{margin-top:2px}
+.fee-was b{display:block;margin-bottom:1px;font-size:13.5px;font-weight:800;color:var(--hh-blue)}
+.rj-privacy{margin:10px 2px 26px;font-size:12.5px;line-height:1.55;color:var(--hh-mute)}
+.rj-room{margin:16px 2px 10px;font-size:15px;font-weight:700;color:var(--hh-ink)}
+</style>
+<script>
+(function(){
+ var form=document.getElementById('f'); if(!form) return;
+ [].forEach.call(document.querySelectorAll('.sv-q textarea'),function(ta){
+  var q=ta.closest('.sv-q'), ok=q.querySelector('input[type=text][hidden]'), min=Number(ta.getAttribute('data-min'))||1, told=false;
+  function sync(){ var on=ta.value.trim().length>=min; ok.value=on?'1':''; if(on) q.classList.remove('bad');
+   if(on&&!told){ told=true; try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('survey_answer',{path:location.pathname,q:ta.name}); }catch(e){} } }
+  ta.addEventListener('input',sync); sync(); setTimeout(sync,0); setTimeout(sync,800);   // 저장해 둔 입력을 되살린 뒤 다시 확인
+ });
+ // 참여 고르기 (10/18 운영자): 재참여하지 않을 사람에게도 보냄. 6기는 여성, 7기는 남성 (링크 g). 그 성별 기수가 닫혔으면 열린 기수를 보임
+ var jq=form.querySelector('.q[data-name="sv_join"]');
+ if(jq){
+  var G=window.HH_G||'x', opts=[].slice.call(jq.querySelectorAll('.opt[data-path]')), open={}, regOpen={};
+  var payQ=[form.querySelector('.q[data-name="buddy_room"]'), form.querySelector('.q[data-name="name"]')], nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
+  var dn=document.querySelector('.page[data-page="done"] .done'), dh=dn&&dn.querySelector('h2'), dp=dn&&dn.querySelector('p'), ap=dn&&dn.querySelector('.ap-get'), d0=dh&&[dh.textContent,dp.innerHTML];
+  function picked(){ var r=jq.querySelector('input:checked'); return r?r.value:''; }
+  function sync(){ var v=picked(), join=!!v&&v!=='후기만', o=jq.querySelector('input:checked');
+   payQ.forEach(function(q){ if(q) q.hidden=!join; });
+   if(nameIn){ if(join) nameIn.setAttribute('required',''); else nameIn.removeAttribute('required'); }
+   if(!join){ var br=form.querySelectorAll('input[name="buddy_room"]:checked'); if(br.length){ [].forEach.call(br,function(r){ r.checked=false; r.closest('.opt').classList.remove('on'); }); var r0=form.querySelector('input[name="buddy_room"]'); if(r0) r0.dispatchEvent(new Event('change',{bubbles:true})); } }
+   window.HH_SV_REVIEW=v==='후기만';
+   var reg=o&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
+   if(btn&&form.dataset.submitting!=='true') btn.textContent=v==='후기만'?'후기 보내기':'제출하기';
+   if(dh){ dh.textContent=v==='후기만'?'후기 고마워요 💌':d0[0]; dp.innerHTML=v==='후기만'?'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수가 궁금하면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.':d0[1]; if(ap) ap.hidden=v==='후기만'; } }
+  function vis(){ var live=opts.filter(function(o){ return open[o.getAttribute('data-path')]!==false; });
+   var mine=live.filter(function(o){ return G==='x'||!o.getAttribute('data-g')||o.getAttribute('data-g')===G; }), show=mine.length?mine:live;
+   opts.forEach(function(o){ var on=show.indexOf(o)>=0; o.hidden=!on; var r=o.querySelector('input'); if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); } });
+   sync(); }
+  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join') sync(); });
+  opts.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
+   fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
+   if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });
+  setInterval(function(){ opts.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
+  // 제출했는데 고른 기수가 그새 마감됨 (서버 409): 페이지는 그대로 두고 그 칸만 숨김
+  window.hhSvClosed=function(){ var r=jq.querySelector('input:checked'); if(r) open[r.closest('.opt').getAttribute('data-path')]=false; vis();
+   if(btn){ btn.disabled=false; btn.textContent='제출하기'; }
+   alert('고른 기수 신청이 방금 마감됐어요. 다른 기수나 후기만 남기기를 골라 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.');
+   jq.scrollIntoView({behavior:'smooth',block:'center'}); };
+  vis(); setTimeout(vis,0); setTimeout(vis,800);   // 저장해 둔 입력을 되살린 뒤
+ }
+ // 친구 칸: 누르면 펼치고, 방 배정을 아직 안 골랐으면 [상관없음]으로 (금액은 friend-discount 조각의 sync 가 바꿈). 혼자를 고르면 접힘
+ var w=document.getElementById('frWith'), wb=document.getElementById('frWithBtn'), body=document.getElementById('frBody');
+ if(w&&wb&&body){
+  function room(){ var r=form.querySelector('input[name="buddy_room"]:checked'); return r?r.value:''; }
+  function paint(){ var on=!!room()&&room()!=='혼자'; w.classList.toggle('on',on); wb.classList.toggle('on',on); body.hidden=!on; wb.setAttribute('aria-expanded',on?'true':'false'); }
+  wb.addEventListener('click',function(){ if(room()&&room()!=='혼자'){ paint(); return; }
+   var r=body.querySelector('input[value="상관없음"]'); r.checked=true; r.dispatchEvent(new Event('change',{bubbles:true}));
+   setTimeout(function(){ var b=form.querySelector('input[name="buddy"]'); if(b) b.focus({preventScroll:true}); },60); });
+  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='buddy_room') paint(); });
+  paint(); setTimeout(paint,0); setTimeout(paint,800);   // 저장해 둔 입력을 되살린 뒤
+ }
+})();
+</script>
