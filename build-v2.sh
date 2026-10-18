@@ -8,11 +8,11 @@ cd "$(dirname "$0")"
 MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu-FE/.env.production 2>/dev/null | cut -d= -f2 | tr -d '"\r')}"
 [ -n "$MP" ] || { echo "Mixpanel 토큰을 못 읽음"; exit 1; }
 # 등록부를 JSON 으로 (node 는 CI 에 있음)
-REG="$(node --input-type=module -e "import('./shared/forms.mjs').then(m=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO})))")"
+REG="$(node --input-type=module -e "Promise.all([import('./shared/forms.mjs'),import('./shared/rejoin-survey.mjs')]).then(([m,s])=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO,SURVEY:{SECTIONS:s.SURVEY_SECTIONS,Q:s.SURVEY}})))")"
 [ -n "$REG" ] || { echo "등록부를 못 읽음"; exit 1; }
 export MP REG
 python3 - <<'EOF'
-import os, re, json
+import os, re, json, html
 from datetime import datetime
 R=json.loads(os.environ['REG']); MP=os.environ['MP']
 FORMS, CUR, DL, DLKO, INFO = R['FORMS'], R['CURRENT'], R['DEADLINES'], R['DEADLINE_KO'], R['INFO']
@@ -31,6 +31,46 @@ FR_HOOK, _fr = _fr.split('<!--HOOK-->\n',1)[1].split('<!--BANNER-->\n',1)
 FR_BANNER, FR_TAIL = _fr.split('<!--TAIL-->\n',1)
 REJOIN_HOOK=open('src/rejoin-friend.html',encoding='utf-8').read()
 REJOIN_SHARE=re.sub(r'^<!--.*?-->\n', '', open('src/rejoin-share.html',encoding='utf-8').read(), count=1, flags=re.S)
+# 재참여 설문 (10/17): 문항은 shared/rejoin-survey.mjs, 친구 문항 머리와 설문 모양/동작은 src/rejoin-survey.html
+SV=R['SURVEY']
+SV_FRIEND, SV_TAIL = open('src/rejoin-survey.html',encoding='utf-8').read().split('<!--FRIEND-->\n',1)[1].split('<!--TAIL-->\n',1)
+def survey_html():
+    # 주관식 문항 (10/17 운영자: 고르는 설문 대신 후기와 바라는 점 두 칸). 글자 칸은 템플릿 검사가 안 봐서 숨긴 _ok 칸을 min 자 이상일 때 채움 (src/rejoin-survey.html)
+    E = lambda s: html.escape(str(s), quote=True)
+    out = '<div class="sv" id="sv">\n'
+    for k in [k for sec in SV['SECTIONS'] for k in sec['keys']]:
+        q = SV['Q'][k]; assert q['type'] == 'text', f'{k} 주관식만 찍음'
+        out += (f'<div class="q sv-q" data-name="{k}"><p class="t">{E(q["title"])}<span class="req">*</span></p>\n'
+                + (f' <p class="sv-hint">{E(q["hint"])}</p>\n' if q.get('hint') else '')
+                + f' <textarea name="{k}" rows="4" maxlength="{q.get("max", 1000)}" data-min="{q.get("min", 1)}" placeholder="{E(q["placeholder"])}"></textarea>\n'
+                + f' <input type="text" name="{k}_ok" value="" hidden required>\n <p class="err">{q.get("min", 1)}자 이상 적어 주세요</p></div>\n\n')
+    return out + '</div>\n\n'
+SURVEY_HTML = survey_html()
+def join_html(f):
+    # 다음 기수 문항 (10/18 운영자): 후기만 남기는 게 기본. 다음 기수 날짜와 [재참여하면 2,000원 할인돼요] 를 보여 주고, 보이는 칸은 [네, 신청할래요] 하나(다시 누르면 꺼짐).
+    #   켜면 그때 전화번호, 친구 문항, 참가비, 송금자 이름이 펼쳐짐 (전화번호도 신청하는 사람만)
+    #   값(sv_join)은 기수 이름 또는 '후기만'(숨긴 칸, 처음부터 골라져 있음). 서버가 등록부 joins 로 접수할 기수 줄을 정함
+    #   data-g: 그 성별 링크(g=f/m)에서만 보이는 기수 (joinFor), data-path: 마감 확인용 기수 줄, data-reg: 친구에게 보낼 그 기수 정가 폼(등록부에 있을 때만)
+    E = lambda s: html.escape(str(s), quote=True)
+    short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
+    cos, yes, no = [], [], ''
+    for v, path in f['joins'].items():
+        if path == f['path']:   # 후기만: 화면에는 안 보이고 처음부터 골라져 있음 (템플릿 스크립트가 라디오마다 .opt 를 찾아서 숨긴 칸으로 감쌈)
+            no = f'  <label class="opt" hidden><input type="radio" name="sv_join" value="{E(v)}" checked></label>\n'
+            continue
+        g = FORMS[path]
+        period = g.get('period') or INFO.get(g['cohort'], {}).get('period', '')
+        dko = g.get('deadlineKo') or DLKO.get(g['cohort'], '')
+        reg = next((q for q, x in FORMS.items() if x['cohort'] == g['cohort'] and x.get('track') == g.get('track') and x['plan'] == 'regular' and x.get('entry')), '')
+        assert period and dko and g.get('fee') == f['fee'], f'{path} 일정/마감/금액이 없음'
+        at = f'data-path="{path}" data-g="{f.get("joinFor", {}).get(v, "")}" data-reg="{reg}"'
+        cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
+        yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
+    assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
+    off = f"{f['wasFee'] - f['fee']:,}"
+    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n'
+            + f' <p class="sv-off">재참여하면 <b>{off}원 할인</b>돼요<small><s>{f["wasFee"]:,}원</s> → {f["fee"]:,}원</small></p>\n'
+            + ' <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n</div>\n\n')
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -105,13 +145,20 @@ def extra_q(f):
 
 def gen(path, f):
     cohort, plan = f['cohort'], f['plan']
+    f = dict(f, path=path)
     outdir = 'public' + path
     os.makedirs(outdir, exist_ok=True)
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
     phone_only = bool(f.get('phoneOnly'))   # 5기 재참여: 전화번호만 받음 (지난 신청 정보는 서버가 가져옴)
     one_page = bool(f.get('onePage'))       # 자정 마감 할인: 문항은 그대로 두고 페이지만 안 나눔 (10/13 운영자)
+    survey = bool(f.get('survey'))          # 재참여 설문 (10/17): 소개 없이 한 페이지에 후기, 바라는 점, 전화번호, 친구, 참가비
+    if survey: assert phone_only and f.get('landingV3') and f.get('friendFee') and f.get('wasFee') and f.get('friendForm'), f'{path} 설문 폼은 phoneOnly + landingV3 + friendFee + wasFee + friendForm'
     lastp = '1' if (phone_only or one_page) else ('2' if f.get('twoPage') else '3')      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지, 랜딩 3판은 2페이지)
+    # 친구가 내는 금액: 친구는 정가 폼(고정 링크 friendForm 이 가리키는 폼들)에서 친구 할인으로 신청
+    pals = {g.get('friendFee') for g in FORMS.values() if g.get('entry') == f.get('friendForm')} if survey else set()
+    pal_fee = next(iter(pals), None) if survey else None
+    if survey: assert pals == {f['fee']}, f'{path} 친구가 받는 할인 금액이 이 폼 금액과 다름: {pals}'
     fee = f"{f['fee']:,}"
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
@@ -133,6 +180,7 @@ def gen(path, f):
         consent = '성별, 출생연도, 전화번호, 하시는 일'
     else:
         fee_note = (f'{deadline_ko}까지 신청하면 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if comeback
+                    else f'할인된 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if survey
                     else f'친구 초대 할인으로 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('invite')
                     else f'재참여 할인으로 참가비는 {fee}원이에요. 초대받은 친구도 같은 금액이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin') and cohort != '4'
                     else f'재참여하시는 분과 초대받은 친구 모두 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if f.get('rejoin')
@@ -143,6 +191,7 @@ def gen(path, f):
         consent = ('성별, 출생연도, 전화번호, 하시는 일, 신청자 확인용 이름, 함께 신청한 친구의 전화번호' if work
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
         if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
+        if survey: done_body = '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.'
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -203,6 +252,20 @@ def gen(path, f):
             a = '- 목적 : 참가자 확인, 방 배정, 초대 코드와 일정 안내'
             assert t.count(a) == 1, f'{path} 동의 목적 줄을 못 찾음'
             t = t.replace(a, '- 목적 : 참가자 확인, 방 배정, 신청 진행과 마감 안내(작성 중인 신청 포함), 초대 코드와 일정 안내', 1)
+        if survey:
+            # 재참여 설문 (10/17 운영자: 소개는 없애고 그냥 신청서): 랜딩 3판의 소개(.ld)를 통째로 빼고 처음부터 신청서 모드. 위에는 로고와 안내 카드만
+            t, n = re.subn(r'<div class="ld">\n.*?\n</div>\n(?=<div class="ld-fcard")', '', t, count=1, flags=re.S)
+            assert n == 1, f'{path} 소개 구역을 못 찾음'
+            off = f"{f['wasFee'] - f['fee']:,}"
+            for a, b in (('<html lang="ko">', '<html lang="ko" data-mode="form">'),
+                         ('<p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl>', '<h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p>'),   # 10/18: 후기가 먼저라 위에는 금액 카드 대신 제목
+                         ('<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>', '<h2>신청이 마감됐어요</h2><p>'),   # 이 페이지는 마감이 없어 안 보이지만 기수 글자가 남지 않게
+                         ('<title>하루하루 소개팅 __COHORT__기 신청폼 💕</title>', '<title>하루하루 지난 기수 후기 💌</title>'),
+                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
+                         ('<button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button>', ''),
+                         ('<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">', '<meta property="og:title" content="지난 기수 어땠어요? 후기를 들려주세요 💌">')):
+                assert t.count(a) == 1, f'{path} 설문 폼 자리를 못 찾음: {a[:30]}'
+                t = t.replace(a, b, 1)
         # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
         if f.get('landingV3') and f.get('noRecord'):
             t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
@@ -210,19 +273,19 @@ def gen(path, f):
     else:
         t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
     for k, v in {
-        '__LD_BADGE__': f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
+        '__LD_BADGE__': '지난 참가자 전용' if survey else f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
         '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
         '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells([r for r in rows_a if r[0] != '참가비']), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '설문 시작하기 💌' if survey else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
         '__SCHOOL_Q__': '' if phone_only else school_q(f), '__SOURCE_D__': ('블라인드' if work else '에브리타임'), '__EXTRA_Q__': extra_q(f),
-        '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7)
+        '__DONE_SURVEY__': (DONE_SURVEY if NEWGEN(cohort) and not survey else ''),   # 4기 폼 전부 완료 화면 선택 문항 (10/7). 설문 폼은 이미 설문을 해서 뺌
         '__CONSENT_ITEMS__': consent, '__DONE_TITLE__': done_title, '__DONE_BODY__': done_body,
         '__ALERT_PATH__': f.get('alert', ''),
         '__LD_ALERT__': ('<div class="ld-al"><button type="button" class="ld-al-open" id="ldAlOpen">지금은 말고, 다음 기수 알림만 받을래요</button>'
@@ -256,9 +319,9 @@ def gen(path, f):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
     if phone_only:
-        # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호)으로
+        # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호, 설문 폼은 첫 설문 문항)으로
         assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
-        t = t.replace('.q[data-name="gender"]', '.q[data-name="phone"]')
+        t = t.replace('.q[data-name="gender"]', '.q[data-name="sv_review"]' if survey else '.q[data-name="phone"]')
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
         start = t.index('<div class="q" data-name="source">'); end = t.index('<div class="q" data-name="intent">', start)
@@ -293,7 +356,7 @@ def gen(path, f):
                '- 이용 항목 : 전화번호\n- 보유 : 동의일로부터 6개월, 언제든 수신 거부할 수 있어요.\n- 동의하지 않아도 신청할 수 있어요.</p>\n'
                ' <p class="err">필수 항목에 동의가 필요해요</p></div>\n')
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
-        for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"', 'data-engage')):
+        for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"',) if survey else ('data-cta="sticky"', 'data-engage')):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
         if not prealert and f.get('twoPage'):   # 랜딩 3판(10/12): 템플릿의 2페이지(전화, 동의, 참가비) 그대로. 동의 전엔 임시 저장에 연락처를 안 넣는 것은 3페이지판과 같게
             pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
@@ -308,7 +371,16 @@ def gen(path, f):
             nav3 = prev1 + '<button type="submit" class="btn" id="submit">제출하기</button>'
             nav1 = '<div class="nav"><button type="button" class="btn" data-next="2">다음 페이지 →</button></div>\n'
             assert m and t.count(sec2) == 1 and t.count(nav3) == 1 and t.index(sec2) + len(sec2) == m.start(), f'{path} 전화번호/동의 문항 또는 2페이지 자리를 못 찾음'
-            if phone_only:
+            if survey:
+                # 재참여 설문 (10/17): 한 페이지에 후기, 바라는 점, 전화번호(동의 체크 없이 이용 안내 한 줄), 친구 문항, 참가비, 제출
+                join = nav1 + '</section>\n\n' + sec2
+                assert t.count(join) == 1, f'{path} 1페이지 다음 버튼을 못 찾음'
+                mc = re.search(r'<div class="q" data-name="consent">.*?</div>\n\n', m.group(0), flags=re.S)
+                assert mc, f'{path} 동의 문항을 못 찾음'
+                notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 후기와 바라는 점은 방 구성과 진행을 고치는 데 써요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
+                t = t.replace(join + m.group(0), SURVEY_HTML + (join_html(f) if f.get('joins') else '') + m.group(0).replace(mc.group(0), notice), 1)
+                t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
+            elif phone_only:
                 # 한 페이지에 전부 (10/11 운영자: 다음 페이지 없이 한번에). 전화번호, 친구 문항, 참가비, 제출 버튼 순서, 그 아래 친구 추천 칸
                 join = nav1 + '</section>\n\n' + sec2
                 assert t.count(join) == 1, f'{path} 1페이지 다음 버튼을 못 찾음'
@@ -333,7 +405,12 @@ def gen(path, f):
             assert t.count(pf) == 1, f'{path} 임시 저장 함수를 못 찾음'
             t = t.replace(pf, "function partial(beacon){ if(submitted) return; var pfields=data(); if(!pfields.consent){ delete pfields.phone; delete pfields.name; delete pfields.buddy; }\n  post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:pfields,")
             qp, qc = '<div class="q" data-name="phone">', '<div class="q" data-name="consent">'   # 문항 블록으로 찾음 (랜딩의 스타일 선택자에도 data-name 이 나와서)
-            if phone_only:
+            if survey:
+                p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
+                assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1 and qc not in t and '<div class="ld">' not in t, f'{path} 설문 폼 한 페이지 구성이 어긋남'
+                assert p1.index('id="sv"') < p1.index(qp) < p1.index('class="rj-privacy"') < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 설문 폼 문항 순서가 다름'   # 친구 문항은 아래 친구 할인 조각이 참가비 위로 옮기고 확인
+                assert all(f'data-name="{k}"' in p1 for sec in SV['SECTIONS'] for k in sec['keys']), f'{path} 설문 문항이 빠짐'
+            elif phone_only:
                 p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
                 assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1, f'{path} 한 페이지 구성이 어긋남'
                 assert qc not in t and 'class="rj-privacy"' in p1 and p1.index(qp) < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 문항 순서가 다름'
@@ -349,12 +426,14 @@ def gen(path, f):
         if f.get('friendFee') or f.get('rejoin'):
             # 친구 할인 (10/8): 친구 문항을 참가비 안내 위로 올리고, 제목을 할인 안내로 바꾸고, 친구 선택지를 고르면 금액과 송금 버튼이 할인 금액으로 바뀜. 친구 문항에는 공유 버튼
             won = lambda n: f'{n:,}'
-            share_only = bool(f.get('rejoin'))
+            share_only = bool(f.get('rejoin')) and not f.get('friendFee')   # 재참여 폼은 고정 금액 (설문 폼만 친구 할인으로 금액이 바뀜)
             off = won(f['fee'] - f.get('friendFee', f['fee']))
-            frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])),
-                   '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(f['listFee']) + '원</s> → ') if f.get('listFee') else '',
-                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': f'h{cohort}-friend' + ('-rejoin' if share_only else ''),
-                   '__SHARE_TEXT__': (f'하루하루 소개팅 해 봐! 이 링크로 신청하면 {fee}원에 할인받을 수 있어.' if f.get('friendForm')
+            was = f.get('listFee') or (f.get('wasFee') if survey else None)   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
+            frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])), '__PAL_FEE__': won(pal_fee) if survey else '',
+                   '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(was) + '원</s> → ') if was else '',
+                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("(window.HH_SHARE_PATH||'" + f['friendForm'] + "')" if survey else "'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': 'rejoin-friend' if survey else f'h{cohort}-friend' + ('-rejoin' if f.get('rejoin') else ''),
+                   '__SHARE_TEXT__': (f'하루하루 소개팅 같이 하자! 이 링크로 신청하고 친구 번호 칸에 내 번호를 적으면 너는 {won(pal_fee or 0)}원이야.' if survey
+                                      else f'하루하루 소개팅 해 봐! 이 링크로 신청하면 {fee}원에 할인받을 수 있어.' if f.get('friendForm')
                                       else f'하루하루 소개팅 같이 신청하자! 이 링크로 신청하면 친구도 {fee}원이야. 신청서 친구 번호 칸에 서로 번호를 적어줘.' if share_only
                                       else f'하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 {off}원 할인이래.')}
             def frfill(s):
@@ -365,13 +444,15 @@ def gen(path, f):
             assert mb and t.count(name_open) == 1 and mb.group(0).count(title) == 1 and mb.group(0).count(note) == 1, f'{path} 친구 문항/참가비 안내를 못 찾음'
             hook = REJOIN_SHARE if phone_only else REJOIN_HOOK if share_only else FR_HOOK   # 전화번호만 받는 폼은 친구 추천과 방 배정을 한 문항으로
             buddy = mb.group(0).rstrip('\n').replace(title, frfill(hook), 1)
+            if survey: buddy = frfill(SV_FRIEND).rstrip('\n')   # 설문 폼은 친구 문항 전체를 [혼자 5,900원] [친구랑 같이 3,900원] 두 칸으로 (값은 같은 buddy_room 네 값)
             if not share_only: buddy = buddy.replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
             t = t.replace(mb.group(0), '', 1).replace(name_open, buddy + '\n\n' + name_open, 1)
             if not share_only:
                 a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
                 blk = t[a0:a1]; ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'; amt = won(f['fee']) + '원'
                 assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
-                blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + frfill(FR_BANNER), 1)
+                banner = frfill(FR_BANNER).replace('<b>친구 할인 적용</b>', '<b>재참여 할인 + 친구 할인 적용</b>') if survey else frfill(FR_BANNER)
+                blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + banner, 1)
                 t = t[:a0] + blk + t[a1:]
             if (f.get('twoPage') or f.get('phonePage')) and not share_only:   # phonePage(10/13): 3페이지판에서도 친구 문항을 이름 아래로 접음
                 # 랜딩 3판(10/12): 친구 문항을 송금자 이름 아래로 내리고 한 줄 + 버튼으로 접음 (5기 3페이지 미제출 32명 중 16명이 친구 문항에서 멈춤). 아무것도 안 고르면 혼자(정가)
@@ -387,15 +468,15 @@ def gen(path, f):
                 t = t.replace(mb2.group(0), '', 1).replace(name_end, name_end + '\n\n' + bd2 + '\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1
             t = t.replace(foot, frfill(FR_TAIL) + foot, 1)
-            if f.get('twoPage') or f.get('phonePage'):
+            if f.get('twoPage') or f.get('phonePage') or survey:
                 # 계좌번호 복사 버튼 (10/12 사용자: 토스 말고 계좌 복사도). 토스 버튼 바로 아래, 계좌는 템플릿 안내 글자에서 읽음
                 ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S)
                 assert ac and pay_a, f'{path} 계좌/송금 버튼을 못 찾음'
                 t = t.replace(pay_a.group(0), pay_a.group(0) + f' <button type="button" class="acct-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>토스뱅크 {ac.group(1)} 계좌번호 복사</span></button>\n', 1)
                 t = t.replace(foot, FOLD_TAIL + foot, 1)
             p3 = t.split(f'data-page="{lastp}"', 1)[1].split('data-page="done"', 1)[0]
-            if f.get('friendForm'): assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
-            assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if (f.get('twoPage') or f.get('phonePage')) else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or 'class="rj-room"' in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
+            if f.get('friendForm') and not survey: assert FORMS.get(f['friendForm'], {}).get('fee') == f['fee'] and not FORMS[f['friendForm']].get('phoneOnly'), f'{path} 친구 초대 폼이 없거나 금액이 다름'
+            assert ((p3.index('<div class="q" data-name="buddy_room">') > p3.index('<div class="q" data-name="name">')) if (f.get('twoPage') or f.get('phonePage')) else (p3.index('<div class="q" data-name="buddy_room">') < p3.index('<div class="q" data-name="name">'))) and '__FR' not in t and '__SHARE' not in t and t.count('class="fr-share"') == 1 and (not phone_only or ('id="frWith"' if survey else 'class="rj-room"') in p3), f'{path} 친구 할인 조각이 제대로 안 들어감'
         if comeback:
             # 계좌번호 복사 버튼 (5기 정가 폼과 같은 것). 친구 할인이 없어 위 블록을 안 타므로 여기서 따로 끼움
             ac = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t); pay_a = re.search(r'<a class="pay" id="pay"[^>]*>.*?</a>\n', t, flags=re.S); foot = '<p class="foot">'
@@ -410,6 +491,22 @@ def gen(path, f):
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
             t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["listFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+        if survey:
+            # 재참여 할인 표시 (10/17): 참가비 안내 제목 아래 '재참여 할인 7,900원 → 5,900원'. 친구 선택지를 고르면 이 줄은 숨고 친구 할인 안내가 이어서 보여 줌
+            ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
+            assert t.count(ftitle) == 1 and not f.get('listFee'), f'{path} 참가비 안내 제목을 못 찾음'
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>재참여 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+            foot = '<p class="foot">'; assert t.count(foot) == 1 and not re.search(r'__[A-Z0-9_]+__', SV_TAIL)
+            t = t.replace(foot, SV_TAIL + foot, 1)
+            if f.get('joins'):
+                # 기수를 고르는 한 장 (10/18): 고른 기수가 그새 마감되면(서버 409) 페이지를 닫지 않고 그 칸만 숨김(hhSvClosed), 후기만이면 메타 Lead 를 안 보냄
+                for a, b in (("if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); }",
+                              "if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; if(window.hhSvClosed){ hhSvClosed(); throw new Error('sv_closed'); } closeForm(); throw new Error('cohort_closed'); }"),
+                             (".catch(function(err){ if(err.message==='cohort_closed'){", ".catch(function(err){ if(err.message==='sv_closed') return; if(err.message==='cohort_closed'){"),
+                             ("     fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);",
+                              "     if(!window.HH_SV_REVIEW) fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);")):
+                    assert t.count(a) == 1, f'{path} 화면 스크립트 고리를 못 찾음: {a[:40]}'
+                    t = t.replace(a, b, 1)
         if not prealert:
             # 완료 화면: 완료 문구 바로 아래에 앱 설치 안내 (10/8 운영자). 무료 사전 알림 폼은 방이 아직 안 잡혀서 뺌
             d0 = t.index('<section class="page" data-page="done">'); d1 = t.index('</p>', d0) + 4

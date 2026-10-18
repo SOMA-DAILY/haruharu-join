@@ -2,6 +2,7 @@ import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
 import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
 import { friendFee } from '../../shared/friend-discount.mjs';
+import { cleanSurvey } from '../../shared/rejoin-survey.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -215,10 +216,21 @@ export async function onRequest({ request, env, params, waitUntil }) {
       h.plan = FESTIVAL_PLAN;
       if (!festivalStatus(now, env).open) return json({ ok: false, error: 'festival_closed', ...festivalStatus(now, env) }, 409);
     }
+    // 재참여 후기 폼 (10/17~, 등록부 joins): 한 장에서 고른 값(sv_join)으로 접수할 기수 줄을 서버가 정함. 후기만이면 그 페이지 줄 그대로(무료, cohort 'review')
+    //   방문 기록(sessions)은 페이지 경로(pagePath)로 남기고, 신청 사본(submissions)과 요금제/기수/마감은 고른 기수 줄로
+    const pagePath = b.path, page = festival ? null : formOf(b.path);
+    let reviewOnly = false;
+    if (page && page.joins) {
+      const target = formOf(page.joins[String((b.fields || {}).sv_join || '')] || '');
+      if (!target) return json({ ok: false, error: 'missing', miss: ['sv_join'] }, 400);
+      reviewOnly = target.path === page.path;
+      b.path = target.path;
+    }
     // 등록부(shared/forms.mjs)로 요금제/기수/지역을 서버가 확정 (클라이언트 hidden 값은 안 믿음). 등록부에 없는 경로는 받지 않음
     const form = festival ? null : formOf(b.path);
     if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
     if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
+    if (reviewOnly) h.plan = 'review';   // 후기만 (참가 신청 아님, 참가비 없음)
     // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
     if (form) { const st = formStatus(b.path, now, env); if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409); }
     const preRegistration = form && form.plan === 'early';
@@ -226,13 +238,16 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
     const phoneOnly = !!(form && form.phoneOnly);
-    const required = phoneOnly ? ['phone', 'name'] : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       required.push('device');
     }
     if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
+    // 재참여 설문 폼(등록부 survey): 설문을 다 해야 할인이라 빠진 문항이 있으면 받지 않음. 값은 선택지에 있는 것만 남김
+    const sv = form && form.survey ? cleanSurvey(b.fields) : null;
+    if (sv) miss.push(...sv.miss);
     let capture = null;
     if (festival) {
       capture = decodeCapture(b.capture);
@@ -243,12 +258,13 @@ export async function onRequest({ request, env, params, waitUntil }) {
     let priorFrom = null;
     if (phoneOnly) {
       for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'consent']) delete f[k];   // 동의 체크 문항 없음 (이용 안내만)
-      const prior = await priorProfile(env, normPhone(f.phone));
+      if (reviewOnly) for (const k of ['phone', 'name', 'buddy', 'buddy_room']) delete f[k];   // 후기만 (10/18 운영자: 전화번호는 신청하는 사람만): 전화번호, 참가비, 친구 칸은 화면에서 숨겨짐. 익명 후기
+      const prior = reviewOnly ? {} : await priorProfile(env, normPhone(f.phone));
       for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
       const ua = String(b.ua || '');
       const dv = /iphone|ipad|ipod/i.test(ua) ? 'iPhone' : /android/i.test(ua) ? 'Android' : '';
       if (dv) f.device = dv;
-      priorFrom = prior.from || '';
+      priorFrom = reviewOnly ? null : prior.from || '';   // 후기만은 번호가 없어 지난 신청을 안 찾음
     }
     if (capture && capture.error) return json({ ok: false, error: capture.error }, capture.error === 'capture_too_large' ? 413 : 400);
     if (festival) f.avoid_same_major = AVOID_MAJOR_VALUES.includes(f.avoid_same_major) ? f.avoid_same_major : '';
@@ -270,9 +286,11 @@ export async function onRequest({ request, env, params, waitUntil }) {
     }
     const rec = { id, application_id: id, sid: b.sid || '', submitted_at: KST(now), ts: now, track: form ? form.track : (festival ? 'festival' : ''), fields: f, phone_digits: normPhone(f.phone), hidden: h, ref: (b.ref || '').slice(0, 300), ua: (b.ua || '').slice(0, 200), ip: request.headers.get('cf-connecting-ip') || '' };
     // 친구 할인: 안내받은 금액을 서버가 등록부와 친구 문항으로 정해서 남김 (클라이언트 값 안 믿음). 대상 폼이 아니면 칸 자체를 안 만듦
-    const ff = form && form.friendFee ? friendFee(form, f) : null;
+    const ff = form && form.friendFee && !reviewOnly ? friendFee(form, f) : null;
     if (ff != null) rec.friend_fee = ff;
     if (priorFrom != null) rec.prior_from = priorFrom;   // 가져온 지난 신청 ID ('' = 못 찾음)
+    if (sv) rec.survey = sv.survey;
+    if (page && page.joins) rec.from_page = page.path;   // 재참여 후기 폼에서 고른 기수로 접수됨
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
@@ -282,8 +300,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // D1 사본 + 세션 제출 표시. 실패해도 제출은 성공 처리 (정본은 KV)
     try {
       if (env.DB) {
-        const p = normPath(b.path, h.city);
-        const noSess = !!(form && form.noPage);   // 알림 신청(화면 없음, 10/11): 방문 기록에 가짜 방문/제출을 만들지 않음. 신청 사본(submissions)만
+        const p = normPath(b.path, h.city), sp = normPath(pagePath, h.city);   // sp: 방문 기록 경로 (재참여 후기 폼은 페이지 경로, 그 밖에는 p 와 같음)
+        const noSess = !!(form && form.noPage) && !(page && page.joins);   // 알림 신청(화면 없음, 10/11): 방문 기록에 가짜 방문/제출을 만들지 않음. 신청 사본(submissions)만
         await env.DB.batch([
           env.DB.prepare(`INSERT OR REPLACE INTO submissions (application_id, kv_key, path, city, cohort, src, channel, submitted_ts, submitted_at,
               name, phone, phone_digits, gender, birth_year, school, source, device, intent, intent_other, consent, buddy, plan, status, memo, status_updated_at, room, buddy_room)
@@ -294,9 +312,9 @@ export async function onRequest({ request, env, params, waitUntil }) {
           // 방문 기록이 먼저 못 들어온 경우(비콘 유실 등)에도 제출이 지표에서 빠지지 않게 행을 먼저 만듦
           ...(noSess ? [] : [env.DB.prepare(`INSERT OR IGNORE INTO sessions (sid, path, city, src, channel, ua, device, in_app, is_bot, first_ts, last_ts, started, started_ts, max_page)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9, ?9, 1, ?9, 3)`)
-            .bind(String(b.sid || id).slice(0, 64), p, h.city || null, h.src || null, h.utm_content || h.src || 'direct', String(b.ua || '').slice(0, 300), device(String(b.ua || '')), inApp(String(b.ua || '')), now),
+            .bind(String(b.sid || id).slice(0, 64), sp, h.city || null, h.src || null, h.utm_content || h.src || 'direct', String(b.ua || '').slice(0, 300), device(String(b.ua || '')), inApp(String(b.ua || '')), now),
           env.DB.prepare('UPDATE sessions SET submitted = 1, submitted_ts = ?3, application_id = ?4, max_page = 3, last_ts = ?3 WHERE sid = ?1 AND path = ?2')
-            .bind(String(b.sid || id).slice(0, 64), p, now, id)]),
+            .bind(String(b.sid || id).slice(0, 64), sp, now, id)]),
         ]);
         dbOk = true;
       }
@@ -312,6 +330,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (ff != null && dbOk) {
       try { await env.DB.prepare('UPDATE submissions SET friend_fee = ?2 WHERE application_id = ?1').bind(id, ff).run(); } catch (e) {}
     }
+    // 재참여 설문(migrations/0014)도 batch 밖에서: 원격에 0014 가 없어도 신청자 행은 남고 설문은 KV 정본에만
+    if (sv && dbOk) {
+      try { await env.DB.prepare('UPDATE submissions SET survey = ?2 WHERE application_id = ?1').bind(id, JSON.stringify(sv.survey)).run(); } catch (e) {}
+    }
     // 트랙/직장인 문항(migrations/0008)도 batch 밖에서: 원격에 0008 이 없어도 신청자 행은 남음
     if (form && dbOk) {
       try {
@@ -321,7 +343,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     }
     if (!kvOk && !dbOk) return json({ ok: false, error: 'store failed' }, 500);
     // Lead 는 서버가 전화번호 해시(82 국가번호), 성별까지 붙여 보냄. 브라우저 픽셀 Lead 와 lead_eid 로 합쳐짐
-    if (form) {
+    if (form && !reviewOnly) {   // 후기만은 신청이 아니라 Lead 를 안 보냄
       const d = normPhone(f.phone), ph = /^0\d{9,10}$/.test(d) ? '82' + d.slice(1) : '';
       const user = { country: [await sha256('kr')] };
       if (ph) user.ph = [await sha256(ph)];
