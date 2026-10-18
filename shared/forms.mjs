@@ -93,6 +93,9 @@ export const FORMS = {
   //   noRecord (10/14 사용자): 성과 구역(250명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 250명+ 참여' 줄은 그대로
   //   entry (10/14 사용자): 고정 링크 /seoul/student/ (광고 남녀, 바이오) 가 5기 마감 뒤 이 폼으로. 광주는 안 함 → /gwangju/student/ 는 5기 마감 안내 + 지역 선택 버튼
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
+  //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
+  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/' },
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
@@ -177,13 +180,14 @@ export function nextFormPath(f) {
   return same || '/';
 }
 // 고정 링크가 보낼 폼: entry 가 같은 폼 중 지금 열린 것, 그중 마감이 가장 이른 것(다음 기수를 미리 올려 둬도 앞 기수가 끝날 때까지 앞 기수로).
-//   열린 게 없으면 가장 최근 기수 폼(마감 안내가 뜸)
-export function entryTarget(entry, now = Date.now(), env) {
+//   단 성별 g 가 폼의 entryFirst 와 같으면 그 폼이 먼저 (10/18: 남자는 7기 먼저). 열린 게 없으면 가장 최근 기수 폼(마감 안내가 뜸)
+export function entryTarget(entry, now = Date.now(), env, g = '') {
   const e = normalizePath(entry);
   const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e);
   if (!cand.length) return null;
   const st = cand.map((p) => ({ p, ...formStatus(p, now, env), n: Number(FORMS[p].cohort) || 0 }));
-  const open = st.filter((x) => x.open).sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity) || a.n - b.n);
+  const first = (x) => (g && FORMS[x.p].entryFirst === g ? 0 : 1);
+  const open = st.filter((x) => x.open).sort((a, b) => first(a) - first(b) || (a.deadline ?? Infinity) - (b.deadline ?? Infinity) || a.n - b.n);
   if (open.length) return open[0].p;
   return st.sort((a, b) => b.n - a.n)[0].p;
 }
