@@ -49,7 +49,12 @@ test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기
     const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
     assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-m-film-2137'), [302, '/7/seoul/?src=ad-seoul-m-film-2137&g=m']);   // 옛 기수 남자 광고 주소도 7기
     assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/6/seoul/?src=ad-seoul-f-film-1360&g=f']);
-    assert.equal((await hit('/6/seoul/?g=m'))[0], 200);   // 열린 6기 폼에 직접 온 건 그대로
+    assert.deepEqual(await hit('/6/seoul/?src=h6-friend&g=m'), [302, '/7/seoul/?src=h6-friend&g=m']);   // 6기 폼에 g=m 으로 직접 와도 7기 (genderTo)
+    assert.equal((await hit('/6/seoul/?g=f'))[0], 200);
+    assert.equal((await hit('/6/seoul/?src=h6-seoul-insta-bio'))[0], 200);   // 바이오(g 없음)는 6기 폼에서 성별 고를 때 안내
+    const html = (await import('node:fs')).readFileSync(new URL('../public/6/seoul/index.html', import.meta.url), 'utf8');
+    assert.ok(html.includes('data-gto="남성" data-to="/7/seoul/"') && html.includes('남성은 7기로 신청받고 있어요') && html.includes('7기 신청하러 가기 →'));
+    assert.ok(!(await import('node:fs')).readFileSync(new URL('../public/7/seoul/index.html', import.meta.url), 'utf8').includes('class="gto"'));
   } finally { Date.now = o; }
 });
 

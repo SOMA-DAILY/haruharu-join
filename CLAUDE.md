@@ -402,5 +402,6 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 
 - 진행 10/23(금)~25(일), 마감 10/21(수) 18:00 (공통 등록부). 화면/문항/금액(7,900, 친구 5,900)/동의(`remind`)/`noRecord` 는 6기 서울 폼 그대로, 기수와 날짜만 다름
 - **남자 먼저 (10/18 운영자, 남자 풀 목적):** `/7/seoul/` 에 `entry: '/seoul/student/'` + `entryFirst: 'm'`. 고정 링크로 오는 남자(`g=m` 또는 광고 src 의 m)는 6기 마감 전에도 7기, 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기, 뒤엔 모두 7기. 마감된 옛 기수 정가 폼(`_middleware`)도 같은 규칙. 열린 6기 폼에 직접 온 건 그대로
+- **6기 폼의 남자 (등록부 `genderTo`):** `/6/seoul/` 에서 성별 [남성]을 고르면 아래 문항과 다음 버튼을 숨기고 `남성은 7기로 신청받고 있어요` + 7기 일정 + `7기 신청하러 가기 →`(쿼리 그대로 + `g=m`). 바이오처럼 g 없이 온 남자용. Mixpanel `gender_redirect_view` / `gender_redirect_click`. `/6/seoul/?g=m` 으로 직접 오면 `_middleware` 가 7기로 302
 - `CURRENT_COHORT` 는 6기 마감 전까지 `6` 유지 (지역 선택, 마감 안내 버튼). 6기 마감 뒤 `7` 로 바꾸고 build
 - 테스트 `tests/entry.test.mjs`

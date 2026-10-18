@@ -92,7 +92,8 @@ export const FORMS = {
   //   remind (10/14 사용자): [모두 동의] + (선택) 모집 소식 문자 대신 필수 동의 하나, 목적에 '신청 진행과 마감 안내(작성 중인 신청 포함)'. 이 근거로는 본인 신청 마감 안내만 (할인/홍보 넣으면 광고성 → 수신 동의 필요)
   //   noRecord (10/14 사용자): 성과 구역(250명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 250명+ 참여' 줄은 그대로
   //   entry (10/14 사용자): 고정 링크 /seoul/student/ (광고 남녀, 바이오) 가 5기 마감 뒤 이 폼으로. 광주는 안 함 → /gwangju/student/ 는 5기 마감 안내 + 지역 선택 버튼
-  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  //   genderTo (10/18 사용자): 성별에서 남성을 고르면 아래 문항 대신 7기 안내 + [7기 신청하러 가기] (쿼리 그대로 + g=m). 바이오처럼 g 없이 온 남자용
+  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', genderTo: { '남성': '/7/seoul/' } },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
   //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
   '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/' },
