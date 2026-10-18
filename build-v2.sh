@@ -47,15 +47,16 @@ def survey_html():
     return out + '</div>\n\n'
 SURVEY_HTML = survey_html()
 def join_html(f):
-    # 다음 기수 문항 (10/18 운영자: 후기만 남기는 게 기본. 다음 기수가 언제인지 보여 주고 [네, 신청할래요] 를 누르면 그때 할인 안내와 친구/참가비 칸이 펼쳐짐)
-    #   값(sv_join)은 기수 이름 또는 '후기만'(처음부터 골라져 있음). 서버가 등록부 joins 로 접수할 기수 줄을 정함
+    # 다음 기수 문항 (10/18 운영자): 후기만 남기는 게 기본. 다음 기수 날짜와 [재참여하면 2,000원 할인돼요] 를 보여 주고, 보이는 칸은 [네, 신청할래요] 하나(다시 누르면 꺼짐).
+    #   켜면 그때 전화번호, 친구 문항, 참가비, 송금자 이름이 펼쳐짐 (전화번호도 신청하는 사람만)
+    #   값(sv_join)은 기수 이름 또는 '후기만'(숨긴 칸, 처음부터 골라져 있음). 서버가 등록부 joins 로 접수할 기수 줄을 정함
     #   data-g: 그 성별 링크(g=f/m)에서만 보이는 기수 (joinFor), data-path: 마감 확인용 기수 줄, data-reg: 친구에게 보낼 그 기수 정가 폼(등록부에 있을 때만)
     E = lambda s: html.escape(str(s), quote=True)
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     cos, yes, no = [], [], ''
     for v, path in f['joins'].items():
-        if path == f['path']:
-            no = f'  <label class="opt fr-card"><span class="k">B</span><input type="radio" name="sv_join" value="{E(v)}" checked><span class="fr-l">아니요, 후기만 남길게요</span></label>\n'
+        if path == f['path']:   # 후기만: 화면에는 안 보이고 처음부터 골라져 있음 (템플릿 스크립트가 라디오마다 .opt 를 찾아서 숨긴 칸으로 감쌈)
+            no = f'  <label class="opt" hidden><input type="radio" name="sv_join" value="{E(v)}" checked></label>\n'
             continue
         g = FORMS[path]
         period = g.get('period') or INFO.get(g['cohort'], {}).get('period', '')
@@ -66,9 +67,10 @@ def join_html(f):
         cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
         yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
     assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
-    guide = f' <p class="sv-guide" hidden>후기 남긴 분은 <s>{f["wasFee"]:,}원</s> → <b>{f["fee"]:,}원</b>이에요</p>\n'   # 친구 금액은 바로 아래 친구 문항 칸에
-    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n'
-            + ' <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n' + guide + '</div>\n\n')
+    off = f"{f['wasFee'] - f['fee']:,}"
+    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n'
+            + f' <p class="sv-off">재참여하면 <b>{off}원 할인</b>돼요<small><s>{f["wasFee"]:,}원</s> → {f["fee"]:,}원</small></p>\n'
+            + ' <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n</div>\n\n')
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -259,7 +261,7 @@ def gen(path, f):
                          ('<p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl>', '<h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p>'),   # 10/18: 후기가 먼저라 위에는 금액 카드 대신 제목
                          ('<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>', '<h2>신청이 마감됐어요</h2><p>'),   # 이 페이지는 마감이 없어 안 보이지만 기수 글자가 남지 않게
                          ('<title>하루하루 소개팅 __COHORT__기 신청폼 💕</title>', '<title>하루하루 지난 기수 후기 💌</title>'),
-                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기 남기고 다음 기수에 참여하면 {f["wasFee"]:,}원 → {fee}원">'),
+                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
                          ('<button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button>', ''),
                          ('<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">', '<meta property="og:title" content="지난 기수 어땠어요? 후기를 들려주세요 💌">')):
                 assert t.count(a) == 1, f'{path} 설문 폼 자리를 못 찾음: {a[:30]}'
@@ -376,7 +378,7 @@ def gen(path, f):
                 mc = re.search(r'<div class="q" data-name="consent">.*?</div>\n\n', m.group(0), flags=re.S)
                 assert mc, f'{path} 동의 문항을 못 찾음'
                 notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 후기와 바라는 점은 방 구성과 진행을 고치는 데 써요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
-                t = t.replace(join + m.group(0), SURVEY_HTML + m.group(0).replace(mc.group(0), notice) + (join_html(f) if f.get('joins') else ''), 1)
+                t = t.replace(join + m.group(0), SURVEY_HTML + (join_html(f) if f.get('joins') else '') + m.group(0).replace(mc.group(0), notice), 1)
                 t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
             elif phone_only:
                 # 한 페이지에 전부 (10/11 운영자: 다음 페이지 없이 한번에). 전화번호, 친구 문항, 참가비, 제출 버튼 순서, 그 아래 친구 추천 칸
@@ -449,7 +451,7 @@ def gen(path, f):
                 a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
                 blk = t[a0:a1]; ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'; amt = won(f['fee']) + '원'
                 assert blk.count(amt) == 3 and blk.count(ftitle) == 1 and blk.count('href="' + f['pay'] + '"') == 1, f'{path} 참가비 안내의 금액 자리가 예상과 다름'
-                banner = frfill(FR_BANNER).replace('<b>친구 할인 적용</b>', '<b>후기 할인 + 친구 할인 적용</b>') if survey else frfill(FR_BANNER)
+                banner = frfill(FR_BANNER).replace('<b>친구 할인 적용</b>', '<b>재참여 할인 + 친구 할인 적용</b>') if survey else frfill(FR_BANNER)
                 blk = blk.replace(amt, '<span class="fr-fee">' + won(f['fee']) + '</span>원').replace(ftitle, ftitle + banner, 1)
                 t = t[:a0] + blk + t[a1:]
             if (f.get('twoPage') or f.get('phonePage')) and not share_only:   # phonePage(10/13): 3페이지판에서도 친구 문항을 이름 아래로 접음
@@ -490,10 +492,10 @@ def gen(path, f):
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
             t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["listFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
         if survey:
-            # 후기 할인 표시 (10/17): 참가비 안내 제목 아래 '후기 작성 할인 7,900원 → 5,900원'. 친구 선택지를 고르면 이 줄은 숨고 친구 할인 안내가 이어서 보여 줌
+            # 재참여 할인 표시 (10/17): 참가비 안내 제목 아래 '재참여 할인 7,900원 → 5,900원'. 친구 선택지를 고르면 이 줄은 숨고 친구 할인 안내가 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1 and not f.get('listFee'), f'{path} 참가비 안내 제목을 못 찾음'
-            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>후기 작성 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>재참여 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1 and not re.search(r'__[A-Z0-9_]+__', SV_TAIL)
             t = t.replace(foot, SV_TAIL + foot, 1)
             if f.get('joins'):

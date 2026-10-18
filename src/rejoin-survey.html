@@ -2,7 +2,7 @@
      FRIEND: 친구 문항 전체 (참가비 안내 위). 10/17 운영자: 큰 할인 안내 대신 언급은 살짝, 고르는 칸에서 금액을 보여 주기.
        [혼자 5,900원] [친구랑 같이 3,900원] 두 칸. 친구 칸을 누르면 방 배정(라디오 같은 방/다른 방/상관없음, 처음엔 상관없음), 친구 번호, 할인 링크 공유가 펼쳐짐.
        값은 기존 buddy_room 네 값 그대로라 서버, 관리 화면, 친구 할인 판정이 같음 / TAIL: 주관식 칸 모양, 글자 수 확인, 친구 칸 동작,
-       다음 기수 문항(sv_join, 10/18): 후기만이 기본, [네, 신청할래요] 를 누르면 할인 안내와 친구/참가비 칸. 링크 성별(HH_G)에 맞는 기수만, 마감된 기수는 숨김
+       다음 기수 문항(sv_join, 10/18): 후기만이 기본, 보이는 칸은 [네, 신청할래요] 하나(다시 누르면 꺼짐). 켜면 전화번호/친구/참가비/이름. 링크 성별(HH_G)에 맞는 기수만, 마감된 기수는 숨김
      글자 칸(textarea)은 템플릿 검사(validate)가 안 봐서, 숨긴 글자 칸(이름 끝 _ok)을 min 자 이상 적었을 때만 채워 검사에 태움 -->
 <!--FRIEND-->
 <div class="q" data-name="buddy_room"><p class="t">친구랑 함께 신청하나요?</p>
@@ -51,17 +51,19 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
 .fr-body .other{margin-top:0}
 .fr-hint{margin:7px 2px 0;font-size:12.5px;line-height:1.5;color:var(--hh-mute)}
 .fr-body .fr-share{height:38px;margin-top:10px;font-size:14px}
-.sv-join .opt[hidden],.q[hidden],.sv-co[hidden],.sv-guide[hidden]{display:none}
+.sv-join .opt[hidden],.q[hidden],.sv-co[hidden],.rj-privacy[hidden]{display:none}
 .sv-h1{margin:6px 0 4px;font-size:24px;line-height:1.3;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
 .sv-lead{margin:0 0 4px;font-size:14.5px;color:var(--hh-ink2)}
 .sv-cos{display:flex;flex-direction:column;gap:6px;margin:-2px 0 10px}
 .sv-co{margin:0;padding:12px 14px;border-radius:14px;background:var(--hh-sky);font-size:15.5px;font-weight:700;color:var(--hh-ink)}
 .sv-co b{margin-right:8px;color:#1F5FA9}
 .sv-co small{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--hh-ink2)}
-.sv-guide{margin:10px 0 0;padding:12px 14px;border:1.5px solid var(--hh-blue);border-radius:14px;background:#F5F9FE;font-size:15.5px;font-weight:700;color:var(--hh-ink)}
-.sv-guide s{font-weight:500;color:var(--hh-mute)}
-.sv-guide b{font-size:18px;color:#1F5FA9}
-.sv-guide small{display:block;margin-top:3px;font-size:13px;font-weight:500;color:var(--hh-ink2)}
+.sv-off{margin:-4px 2px 10px;font-size:15.5px;font-weight:700;color:var(--hh-ink)}
+.sv-off b{color:#1F5FA9}
+.sv-off small{margin-left:6px;font-size:13px;font-weight:500;color:var(--hh-ink2)}
+.sv-off s{color:var(--hh-mute)}
+.q .sv-join .opt .k{border-radius:7px}
+.q .sv-join .opt.on .k{border:0;background:var(--hh-blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6 11.5l3.4 3.3L16 8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat}
 .fee-was b{display:block;margin-bottom:1px;font-size:13.5px;font-weight:800;color:var(--hh-blue)}
 .rj-privacy{margin:10px 2px 26px;font-size:12.5px;line-height:1.55;color:var(--hh-mute)}
 .rj-room{margin:16px 2px 10px;font-size:15px;font-weight:700;color:var(--hh-ink)}
@@ -75,19 +77,20 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    if(on&&!told){ told=true; try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('survey_answer',{path:location.pathname,q:ta.name}); }catch(e){} } }
   ta.addEventListener('input',sync); sync(); setTimeout(sync,0); setTimeout(sync,800);   // 저장해 둔 입력을 되살린 뒤 다시 확인
  });
- // 다음 기수 문항 (10/18 운영자): 후기만이 기본. 다음 기수 날짜를 보여 주고 [네, 신청할래요] 를 누르면 할인 안내와 친구/참가비 칸이 펼쳐짐.
+ // 다음 기수 문항 (10/18 운영자): 후기만이 기본. 보이는 칸은 [네, 신청할래요] 하나(다시 누르면 꺼져서 후기만). 켜면 전화번호, 친구, 참가비, 송금자 이름이 펼쳐짐.
  //   6기는 여성, 7기는 남성 (링크 g). 마감된 기수는 숨기고, 그 성별 기수가 닫혔으면 열린 기수를 보임. 열린 기수가 없으면 문항째 숨김
  var jq=form.querySelector('.q[data-name="sv_join"]');
  if(jq){
   var G=window.HH_G||'x', yes=[].slice.call(jq.querySelectorAll('.opt[data-path]')), open={}, regOpen={};
-  var no=jq.querySelector('input[value="후기만"]'), guide=jq.querySelector('.sv-guide');
-  var payQ=[form.querySelector('.q[data-name="buddy_room"]'), form.querySelector('.q[data-name="name"]')], nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
+  var no=jq.querySelector('input[value="후기만"]'), phoneIn=form.querySelector('input[name="phone"]'), nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
+  var payQ=[form.querySelector('.q[data-name="phone"]'), form.querySelector('.rj-privacy'), form.querySelector('.q[data-name="buddy_room"]'), form.querySelector('.q[data-name="name"]')];
   var dn=document.querySelector('.page[data-page="done"] .done'), dh=dn&&dn.querySelector('h2'), dp=dn&&dn.querySelector('p'), ap=dn&&dn.querySelector('.ap-get'), d0=dh&&[dh.textContent,dp.innerHTML];
   function co(o){ return jq.querySelector('.sv-co[data-path="'+o.getAttribute('data-path')+'"]'); }
   function picked(){ var r=jq.querySelector('input:checked'); return r?r.value:''; }
+  function toNo(){ if(!no) return; no.checked=true; no.dispatchEvent(new Event('change',{bubbles:true})); }
   function sync(){ var v=picked(), join=!!v&&v!=='후기만', o=jq.querySelector('input:checked');
-   payQ.forEach(function(q){ if(q) q.hidden=!join; }); if(guide) guide.hidden=!join;
-   if(nameIn){ if(join) nameIn.setAttribute('required',''); else nameIn.removeAttribute('required'); }
+   payQ.forEach(function(q){ if(q) q.hidden=!join; });
+   [phoneIn,nameIn].forEach(function(i){ if(!i) return; if(join) i.setAttribute('required',''); else { i.removeAttribute('required'); var q=i.closest('.q'); if(q) q.classList.remove('bad'); } });
    if(!join){ var br=form.querySelectorAll('input[name="buddy_room"]:checked'); if(br.length){ [].forEach.call(br,function(r){ r.checked=false; r.closest('.opt').classList.remove('on'); }); var r0=form.querySelector('input[name="buddy_room"]'); if(r0) r0.dispatchEvent(new Event('change',{bubbles:true})); } }
    window.HH_SV_REVIEW=!join;
    var reg=join&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
@@ -97,11 +100,15 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    var mine=live.filter(function(o){ return G==='x'||!o.getAttribute('data-g')||o.getAttribute('data-g')===G; }), show=mine.length?mine:live;
    yes.forEach(function(o){ var on=show.indexOf(o)>=0, c=co(o), r=o.querySelector('input'); o.hidden=!on; if(c) c.hidden=!on;
     var tag=o.querySelector('.sv-c'); if(tag) tag.hidden=show.length<2;   // 기수가 둘 다 보일 때만 [네, 6기 신청할래요]
-    if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); if(no){ no.checked=true; no.closest('.opt').classList.add('on'); } } });
+    if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); toNo(); } });
    jq.hidden=!show.length;
-   if(!jq.querySelector('input:checked')&&no){ no.checked=true; no.closest('.opt').classList.add('on'); }
+   if(!jq.querySelector('input:checked')) toNo();
    sync(); }
-  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); if(picked()!=='후기만'&&guide) setTimeout(function(){ guide.scrollIntoView({behavior:'smooth',block:'nearest'}); },50); } });
+  // [네] 를 다시 누르면 꺼짐 (라디오라 그냥은 안 꺼져서, 누르기 전에 켜져 있었는지 보고 후기만으로 돌림)
+  yes.forEach(function(o){ var was=false, r=o.querySelector('input');
+   o.addEventListener('pointerdown',function(){ was=r.checked; });
+   o.addEventListener('click',function(e){ if(was&&r.checked){ e.preventDefault(); was=false; r.checked=false; o.classList.remove('on'); toNo(); } else was=false; }); });
+  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); var ph=form.querySelector('.q[data-name="phone"]'); if(picked()!=='후기만'&&ph) setTimeout(function(){ ph.scrollIntoView({behavior:'smooth',block:'center'}); },60); } });
   yes.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
    fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
    if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });

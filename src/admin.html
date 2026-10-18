@@ -360,8 +360,8 @@ function svHtml(r){var o=svOf(r);if(!o)return '';return '<h4>재참여 설문</h
 // 모아 보기: 기수 탭과 상관없이 재참여 후기 폼 응답 전부(6기, 7기 참여와 후기만)를 문항별로 (최근 신청이 위)
 function svSummary(rs){var list=rs.filter(svOf);if(!list.length)return '<div class="muted">설문 응답 없음</div>';
   return REG.SURVEY.SECTIONS.map(function(x){return x.keys.map(function(k){var ts=list.map(function(r){return [r,svOf(r)[k]]}).filter(function(a){return a[1]});
-    return '<h4>'+esc(REG.SURVEY.Q[k].title)+' <span class="muted">'+ts.length+'명</span></h4><ul class="svt">'+ts.map(function(a){return '<li><span class="muted">'+esc(a[0].name||'')+(a[0].gender?' / '+esc(a[0].gender):'')+' / '+esc(cohortKo(cohortOf(a[0])))+'</span><br>'+esc(a[1])+'</li>'}).join('')+'</ul>'}).join('')}).join('')}
-function noPriorBadge(r){var f=regOf(r.path);return f&&f.phoneOnly&&!r.gender?' <span class="badge amber">이전 기록 없음</span>':''}
+    return '<h4>'+esc(REG.SURVEY.Q[k].title)+' <span class="muted">'+ts.length+'명</span></h4><ul class="svt">'+ts.map(function(a){return '<li><span class="muted">'+[a[0].name,a[0].gender,cohortKo(cohortOf(a[0]))].filter(Boolean).map(esc).join(' / ')+'</span><br>'+esc(a[1])+'</li>'}).join('')+'</ul>'}).join('')}).join('')}
+function noPriorBadge(r){var f=regOf(r.path);return f&&f.phoneOnly&&!r.gender&&cohortOf(r)!=='review'?' <span class="badge amber">이전 기록 없음</span>':''}
 function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(cohortOf(r)==='review')return ' <span class="badge blue">후기만</span>';if(f&&f.survey)return ' <span class="badge amber">재참여 설문'+(friendPaid(r)>0?'':' '+esc(f.fee.toLocaleString('ko-KR')+'원'))+'</span>';   // 친구 할인 금액은 친구 배지에
   if(plan==='prealert')return cohortOf(r)==='alert'?(joinedBefore(r)?' <span class="badge green">참여한 적 있음</span>':''):' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
