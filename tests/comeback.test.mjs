@@ -32,7 +32,7 @@ test('10/13 자정에 이 폼만 닫히고 5기 정가 폼은 그대로 열려 �
   for (const path of paths) {
     const before = formStatus(path, END - 1), after = formStatus(path, END);
     assert.equal(before.open, true); assert.equal(before.deadline, END);
-    assert.equal(after.open, false); assert.equal(after.next, (path.includes('/seoul/') ? '/6/seoul/' : '/'));   // 10/14: 6기가 열려서 다음은 6기 서울 (광주는 지역 선택)
+    assert.equal(after.open, false); assert.equal(after.next, (path.includes('/seoul/') ? '/7/seoul/' : '/'));   // 10/14: 6기가 열려서 다음은 6기 서울 (광주는 지역 선택). 10/17: 지금 기수 7기
     assert.equal(formStatus(path.replace('comeback/', ''), END).open, true);
     assert.equal(formStatus(path, END - 1, { FORM_DEADLINE: String(END - 5000) }).open, false);   // 로컬 시험용 환경값
   }
@@ -50,7 +50,7 @@ test('화면: 남은 시간 표시, 7,900 → 4,900, 한 페이지 구성, 친�
   for (const path of paths) {
     const html = read(path);
     assert.ok(html.includes('DEADLINE=' + END + ','));
-    for (const need of ['id="cbBar"', 'id="cbClock"', '아직 고민 중이라면?', '<s>7,900원</s> <b>4,900원</b>', '<p class="fee-was"><s>7,900원</s> → <strong>4,900원</strong></p>', '▶ 토스로 4,900원 송금하기', 'haruharu-pay.pages.dev/e/', 'id="acctCopy"', '<h2>신청이 마감됐어요</h2>', 'href="' + (path.includes('/seoul/') ? '/6/seoul/' : '/') + '?src=h6-'])   // 10/14: 5기가 닫혀서 할인 끝 안내 대신 기수 마감 + 6기 버튼
+    for (const need of ['id="cbBar"', 'id="cbClock"', '아직 고민 중이라면?', '<s>7,900원</s> <b>4,900원</b>', '<p class="fee-was"><s>7,900원</s> → <strong>4,900원</strong></p>', '▶ 토스로 4,900원 송금하기', 'haruharu-pay.pages.dev/e/', 'id="acctCopy"', '<h2>신청이 마감됐어요</h2>', 'href="' + (path.includes('/seoul/') ? '/7/seoul/' : '/') + '?src=h7-'])   // 10/14: 5기가 닫혀서 할인 끝 안내 대신 기수 마감 + 다음 기수 버튼 (10/17: 7기)
       assert.ok(html.includes(need), path + ' 에 없음: ' + need);
     for (const not of ['12,900', '5,900', 'class="fr-share"', 'class="fr-mini"', 'data-engage', 'id="ldSticky"']) assert.ok(!html.includes(not), path + ' 에 있으면 안 됨: ' + not);
     assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 1);   // 페이지를 안 나눔
@@ -73,7 +73,7 @@ test('낮 1시 마감 할인 폼: 주소만 다르고 10/14 13:00 에 닫힌다'
     const f = formOf(path);
     assert.equal(f.fee, 4900); assert.equal(f.plan, 'discount'); assert.match(f.pay, /\/e\/$/);
     assert.equal(formStatus(path, END2 - 1).open, true); assert.equal(formStatus(path, END2).open, false);
-    assert.equal(formStatus(path, END2).next, (path.includes('/seoul/') ? '/6/seoul/' : '/'));
+    assert.equal(formStatus(path, END2).next, (path.includes('/seoul/') ? '/7/seoul/' : '/'));
     const html = read(path);
     for (const need of ['DEADLINE=' + END2 + ',', '오늘 낮 1시까지만<br>', '1시가 지나면 다시 7,900원이에요', '10월 14일(수) 낮 1시 마감', '▶ 토스로 4,900원 송금하기', 'id="cbClock"'])
       assert.ok(html.includes(need), path + ' 에 없음: ' + need);
@@ -106,7 +106,7 @@ test('저녁 6시 마감 할인 폼: 5기 마감과 같이 닫히고, 마감 뒤
     const html = read(path);
     for (const need of ['DEADLINE=' + END3 + ',', '오늘 저녁 6시까지만<br>', '저녁 6시에 5기 신청이 마감돼요', '10월 14일(수) 저녁 6시 마감', 'content="아직 고민 중이라면? 오늘 저녁 6시까지 4,900원"', '<h2>신청이 마감됐어요</h2>', '▶ 토스로 4,900원 송금하기'])
       assert.ok(html.includes(need), path + ' 에 없음: ' + need);
-    assert.ok(html.includes('6기 신청하러 가기 →'), path + ' 6기 버튼');   // 10/14
+    assert.ok(html.includes('7기 신청하러 가기 →'), path + ' 7기 버튼');   // 10/14 6기, 10/17 지금 기수 7기
     for (const not of ['<h2>4,900원 할인이 끝났어요', '5기 신청하러 가기 →', '지나면 다시', 'name="source"', 'name="intent"', '__CB_']) assert.ok(!html.includes(not), path + ' 에 있으면 안 됨: ' + not);
   }
   assert.ok(read('/5/seoul/lunch/').includes('1시가 지나면 다시 7,900원이에요') && read('/5/seoul/lunch/').includes('<h2>신청이 마감됐어요</h2>'));   // 앞 판 글자는 그대로, 10/14 6기가 열려서 마감 뒤엔 기수 마감 안내
