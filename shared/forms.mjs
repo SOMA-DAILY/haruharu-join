@@ -11,8 +11,9 @@ export const COHORT_DEADLINES = {
   '4': '2026-10-10T17:00:00+09:00', // 10/10 사용자: 직장인 사전알림 빼고 지금 닫고 5기로 이어지게 (원래 10/11 00:00). 진행 10/11(일)~10/13(화)
   '5': '2026-10-14T18:00:00+09:00', // 신청 마감 10/14(수) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
   '6': '2026-10-18T18:00:00+09:00', // 진행 10/19(월)~10/21(수) (10/14 사용자). 마감은 5기처럼 시작 전날 18:00 (가안)
+  '7': '2026-10-21T18:00:00+09:00', // 10/18 사용자: 모든 7기 폼은 진행 10/23~25, 마감 10/21 18:00으로 통일
 };
-export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00' };
+export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 21일(수) 18:00' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
@@ -103,7 +104,7 @@ export const FORMS = {
   '/rejoin/seoul/':         { ...S3, cohort: 'review', ...REJOIN_SV, noPage: false, label: '재참여 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true, friendForm: '/seoul/student/',
                               joins: { '6기': '/6/seoul/rejoin/', '7기': '/7/seoul/rejoin/', '후기만': '/rejoin/seoul/' }, joinFor: { '6기': 'f', '7기': 'm' } },
   '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
-  '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)', period: '10월 24일(토) ~ 10월 26일(월), 3일', deadline: '2026-10-22T18:00:00+09:00', deadlineKo: '10월 22일(목) 18:00' },   // 7기 기수 줄(COHORT_DEADLINES)이 아직 없어서 일정/마감을 이 줄에. 7기를 열면 둘 중 이른 마감
+  '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -119,6 +120,7 @@ export const COHORT_INFO = {
   '4': { period: '10월 11일(일) ~ 10월 13일(화), 3일', deadlineKo: '10월 10일(토)' },
   '5': { period: '10월 15일(목) ~ 10월 17일(토), 3일', deadlineKo: '10월 14일(수) 18:00' },
   '6': { period: '10월 19일(월) ~ 10월 21일(수), 3일', deadlineKo: '10월 18일(일) 18:00' },
+  '7': { period: '10월 23일(금) ~ 10월 25일(일), 3일', deadlineKo: '10월 21일(수) 18:00' },
 };
 
 export function normalizePath(p) {
