@@ -29,6 +29,13 @@
 <!--TAIL-->
 <style>
 .sv-q .sv-hint{margin:-4px 2px 10px;font-size:14px;color:var(--hh-ink2)}
+.sv-cohort-q .sv-hint{margin:-4px 2px 12px;font-size:14px;color:var(--hh-ink2)}
+.sv-cohort-choices{display:flex;flex-wrap:wrap;gap:8px}
+.sv-cohort-choices button{appearance:none;border:1.5px solid var(--hh-line);border-radius:8px;background:#fff;padding:10px 14px;min-height:44px;cursor:pointer;font:inherit;font-size:14px}
+.sv-cohort-choices button[aria-pressed=true]{background:var(--hh-sky);border-color:var(--hh-blue);color:#1F5FA9;font-weight:700}
+.sv-cohort-choices button[hidden]{display:none}
+.sv-cohort-choices button:focus-visible{outline:3px solid var(--hh-blue);outline-offset:3px}
+.sv-cohort-q.bad .sv-cohort-choices{outline:1px solid #E0457B;outline-offset:6px;border-radius:8px}
 .sv-q textarea{box-sizing:border-box;display:block;width:100%;min-height:120px;padding:12px 14px;border:1.5px solid var(--hh-line);border-radius:14px;background:#fff;color:var(--hh-ink);font:inherit;font-size:16px;line-height:1.55;resize:vertical}
 .sv-q textarea:focus{outline:none;border-color:var(--hh-blue)}
 .sv-q.bad textarea{border-color:#E0457B}
@@ -71,6 +78,27 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
 <script>
 (function(){
  var form=document.getElementById('f'); if(!form) return;
+ var cohortQ=form.querySelector('.sv-cohort-q');
+ if(cohortQ){
+  var cohortInput=cohortQ.querySelector('input[name="sv_cohorts"]'), cohortButtons=[].slice.call(cohortQ.querySelectorAll('[data-sv-cohort]'));
+  function cohortSync(){
+   var values=[]; try{values=JSON.parse(cohortInput.value||'[]')}catch(e){} if(!Array.isArray(values))values=[];
+   cohortButtons.forEach(function(b){b.hidden=Number(b.getAttribute('data-open-after'))>Date.now()});
+   var available=cohortButtons.filter(function(b){return !b.hidden}).map(function(b){return b.getAttribute('data-sv-cohort')});
+   values=values.filter(function(v){return available.indexOf(v)>=0});
+   if(values.indexOf('unknown')>=0)values=['unknown'];
+   cohortInput.value=values.length?JSON.stringify(values):'';
+   cohortButtons.forEach(function(b){b.setAttribute('aria-pressed',values.indexOf(b.getAttribute('data-sv-cohort'))>=0?'true':'false')});
+   if(values.length)cohortQ.classList.remove('bad');
+  }
+  cohortQ.addEventListener('click',function(e){var b=e.target.closest('[data-sv-cohort]');if(!b)return;
+   var key=b.getAttribute('data-sv-cohort'), values=[];try{values=JSON.parse(cohortInput.value||'[]')}catch(e){}
+   if(key==='unknown')values=values.indexOf(key)>=0?[]:['unknown'];
+   else{values=values.filter(function(v){return v!=='unknown'});var i=values.indexOf(key);if(i>=0)values.splice(i,1);else values.push(key)}
+   cohortInput.value=JSON.stringify(values);cohortSync();cohortInput.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  cohortSync();setTimeout(cohortSync,0);setTimeout(cohortSync,800);
+ }
  [].forEach.call(document.querySelectorAll('.sv-q textarea'),function(ta){
   var q=ta.closest('.sv-q'), ok=q.querySelector('input[type=text][hidden]'), min=Number(ta.getAttribute('data-min'))||1, told=false;
   function sync(){ var on=ta.value.trim().length>=min; ok.value=on?'1':''; if(on) q.classList.remove('bad');

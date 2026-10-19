@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>하루하루 신청 관리</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="/admin/survey-gallery.css">
 <style>
 :root{--bg:#f5f6f8;--card:#fff;--ink:#16181d;--sub:#6b7280;--faint:#9ca3af;--line:#e5e7eb;--blue:#246BE0;--blue-soft:#e8f0fd;--green:#12a150;--green-soft:#e7f7ee;--amber:#d97706;--amber-soft:#fdf3e1;--red:#dc2626;--red-soft:#fdeaea;--new:#fff7d6}
 *{box-sizing:border-box}
@@ -19,7 +20,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .login-box{background:var(--card);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
 .brand{font-weight:800;font-size:20px;color:var(--blue);margin-bottom:4px;letter-spacing:-.3px}
 .login-box p{color:var(--sub);margin:0 0 20px}
-.login-box input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.login-box input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;font-size:16px}
 .btn{border:0;border-radius:10px;padding:9px 14px;cursor:pointer;background:var(--blue);color:#fff;font-weight:600;white-space:nowrap}
 .btn.full{width:100%;padding:12px}
 .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
@@ -75,11 +76,6 @@ main{max-width:1320px;margin:0 auto;padding:18px 20px 60px}
 .bar i{display:block;height:100%;background:var(--blue);border-radius:6px}
 .fun .n{text-align:right}
 .fun .n span{color:var(--sub);font-size:12px;margin-left:4px}
-/* 재참여 설문 모아 보기 (10/17~): 후기와 바라는 점 글 목록 */
-.svt{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
-.svt li{margin-bottom:10px;white-space:pre-wrap}
-.svt .muted{font-size:12px}
-
 .chart{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:8px}
 .chart .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;height:100%;justify-content:flex-end}
 .chart .st{width:100%;max-width:34px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
@@ -313,7 +309,9 @@ dd{margin:0;word-break:break-all}
 <div id="lightbox" class="hidden"><img id="lbImg" alt="학생 인증 캡처"></div>
 
 <script>var REG=__FORMS_JSON__;</script>
-<script>
+<script type="module">
+import { createSurveyGallery } from './survey-gallery.mjs';
+import { reviewRows } from '../shared/review-cohorts.mjs';
 (function(){
 var HOST='https://join.haruharu.co.kr';
 var STATUSES=['','송금확인','송금확인 안됨','결제 요청함','연락함','확정','보류','취소'];
@@ -356,11 +354,7 @@ function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.
 // 전화번호만 받는 재참여 폼: 같은 번호의 지난 신청을 못 찾아 성별이 빈 사람 (번호가 바뀌었거나 처음 온 사람). 연락해서 확인
 // 재참여 설문 (10/17~, 등록부 survey 폼): 답은 D1 submissions.survey (JSON, migrations/0014). 문항 글자는 REG.SURVEY (shared/rejoin-survey.mjs)
 function svOf(r){if(!r.survey)return null;try{var o=JSON.parse(r.survey);return o&&typeof o==='object'&&!Array.isArray(o)?o:null}catch(e){return null}}
-function svHtml(r){var o=svOf(r);if(!o)return '';return '<h4>재참여 설문</h4><dl>'+REG.SURVEY.SECTIONS.map(function(x){return x.keys.map(function(k){return o[k]?'<dt>'+esc(REG.SURVEY.Q[k].title)+'</dt><dd style="white-space:pre-wrap">'+esc(o[k])+'</dd>':''}).join('')}).join('')+'</dl>'}
-// 모아 보기: 기수 탭과 상관없이 재참여 후기 폼 응답 전부(6기, 7기 참여와 후기만)를 문항별로 (최근 신청이 위)
-function svSummary(rs){var list=rs.filter(svOf);if(!list.length)return '<div class="muted">설문 응답 없음</div>';
-  return REG.SURVEY.SECTIONS.map(function(x){return x.keys.map(function(k){var ts=list.map(function(r){return [r,svOf(r)[k]]}).filter(function(a){return a[1]});
-    return '<h4>'+esc(REG.SURVEY.Q[k].title)+' <span class="muted">'+ts.length+'명</span></h4><ul class="svt">'+ts.map(function(a){return '<li><span class="muted">'+[a[0].name,a[0].gender,cohortKo(cohortOf(a[0]))].filter(Boolean).map(esc).join(' / ')+'</span><br>'+esc(a[1])+'</li>'}).join('')+'</ul>'}).join('')}).join('')}
+function svHtml(r){var o=svOf(r);if(!o)return '';var review=reviewRows(S.apps,REG).find(function(x){return x.id===r.application_id});return '<h4>재참여 설문</h4><dl>'+(review?'<dt>참여했던 기수</dt><dd>'+esc(review.participant)+'</dd>':'')+REG.SURVEY.SECTIONS.map(function(x){return x.keys.map(function(k){return o[k]?'<dt>'+esc(REG.SURVEY.Q[k].title)+'</dt><dd style="white-space:pre-wrap">'+esc(o[k])+'</dd>':''}).join('')}).join('')+'</dl>'}
 function noPriorBadge(r){var f=regOf(r.path);return f&&f.phoneOnly&&!r.gender&&cohortOf(r)!=='review'?' <span class="badge amber">이전 기록 없음</span>':''}
 function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(cohortOf(r)==='review')return ' <span class="badge blue">후기만</span>';if(f&&f.survey)return ' <span class="badge amber">재참여 설문'+(friendPaid(r)>0?'':' '+esc(f.fee.toLocaleString('ko-KR')+'원'))+'</span>';   // 친구 할인 금액은 친구 배지에
   if(plan==='prealert')return cohortOf(r)==='alert'?(joinedBefore(r)?' <span class="badge green">참여한 적 있음</span>':''):' <span class="badge blue">사전알림</span>'+(paidLater(r)?' <span class="badge green">결제함</span>':'');if(plan==='early'||plan==='discount')return ' <span class="badge amber">'+esc(feeOf(r))+'</span>';return ''}
@@ -399,7 +393,7 @@ function copy(t){navigator.clipboard.writeText(t).then(function(){toast('복사�
 function api(path,opt){return fetch('/api/admin/'+path,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},opt||{})).then(function(r){if(r.status===401){showLogin();throw new Error('401')}return r.json()})}
 function post(path,body){return api(path,{method:'POST',body:JSON.stringify(body)})}
 
-function showLogin(){$('app').classList.add('hidden');$('login').classList.remove('hidden');stop()}
+function showLogin(){if(surveyGallery)surveyGallery.close();closeD();$('app').classList.add('hidden');$('login').classList.remove('hidden');stop()}
 function showApp(){$('login').classList.add('hidden');$('app').classList.remove('hidden')}
 $('loginForm').onsubmit=function(e){e.preventDefault();$('loginErr').textContent='';
   fetch('/api/admin/login',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({password:$('pw').value})})
@@ -759,9 +753,8 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
     '<div class="acts"><button class="btn" id="dSave">저장</button><button class="btn ghost" id="dCopy">전화번호 복사</button><button class="btn ghost" id="dClose">닫기</button></div>';
   $('drawer').classList.remove('hidden');renderApps();
   $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value,$('dRoom').value.trim(),{buddy:$('dBuddy').value.trim(),buddy_room:$('dBr').value}).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD});
-$('svBtn').onclick=function(){var rs=S.apps.filter(svOf);
-  $('panel').innerHTML='<h2>후기, 바라는 점 모아 보기</h2><div class="meta">재참여 후기 폼에 남긴 '+rs.length+'명</div>'+svSummary(rs)+'<div class="acts"><button class="btn ghost" id="dClose">닫기</button></div>';
-  $('drawer').classList.remove('hidden');$('dClose').onclick=closeD};
+var surveyGallery=createSurveyGallery({getRows:function(){return S.apps},registry:REG});
+$('svBtn').onclick=function(){surveyGallery.open(this)};
 $('csvBtn').onclick=function(){var rs=appsFiltered();
   if(S.cohort==='alert'){   // 알림 신청 CSV: 알림에 있는 칸만
     var ch=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};

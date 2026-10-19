@@ -134,6 +134,6 @@ test('화면: 소개 없이 한 페이지에 후기, 바라는 점, 다음 기�
 
 test('관리 화면: 설문 문항 글자, 모아 보기, 후기만 탭과 후기 폼 링크 카드', () => {
   const adm = readFileSync(new URL('../public/admin/index.html', import.meta.url), 'utf8');
-  assert.ok(adm.includes('"SURVEY":') && adm.includes('id="svBtn"') && adm.includes('function svSummary('));
+  assert.ok(adm.includes('"SURVEY":') && adm.includes('id="svBtn"') && adm.includes('createSurveyGallery('));
   assert.ok(adm.includes("c==='review'?'재참여 후기만'") && adm.includes("if(f.joins)return") && adm.includes("s==='rejoin-msg'"));
 });

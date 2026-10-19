@@ -503,6 +503,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 
 <div class="sv" id="sv">
+<div class="q sv-cohort-q" data-name="sv_cohorts"><p class="t">어느 기수에 참여하셨나요?<span class="req">*</span></p><p class="sv-hint">여러 번 참여했다면 모두 골라 주세요</p><div class="sv-cohort-choices" role="group" aria-label="참여했던 기수"><button type="button" data-sv-cohort="7" data-open-after="1792681200000" aria-pressed="false">7기</button><button type="button" data-sv-cohort="6" data-open-after="1792335600000" aria-pressed="false">6기</button><button type="button" data-sv-cohort="5" data-open-after="1791990000000" aria-pressed="false">5기</button><button type="button" data-sv-cohort="4" data-open-after="1791644400000" aria-pressed="false">4기</button><button type="button" data-sv-cohort="3" data-open-after="1791212400000" aria-pressed="false">3기</button><button type="button" data-sv-cohort="2" data-open-after="0" aria-pressed="false">2기</button><button type="button" data-sv-cohort="1" data-open-after="0" aria-pressed="false">1기</button><button type="button" data-sv-cohort="jnu-festival" data-open-after="0" aria-pressed="false">전남대 축제</button><button type="button" data-sv-cohort="setlog" data-open-after="0" aria-pressed="false">앱 출시 전 셋로그</button><button type="button" data-sv-cohort="unknown" data-open-after="0" aria-pressed="false">잘 기억나지 않아요</button></div><input type="text" name="sv_cohorts" value="" hidden required><p class="err">참여했던 기수를 골라 주세요</p></div>
 <div class="q sv-q" data-name="sv_review"><p class="t">지난 기수 후기<span class="req">*</span></p>
  <p class="sv-hint">좋았던 점, 아쉬웠던 점 모두 편하게 적어 주세요</p>
  <textarea name="sv_review" rows="4" maxlength="1000" data-min="10" placeholder="예) 미션 덕분에 말 걸기가 편했어요. 둘째 날부터 방이 조용해진 건 아쉬웠어요."></textarea>
@@ -668,6 +669,13 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 </script>
 <style>
 .sv-q .sv-hint{margin:-4px 2px 10px;font-size:14px;color:var(--hh-ink2)}
+.sv-cohort-q .sv-hint{margin:-4px 2px 12px;font-size:14px;color:var(--hh-ink2)}
+.sv-cohort-choices{display:flex;flex-wrap:wrap;gap:8px}
+.sv-cohort-choices button{appearance:none;border:1.5px solid var(--hh-line);border-radius:8px;background:#fff;padding:10px 14px;min-height:44px;cursor:pointer;font:inherit;font-size:14px}
+.sv-cohort-choices button[aria-pressed=true]{background:var(--hh-sky);border-color:var(--hh-blue);color:#1F5FA9;font-weight:700}
+.sv-cohort-choices button[hidden]{display:none}
+.sv-cohort-choices button:focus-visible{outline:3px solid var(--hh-blue);outline-offset:3px}
+.sv-cohort-q.bad .sv-cohort-choices{outline:1px solid #E0457B;outline-offset:6px;border-radius:8px}
 .sv-q textarea{box-sizing:border-box;display:block;width:100%;min-height:120px;padding:12px 14px;border:1.5px solid var(--hh-line);border-radius:14px;background:#fff;color:var(--hh-ink);font:inherit;font-size:16px;line-height:1.55;resize:vertical}
 .sv-q textarea:focus{outline:none;border-color:var(--hh-blue)}
 .sv-q.bad textarea{border-color:#E0457B}
@@ -710,6 +718,27 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
 <script>
 (function(){
  var form=document.getElementById('f'); if(!form) return;
+ var cohortQ=form.querySelector('.sv-cohort-q');
+ if(cohortQ){
+  var cohortInput=cohortQ.querySelector('input[name="sv_cohorts"]'), cohortButtons=[].slice.call(cohortQ.querySelectorAll('[data-sv-cohort]'));
+  function cohortSync(){
+   var values=[]; try{values=JSON.parse(cohortInput.value||'[]')}catch(e){} if(!Array.isArray(values))values=[];
+   cohortButtons.forEach(function(b){b.hidden=Number(b.getAttribute('data-open-after'))>Date.now()});
+   var available=cohortButtons.filter(function(b){return !b.hidden}).map(function(b){return b.getAttribute('data-sv-cohort')});
+   values=values.filter(function(v){return available.indexOf(v)>=0});
+   if(values.indexOf('unknown')>=0)values=['unknown'];
+   cohortInput.value=values.length?JSON.stringify(values):'';
+   cohortButtons.forEach(function(b){b.setAttribute('aria-pressed',values.indexOf(b.getAttribute('data-sv-cohort'))>=0?'true':'false')});
+   if(values.length)cohortQ.classList.remove('bad');
+  }
+  cohortQ.addEventListener('click',function(e){var b=e.target.closest('[data-sv-cohort]');if(!b)return;
+   var key=b.getAttribute('data-sv-cohort'), values=[];try{values=JSON.parse(cohortInput.value||'[]')}catch(e){}
+   if(key==='unknown')values=values.indexOf(key)>=0?[]:['unknown'];
+   else{values=values.filter(function(v){return v!=='unknown'});var i=values.indexOf(key);if(i>=0)values.splice(i,1);else values.push(key)}
+   cohortInput.value=JSON.stringify(values);cohortSync();cohortInput.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  cohortSync();setTimeout(cohortSync,0);setTimeout(cohortSync,800);
+ }
  [].forEach.call(document.querySelectorAll('.sv-q textarea'),function(ta){
   var q=ta.closest('.sv-q'), ok=q.querySelector('input[type=text][hidden]'), min=Number(ta.getAttribute('data-min'))||1, told=false;
   function sync(){ var on=ta.value.trim().length>=min; ok.value=on?'1':''; if(on) q.classList.remove('bad');
