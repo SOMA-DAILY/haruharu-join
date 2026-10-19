@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 MP="${MIXPANEL_TOKEN:-$(grep -h "EXPO_PUBLIC_MIXPANEL_TOKEN=" ~/project/haruharu-FE/.env.production 2>/dev/null | cut -d= -f2 | tr -d '"\r')}"
 [ -n "$MP" ] || { echo "Mixpanel 토큰을 못 읽음"; exit 1; }
 # 등록부를 JSON 으로 (node 는 CI 에 있음)
-REG="$(node --input-type=module -e "Promise.all([import('./shared/forms.mjs'),import('./shared/rejoin-survey.mjs')]).then(([m,s])=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO,SURVEY:{SECTIONS:s.SURVEY_SECTIONS,Q:s.SURVEY}})))")"
+REG="$(node --input-type=module -e "Promise.all([import('./shared/forms.mjs'),import('./shared/rejoin-survey.mjs')]).then(([m,s])=>console.log(JSON.stringify({FORMS:m.FORMS,CURRENT:m.CURRENT_COHORT,DEADLINES:m.COHORT_DEADLINES,DEADLINE_KO:m.COHORT_DEADLINE_KO,INFO:m.COHORT_INFO,SURVEY:{SECTIONS:s.SURVEY_SECTIONS,Q:s.SURVEY,COHORTS:s.surveyCohortChoices(Infinity)}})))")"
 [ -n "$REG" ] || { echo "등록부를 못 읽음"; exit 1; }
 export MP REG
 python3 - <<'EOF'
@@ -38,6 +38,10 @@ def survey_html():
     # 주관식 문항 (10/17 운영자: 고르는 설문 대신 후기와 바라는 점 두 칸). 글자 칸은 템플릿 검사가 안 봐서 숨긴 _ok 칸을 min 자 이상일 때 채움 (src/rejoin-survey.html)
     E = lambda s: html.escape(str(s), quote=True)
     out = '<div class="sv" id="sv">\n'
+    out += '<div class="q sv-cohort-q" data-name="sv_cohorts"><p class="t">어느 기수에 참여하셨나요?<span class="req">*</span></p><p class="sv-hint">여러 번 참여했다면 모두 골라 주세요</p><div class="sv-cohort-choices" role="group" aria-label="참여했던 기수">'
+    for choice in SV['COHORTS']:
+        out += f'<button type="button" data-sv-cohort="{E(choice["value"])}" data-open-after="{choice.get("availableAt", 0)}" aria-pressed="false">{E(choice["label"])}</button>'
+    out += '</div><input type="text" name="sv_cohorts" value="" hidden required><p class="err">참여했던 기수를 골라 주세요</p></div>\n'
     for k in [k for sec in SV['SECTIONS'] for k in sec['keys']]:
         q = SV['Q'][k]; assert q['type'] == 'text', f'{k} 주관식만 찍음'
         out += (f'<div class="q sv-q" data-name="{k}"><p class="t">{E(q["title"])}<span class="req">*</span></p>\n'
