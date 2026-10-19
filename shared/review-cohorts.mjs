@@ -65,13 +65,13 @@ export function reviewRows(applications, registry) {
       cohorts = matches.map(cohortOf);
       const confirmed = new Set(matches.filter((prior) => prior.status === '확정' && String(prior.room || '').trim()).map(cohortOf));
       estimated = cohorts.some((key) => !confirmed.has(key));
-      if (cohorts.length) source = estimated ? '이전 송금확인 기록으로 추정' : '이전 확정 기록';
+      if (cohorts.length) source = estimated ? '이전 송금확인 기록' : '이전 확정 기록';
     }
     cohorts = [...new Set(cohorts)];
     if (!cohorts.length || cohorts.includes('unknown')) cohorts = ['unknown'];
     cohorts.sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
     return { id: row.application_id, survey, cohorts, source, estimated,
-      participant: cohorts[0] === 'unknown' ? '기수 미확인 참가자' : cohorts.map(cohortLabel).join(', ') + ' 참가자' + (estimated ? ' (추정)' : ''),
+      participant: cohorts[0] === 'unknown' ? '기수 미확인 참가자' : cohorts.map(cohortLabel).join(', ') + ' 참가자',
       gender: ['남성', '여성'].includes(row.gender) ? row.gender : '성별 미확인',
       author: row.name || '익명', time: submittedTime(row) };
   }).sort((a, b) => b.time - a.time);

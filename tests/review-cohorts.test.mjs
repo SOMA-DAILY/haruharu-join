@@ -62,8 +62,8 @@ test('같은 번호의 과거 송금확인은 방 미배정이어도 참여 기�
     prior({ application_id: 'paid-4', cohort: '4', status: '송금확인', room: '' }),
     prior({ application_id: 'paid-4-duplicate', cohort: '4', status: '송금확인', room: '' })], registry);
   assert.deepEqual(rows[0].cohorts, ['5', '4']);
-  assert.equal(rows[0].participant, '5기, 4기 참가자 (추정)');
-  assert.equal(rows[0].source, '이전 송금확인 기록으로 추정');
+  assert.equal(rows[0].participant, '5기, 4기 참가자');
+  assert.equal(rows[0].source, '이전 송금확인 기록');
   assert.equal(rows[0].estimated, true);
 });
 
