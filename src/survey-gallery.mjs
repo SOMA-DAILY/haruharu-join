@@ -37,7 +37,7 @@ export function createSurveyGallery({ getRows, registry }) {
     overlay.querySelector('#sgResponses').setAttribute('aria-labelledby', 'sgTab-' + topic);
     overlay.querySelector('.sg-count').textContent = (cohort === 'all' ? '전체' : cohortLabel(cohort)) + ' / ' + filtered.length + '개의 ' + topicLabel(topic);
     overlay.querySelector('.sg-list').innerHTML = filtered.length ? '<div class="sg-grid">' + filtered.map((row) =>
-      '<article class="sg-card"><div class="sg-card-head"><span class="sg-cohort">' + escape(row.participant) + '</span>' +
+      '<article class="sg-card"><div class="sg-card-head"><span class="sg-cohort" title="' + escape(row.source) + '">' + escape(row.participant) + '</span>' +
       '<span class="sg-gender">' + escape(row.gender) + '</span><time class="sg-date">' +
       (row.time ? new Date(row.time + 9 * 3600e3).toISOString().slice(0, 10).replaceAll('-', '.') : '날짜 미확인') + '</time></div>' +
       '<p class="sg-text">' + escape(row.survey[topic]) + '</p></article>'
