@@ -55,3 +55,36 @@ test('본인 응답 우선, 복수 기수 중복 제거, 명시한 미확인은 
   assert.deepEqual(reviewRows([review({ ...r, survey: JSON.stringify({ ...feedback, sv_cohorts: ['unknown'] }) }), prior()], registry)[0].cohorts, ['unknown']);
   assert.equal(reviewRows([review({ survey: '{invalid' })], registry).length, 0);
 });
+
+test('같은 번호의 과거 송금확인은 방 미배정이어도 참여 기수 추정에 사용한다', () => {
+  const rows = reviewRows([review({ phone_digits: '010-0000-0001' }),
+    prior({ status: '송금확인', room: '' }),
+    prior({ application_id: 'paid-4', cohort: '4', status: '송금확인', room: '' }),
+    prior({ application_id: 'paid-4-duplicate', cohort: '4', status: '송금확인', room: '' })], registry);
+  assert.deepEqual(rows[0].cohorts, ['5', '4']);
+  assert.equal(rows[0].participant, '5기, 4기 참가자 (추정)');
+  assert.equal(rows[0].source, '이전 송금확인 기록으로 추정');
+  assert.equal(rows[0].estimated, true);
+});
+
+test('송금 추정에서도 미송금, 취소, 사전알림, 후기 이후 신청과 다음 기수는 제외한다', () => {
+  const rows = reviewRows([review({ phone_digits: '01000000001' }),
+    ...['', '송금확인 안됨', '취소', '결제 요청함'].map((status, i) => prior({ application_id: 'no-' + i, status, room: '' })),
+    prior({ application_id: 'after', status: '송금확인', submitted_ts: at + 1 }),
+    prior({ application_id: 'future-cohort', status: '송금확인', cohort: '7', path: '/7/seoul/' }),
+    prior({ application_id: 'prealert', status: '송금확인', path: '/4/seoul-work/pre/', cohort: '4' }),
+    prior({ application_id: 'review', status: '송금확인', path: '/6/seoul/rejoin/', cohort: '6' })], registry);
+  assert.deepEqual(rows[0].cohorts, ['unknown']);
+  assert.equal(rows[0].estimated, false);
+});
+
+test('직접 선택과 이전 확정 기록은 추정으로 표시하지 않는다', () => {
+  const self = review({ phone_digits: '01000000001', survey: { ...feedback, sv_cohorts: ['3'] } });
+  const paid = prior({ status: '송금확인', room: '' });
+  assert.equal(reviewRows([self, paid], registry)[0].estimated, false);
+  assert.equal(reviewRows([self, paid], registry)[0].participant, '3기 참가자');
+  const exact = reviewRows([review({ phone_digits: '01000000001' }), paid, prior({ application_id: 'confirmed' })], registry)[0];
+  assert.equal(exact.estimated, false);
+  assert.equal(exact.source, '이전 확정 기록');
+  assert.equal(exact.participant, '5기 참가자');
+});
