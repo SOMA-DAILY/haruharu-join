@@ -763,7 +763,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  var Q=new URLSearchParams(location.search);
  var HID=['src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'];
  var hidden={city:CITY,cohort:COHORT,plan:PLAN}; HID.forEach(function(k){ if(Q.get(k)) hidden[k]=Q.get(k); });
- var ARM=(function(){ var m=/(?:^|;\s*)hh_ab_[a-z0-9]+=(a|b)(?:;|$)/.exec(document.cookie||''); return m?m[1]:''; })(); if(ARM) hidden.arm=ARM;   // 50/50 팔 (10/20): 서버 함수가 준 쿠키. 세션/제출 기록과 Mixpanel 에 같이 남김
+ var ARM=(function(){ var m=new RegExp('(?:^|;\\s*)hh_ab_'+location.pathname.replace(/[^a-z0-9]/gi,'')+'=(a|b)(?:;|$)').exec(document.cookie||''); return m?m[1]:''; })(); if(ARM) hidden.arm=ARM;   // 50/50 팔 (10/20): 서버 함수가 준 쿠키. 세션/제출 기록과 Mixpanel 에 같이 남김
  var offerControl = PLAN === 'early' ? window.setupEarlyOffer(hidden, goRegular) : null;
  // 경로 코드: utm_content(광고명) 이 있으면 그것, 없으면 src. 모든 리포트는 이 값으로 갈림
  hidden.channel = hidden.utm_content || hidden.src || 'direct';
@@ -777,7 +777,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
  try{
   if(!LOCAL_PREVIEW && window.mixpanel && MIXPANEL_TOKEN && MIXPANEL_TOKEN.indexOf('__')!==0){
    mixpanel.init(MIXPANEL_TOKEN,{ record_sessions_percent:100, record_mask_text_selector:'.mp-sensitive', record_block_selector:'', persistence:'localStorage', ignore_dnt:true });
-   if(ARM) mixpanel.register({arm:ARM});
+   if(ARM) mixpanel.register({arm:ARM}); else try{ mixpanel.unregister('arm'); }catch(e){}   // 다른 폼/다음 기수 이벤트에 arm 이 따라붙지 않게
    mixpanel.register(Object.assign({ application_session:sid, form:'apply-'+COHORT, track:TRACK, in_app_browser:inApp, returning_visitor:returning }, hidden));
    mp=mixpanel;
   }

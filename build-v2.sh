@@ -130,11 +130,11 @@ PAY_V3_TAIL = r"""<style>
 </style>
 <script>
 (function(){ var pay=document.getElementById('pay'), nameIn=document.querySelector('input[name="name"]'), back=document.getElementById('payBack'), direct=document.querySelector('.pay-copy'), sub=document.getElementById('submit'); if(!pay||!pay.getAttribute('data-acct-raw')) return;
- var ACCT=pay.getAttribute('data-acct-raw'), BANK='%ED%86%A0%EC%8A%A4%EB%B1%85%ED%81%AC', PKG='viva.republica.toss', android=/android/i.test(navigator.userAgent||'');
+ var ACCT=pay.getAttribute('data-acct-raw'), BANK='%ED%86%A0%EC%8A%A4%EB%B1%85%ED%81%AC', android=/android/i.test(navigator.userAgent||'');
  function amt(){ var e=pay.querySelector('.fr-fee'); return (e?e.textContent:'').replace(/[^\d]/g,''); }   // 친구 할인이 켜지면 fr-fee 가 바뀌어 금액도 따라감
  var wasHidden=false, clicked=false;
  pay.addEventListener('click',function(e){ e.preventDefault(); clicked=true; var q='send?bank='+BANK+'&accountNo='+ACCT+'&amount='+amt();
-  var url=android?('intent://'+q+'#Intent;scheme=supertoss;package='+PKG+';end'):('supertoss://'+q);
+  var url='supertoss://'+q;   // 자동 실행은 pay 페이지와 같이 supertoss:// 만 (intent:// 는 WebView 에서 폼 탭 자체가 에러 페이지로 갈 수 있음)
   try{ location.href=url; }catch(x){}
   setTimeout(function(){ if(!document.hidden&&!wasHidden&&direct) direct.classList.add('on'); },1200); });   // 토스가 안 열리면 직접 입금 줄 강조
  document.addEventListener('visibilitychange',function(){ if(document.hidden){ if(clicked) wasHidden=true; } else if(wasHidden&&back){ back.hidden=false; if(sub) sub.classList.add('pulse'); setTimeout(function(){ try{ nameIn.focus({preventScroll:true}); back.scrollIntoView({block:'center'}); }catch(x){} },200); } });   // 돌아오면 이름 칸으로
@@ -605,6 +605,9 @@ def gen(path, f):
         t = t[:a0] + new_blk + t[a1:].replace(mb.group(0), '\n\n', 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PAY_V3_TAIL + foot, 1)
+        arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
+        assert arm_line, f'{path} ARM 줄을 못 찾음'
+        t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 

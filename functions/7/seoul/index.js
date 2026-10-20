@@ -22,15 +22,15 @@ export async function onRequestGet(context) {
   let arm = forced === 'a' || forced === 'b' ? forced : saved;
   const fresh = !arm;
   if (!arm) arm = crypto.getRandomValues(new Uint8Array(1))[0] < 128 ? 'a' : 'b';
-  const cookie = `${COOKIE}=${arm}; Path=/7/; Max-Age=2592000; SameSite=Lax` + (url.protocol === 'https:' ? '; Secure' : '');
   let res;
   if (arm === 'b' && env.ASSETS) {
     const bUrl = new URL(url); bUrl.pathname = '/7/seoul/_b/'; bUrl.search = '';
     res = await env.ASSETS.fetch(new Request(bUrl.toString(), { headers: request.headers }));
-    if (!res.ok) res = await context.next();   // _b 가 없으면 a
+    if (!res.ok) { res = await context.next(); arm = 'a'; }   // _b 를 못 가져오면 a 화면 + a 로 기록 (화면과 라벨이 어긋나지 않게)
   } else {
     res = await context.next();
   }
+  const cookie = `${COOKIE}=${arm}; Path=/7/; Max-Age=2592000; SameSite=Lax` + (url.protocol === 'https:' ? '; Secure' : '');
   const out = new Response(res.body, res);
   if (fresh || forced) out.headers.append('set-cookie', cookie);
   out.headers.set('cache-control', 'no-store');

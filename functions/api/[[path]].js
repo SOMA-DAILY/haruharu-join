@@ -321,6 +321,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
             .bind(String(b.sid || id).slice(0, 64), sp, now, id)]),
         ]);
         dbOk = true;
+        // 50/50 팔 (10/20): 방문 기록 없이 제출만 온 경우에도 sessions.arm 에 남게. 열이 없으면 조용히 넘어감
+        if (!noSess && (h.arm === 'a' || h.arm === 'b')) {
+          try { await env.DB.prepare('UPDATE sessions SET arm = COALESCE(arm, ?3) WHERE sid = ?1 AND path = ?2').bind(String(b.sid || id).slice(0, 64), sp, h.arm).run(); } catch (e) {}
+        }
       }
     } catch (e) {}
     // 축제 폼 전용 열(migrations/0007)은 위 batch 밖에서 따로 채움: 원격에 0007 이 빠져도 신청자 행은 남고 이 세 값만 빠짐 (정본 KV 에는 다 있음)
@@ -400,12 +404,13 @@ export async function onRequest({ request, env, params, waitUntil }) {
     } while (cursor);
     rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
     if (url.searchParams.get('format') === 'json') return json(rows);
-    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track'];
+    const HIDDEN_CSV = HIDDEN.filter((k) => k !== 'arm');   // arm 은 맨 끝 (기존 열 위치 유지)
+    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN_CSV, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track', 'arm'];
     const lines = [head.join(',')];
     for (const r of rows) {
       const f = r.fields || {}, h = r.hidden || {};
-      lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN.map((k) => h[k]), r.ref, r.sid].map(esc)
-        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || '')]).join(','));
+      lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN_CSV.map((k) => h[k]), r.ref, r.sid].map(esc)
+        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || ''), esc(h.arm || '')]).join(','));
     }
     return csv(lines);
   }
@@ -649,7 +654,10 @@ async function admin(sub, request, env, kv, url) {
 
   // 신청자 (D1 사본 + 처리 상태)
   if (request.method === 'GET' && sub === '/applicants') {
-    const rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all();
+    // x.arm (10/20, migrations/0015): 50/50 팔. 열이 아직 없으면(마이그레이션 전) 없이 다시 읽음
+    let rows;
+    try { rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app, x.arm FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all(); }
+    catch (e) { rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all(); }
     return json({ rows: rows.results, last_submit: Number(await kv.get('meta:last_submit')) || 0 });
   }
   if (request.method === 'DELETE' && sub === '/applicants') {
