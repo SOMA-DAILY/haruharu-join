@@ -114,12 +114,10 @@ PAY_V3_TAIL = r"""<style>
 .pay-card .q{margin:4px 0 0}
 .pay-card .fr-mini{background:#fff}
 .pay-q{margin-top:14px}
-.pay-q .pay{margin:0 0 10px}
-.pay-direct{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13.5px;color:var(--hh-ink2)}
-.pay-direct>span{flex:none;font-weight:700}
-.pay-direct .acct-copy{flex:1;height:40px;margin:0;font-size:14px}
-.pay-direct em{flex:none;font-style:normal;font-size:12.5px;color:var(--hh-mute)}
-.pay-direct.on .acct-copy{border-color:var(--hh-blue);box-shadow:0 0 0 3px rgba(47,123,214,.25)}
+.pay-q .pay{margin:0 0 8px;border-radius:12px}
+.pay-copy{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:50px;margin:0 0 6px;border:1.5px solid var(--hh-line);border-radius:12px;background:#fff;color:var(--hh-ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.pay-copy.on{border-color:var(--hh-blue);box-shadow:0 0 0 3px rgba(47,123,214,.25)}
+.pay-owner{margin:0 0 12px;font-size:12.5px;color:var(--hh-mute);text-align:center}
 .pay-trust{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#F6F8FB;list-style:none;font-size:13.5px;line-height:1.55;color:var(--hh-ink2)}
 .pay-trust li:before{content:"✓";margin-right:6px;color:var(--hh-blue);font-weight:800}
 .pay-trust a{color:#1F5FA9;font-weight:700}
@@ -131,7 +129,7 @@ PAY_V3_TAIL = r"""<style>
 @keyframes paypulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 5px rgba(26,26,26,.25)}}
 </style>
 <script>
-(function(){ var pay=document.getElementById('pay'), nameIn=document.querySelector('input[name="name"]'), back=document.getElementById('payBack'), direct=document.querySelector('.pay-direct'), sub=document.getElementById('submit'); if(!pay||!pay.getAttribute('data-acct-raw')) return;
+(function(){ var pay=document.getElementById('pay'), nameIn=document.querySelector('input[name="name"]'), back=document.getElementById('payBack'), direct=document.querySelector('.pay-copy'), sub=document.getElementById('submit'); if(!pay||!pay.getAttribute('data-acct-raw')) return;
  var ACCT=pay.getAttribute('data-acct-raw'), BANK='%ED%86%A0%EC%8A%A4%EB%B1%85%ED%81%AC', PKG='viva.republica.toss', android=/android/i.test(navigator.userAgent||'');
  function amt(){ var e=pay.querySelector('.fr-fee'); return (e?e.textContent:'').replace(/[^\d]/g,''); }   // 친구 할인이 켜지면 fr-fee 가 바뀌어 금액도 따라감
  var wasHidden=false, clicked=false;
@@ -595,8 +593,9 @@ def gen(path, f):
                    + fee_was.group(0) + fr_on.group(0) + mb.group(0).strip() + '\n</div>\n'
                    '<div class="q pay-q" data-name="name">\n'
                    f' <a class="pay" id="pay" href="{f["pay"]}" rel="noopener" data-acct-raw="{ac.group(1).replace("-", "")}">토스로 {amt_html}원 송금하기</a>\n'
-                   f' <p class="pay-direct"><span>직접 입금</span><button type="button" class="acct-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>토스뱅크 {ac.group(1)} 복사</span></button><em>예금주 최o현</em></p>\n'
-                   ' <ul class="pay-trust"><li>입금이 확인되면 문자로 안내드려요</li><li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li><li>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a></li></ul>\n'
+                   f' <button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>직접 입금 계좌 복사 {ac.group(1)}</span></button>\n'
+                   ' <p class="pay-owner">토스뱅크, 예금주 최o현</p>\n'
+                   f' <ul class="pay-trust"><li>확인 연락은 신청 마감 {deadline_ko} 이후에 드려요</li><li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li><li>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a></li></ul>\n'
                    ' <p class="pay-back" id="payBack" hidden>송금을 마쳤다면 이름 적고 제출해 주세요</p>\n'
                    ' <p class="t pay-name">송금자 이름 (실명)<span class="req">*</span></p>\n <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'
                    ' <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive">' + name_end)
