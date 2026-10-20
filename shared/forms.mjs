@@ -95,7 +95,7 @@ export const FORMS = {
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
   //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
-  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/' },
+  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true },   // abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----

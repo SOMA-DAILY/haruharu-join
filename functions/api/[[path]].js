@@ -23,7 +23,7 @@ const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
 const WORK_FIELDS = ['schedule_pref'];
 // 캡처 이미지는 FIELDS 에 넣지 않음: /partial(D1 sessions.fields)로는 절대 안 들어가게 제출 본문의 capture 로만 받음
 const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS, ...WORK_FIELDS];
-const HIDDEN = ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto'];
+const HIDDEN = ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto', 'arm'];   // arm (10/20): 50/50 팔 a|b (functions/7/seoul 쿠키)
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebot|meta-externalagent|preview|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
 
 async function readBody(request) {
@@ -162,6 +162,10 @@ async function trackSession(env, request, b) {
       await env.DB.prepare('UPDATE sessions SET did = COALESCE(did, ?3), pay = MAX(COALESCE(pay, 0), ?4) WHERE sid = ?1 AND path = ?2')
         .bind(String(b.sid).slice(0, 64), path, did, b.pay ? 1 : 0).run();
     } catch (e) {}
+  }
+  // 50/50 팔 라벨 (migrations/0015). 첫 기록 값 유지. 열이 없으면 조용히 넘어감
+  if (h.arm === 'a' || h.arm === 'b') {
+    try { await env.DB.prepare('UPDATE sessions SET arm = COALESCE(arm, ?3) WHERE sid = ?1 AND path = ?2').bind(String(b.sid).slice(0, 64), path, h.arm).run(); } catch (e) {}
   }
 }
 
