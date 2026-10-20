@@ -268,6 +268,9 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+    if cand:   # B 팔 (10/20 사용자): 진행 기간과 신청 마감을 한 칸으로, 확정 문자 대신 초대 코드 안내
+        rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 일정', info.get('period', '추후 안내') + f'<small>신청 마감 <b>{deadline_ko}</b>, 초대 코드는 마감 뒤 문자로 보내드려요</small>'),
+                  ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
         rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
@@ -595,7 +598,7 @@ def gen(path, f):
                    f' <a class="pay" id="pay" href="{f["pay"]}" rel="noopener" data-acct-raw="{ac.group(1).replace("-", "")}">토스로 {amt_html}원 송금하기</a>\n'
                    f' <button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>직접 입금 계좌 복사 {ac.group(1)}</span></button>\n'
                    ' <p class="pay-owner">토스뱅크, 예금주 최o현</p>\n'
-                   f' <ul class="pay-trust"><li>확인 연락은 신청 마감 {deadline_ko} 이후에 드려요</li><li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li><li>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a></li></ul>\n'
+                   f' <ul class="pay-trust"><li>초대 코드는 신청 마감 {deadline_ko} 이후에 드려요</li><li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li><li>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a></li></ul>\n'
                    ' <p class="pay-back" id="payBack" hidden>송금을 마쳤다면 이름 적고 제출해 주세요</p>\n'
                    ' <p class="t pay-name">송금자 이름 (실명)<span class="req">*</span></p>\n <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'
                    ' <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive">' + name_end)
