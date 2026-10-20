@@ -375,9 +375,11 @@ function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),
 function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
 // 알림 신청(10/11): 3기 자체폼부터 받은 신청 중 같은 번호가 있으면(시점, 기수 무관, 송금확인 안됨 제외) [참여한 적 있음]
 function joinedBefore(r){return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits&&x.phone_digits===r.phone_digits&&cohortOf(x)!=='alert'&&(regOf(x.path)||{}).plan!=='prealert'&&x.status!=='송금확인 안됨'})}
-function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';if(cohortOf(r)==='alert')return '<span class="badge violet" title="'+esc(r.path)+'">알림 신청</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(f&&f.variant==='v2'&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':'')}
-// 개선판 배지는 같은 기수에 기존판이 같이 있을 때만 (4기 A/B). 5기부터는 폼이 하나라 배지 없음
-function hasBase(p){var f=regOf(p);return !!f&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}
+function formBadge(r){if(isFest(r))return '<span class="badge jnu">전남대 축제</span>';if(cohortOf(r)==='alert')return '<span class="badge violet" title="'+esc(r.path)+'">알림 신청</span>';var f=regOf(r.path);return '<span class="badge '+esc(r.city)+'" title="'+esc(r.path)+'">'+esc(f?(TRACK_KO[f.track]||f.label):(cityKo[r.city]||r.city||'-'))+'</span>'+(isArmB(r)?' <span class="badge" title="50/50 B 팔 (hh_ab 쿠키 b)">개선판</span>':(f&&f.variant==='v2'&&!f.comeback&&!f.rejoin&&hasBase(r.path)?' <span class="badge" title="'+esc(r.path)+'">개선판</span>':''))}
+// 개선판 배지 (10/20): 1) 같은 주소 50/50 의 B 팔 (신청 기록 hidden.arm = b, functions/7/seoul) 2) 같은 기수에 기존판이 따로 있던 4기 A/B (/4/seoul/ vs /4/seoul/v2/).
+// 자정/낮 마감 할인(comeback)과 재참여(rejoin)는 플랜이 같다는 이유로 서로 짝지어지지 않게 뺌 (10/18 6기 낮 1시 할인 신청에 개선판이 잘못 붙었음)
+function isArmB(r){return r.arm==='b'||!!(r.hidden&&r.hidden.arm==='b')}   // 목록은 D1(submissions + sessions.arm), hidden 은 KV 기록용 보조
+function hasBase(p){var f=regOf(p);return !!f&&!f.comeback&&!f.rejoin&&Object.keys(REG.FORMS).some(function(q){var g=REG.FORMS[q];return q!==p&&!g.variant&&!g.comeback&&!g.rejoin&&!g.survey&&g.cohort===f.cohort&&g.track===f.track&&g.plan===f.plan})}
 function renderCohortTabs(){
   $('aCohortTabs').innerHTML=cohortList().map(function(c){return '<button data-c="'+esc(c)+'" class="'+(c==='alert'?'alert':'')+(c===S.cohort?' on':'')+'">'+esc(cohortKo(c))+'</button>'}).join('');
   var ts=trackList(S.cohort);$('aCityTabs').classList.toggle('hidden',S.cohort==='alert');

@@ -21,6 +21,7 @@ CARD=open('src/info-card.html',encoding='utf-8').read()
 EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.v2.html',encoding='utf-8').read()
 LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
+LANDING_V3B=open('src/landing.v3b.html',encoding='utf-8').read()   # 랜딩 3판 B (10/20): 등록부 abTest 폼의 B 팔. 첫 화면 실제 캡처 6칸 + 훅 + 금액 칩, 후기 5, 진행 과정/걱정 접힘, 결제 구역 v3 (PAY_V3_TAIL)
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 # 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
 COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
@@ -99,6 +100,49 @@ FOLD_TAIL = """<script>
 """
 
 
+# 결제 구역 후보 (10/20, ops/결제구역-후보-스펙-2026-10-20.md): 단계 바 → 금액 카드(친구 할인 안으로) → 토스 딥링크(새 탭 없이 같은 화면) → 직접 입금 평문 → 신뢰 3줄 → 송금자 이름
+# 딥링크/복귀 감지는 pay/index.html 의 것을 인라인으로. pay 탭을 안 거쳐서 PayPageView 픽셀은 안 쏘임 (메모만)
+PAY_V3_TAIL = r"""<style>
+.pay-card{margin-top:30px;padding:14px 14px 6px;border:1.5px solid var(--hh-blue);border-radius:16px;background:#F5F9FE}
+.pay-card>.t{font-size:18px;font-weight:700;margin:0 0 10px}
+.pay-card>.t .req{color:#e0245e;font-weight:400;margin-left:3px}
+.pay-steps{display:flex;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.pay-steps li{flex:1;display:flex;align-items:center;gap:6px;padding:8px;border-radius:10px;background:#fff;font-size:12px;font-weight:700;line-height:1.25;color:#22345A}
+.pay-steps b{flex:none;width:18px;height:18px;border-radius:50%;background:var(--hh-blue);color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+.pay-card .fee-was{margin:0 0 6px}
+.pay-card .fr-on{margin:0 0 6px}
+.pay-card .q{margin:4px 0 0}
+.pay-card .fr-mini{background:#fff}
+.pay-q{margin-top:14px}
+.pay-q .pay{margin:0 0 8px;border-radius:12px}
+.pay-copy{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:50px;margin:0 0 6px;border:1.5px solid var(--hh-line);border-radius:12px;background:#fff;color:var(--hh-ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.pay-copy.on{border-color:var(--hh-blue);box-shadow:0 0 0 3px rgba(47,123,214,.25)}
+.pay-owner{margin:0 0 12px;font-size:12.5px;color:var(--hh-mute);text-align:center}
+.pay-trust{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#F6F8FB;list-style:none;font-size:13.5px;line-height:1.55;color:var(--hh-ink2)}
+.pay-trust li:before{content:"✓";margin-right:6px;color:var(--hh-blue);font-weight:800}
+.pay-trust a{color:#1F5FA9;font-weight:700}
+.pay-back{margin:0 0 10px;padding:11px 13px;border-radius:12px;background:#FFF4D6;font-size:14px;font-weight:700;color:#7A4B00}
+.pay-back[hidden]{display:none}
+.q .t.pay-name{font-size:16px;margin:0 0 4px}
+.pay-sub{margin:0 0 8px;font-size:13px;color:var(--hh-mute)}
+#submit.pulse{animation:paypulse 1.2s ease 2}
+@keyframes paypulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 5px rgba(26,26,26,.25)}}
+</style>
+<script>
+(function(){ var pay=document.getElementById('pay'), nameIn=document.querySelector('input[name="name"]'), back=document.getElementById('payBack'), direct=document.querySelector('.pay-copy'), sub=document.getElementById('submit'); if(!pay||!pay.getAttribute('data-acct-raw')) return;
+ var ACCT=pay.getAttribute('data-acct-raw'), BANK='%ED%86%A0%EC%8A%A4%EB%B1%85%ED%81%AC', android=/android/i.test(navigator.userAgent||'');
+ function amt(){ var e=pay.querySelector('.fr-fee'); return (e?e.textContent:'').replace(/[^\d]/g,''); }   // 친구 할인이 켜지면 fr-fee 가 바뀌어 금액도 따라감
+ var wasHidden=false, clicked=false;
+ pay.addEventListener('click',function(e){ e.preventDefault(); clicked=true; var q='send?bank='+BANK+'&accountNo='+ACCT+'&amount='+amt();
+  var url='supertoss://'+q;   // 자동 실행은 pay 페이지와 같이 supertoss:// 만 (intent:// 는 WebView 에서 폼 탭 자체가 에러 페이지로 갈 수 있음)
+  try{ location.href=url; }catch(x){}
+  setTimeout(function(){ if(!document.hidden&&!wasHidden&&direct) direct.classList.add('on'); },1200); });   // 토스가 안 열리면 직접 입금 줄 강조
+ document.addEventListener('visibilitychange',function(){ if(document.hidden){ if(clicked) wasHidden=true; } else if(wasHidden&&back){ back.hidden=false; if(sub) sub.classList.add('pulse'); setTimeout(function(){ try{ nameIn.focus({preventScroll:true}); back.scrollIntoView({block:'center'}); }catch(x){} },200); } });   // 돌아오면 이름 칸으로
+})();
+</script>
+"""
+
+
 # [모두 동의]: 누르면 두 항목을 같이 켜고 끔, 항목을 따로 바꾸면 모두 동의 표시가 따라감. 모양은 여기 style
 AGREE_TAIL = """<style>
 .q[data-name="consent"] .chk{align-items:center}
@@ -151,7 +195,8 @@ def extra_q(f):
 def gen(path, f):
     cohort, plan = f['cohort'], f['plan']
     f = dict(f, path=path)
-    outdir = 'public' + path
+    cand = bool(f.get('candidateB'))   # 50/50 B 팔 (10/20): 같은 등록부 줄을 public{path}_b/ 에 한 번 더 찍음. 서버 functions/{path}/index.js 가 쿠키로 골라 같은 주소에서 냄
+    outdir = 'public' + path + ('_b/' if cand else '')
     os.makedirs(outdir, exist_ok=True)
     work = bool(f.get('occupation'))
     prealert = plan == 'prealert'
@@ -223,6 +268,9 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+    if cand:   # B 팔 (10/20 사용자): 진행 기간과 신청 마감을 한 칸으로, 확정 문자 대신 초대 코드 안내
+        rows_a = [('진행 일정', info.get('period', '추후 안내') + f'<small>{area} 00~07년생 대학생<br>신청 마감 <b>{deadline_ko}</b><br>초대 코드는 시작 전날 18시 이후 문자로 보내드려요</small>'),
+                  ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
         rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
@@ -245,7 +293,7 @@ def gen(path, f):
         t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
-        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else (LANDING_V3B if cand else LANDING_V3) if f.get('landingV3') else LANDING), t, flags=re.S)
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
         if comeback and f.get('leftKo') == '':
             t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left" id="cbLeft" hidden></p>', 1)
@@ -274,7 +322,7 @@ def gen(path, f):
         # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
         if f.get('landingV3') and f.get('noRecord'):
             t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
-            assert n == 1, f'{path} 성과 구역을 못 찾음'
+            assert n == 1 or (cand and 'id="ld-record"' not in LANDING_V3B), f'{path} 성과 구역을 못 찾음'   # B 팔 랜딩은 성과 구역 자체가 없음
     else:
         t = t.replace('<!--TOP_START-->\n', '').replace('<!--TOP_END-->\n', '').replace('<!--INFO_START-->\n', '').replace('<!--INFO_END-->\n', '')
     for k, v in {
@@ -536,6 +584,30 @@ def gen(path, f):
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
         assert os.path.exists('public/img/' + img), f'{path} 이미지 없음: {img}'
+    if cand and f.get('landingV3') and f.get('phonePage') and not survey and not comeback and not share_only and not phone_only:
+        name_open = '<div class="q" data-name="name">'; name_end = '<p class="err">송금자 이름을 입력해 주세요</p></div>'
+        a0 = t.index(name_open); a1 = t.index(name_end, a0) + len(name_end); blk = t[a0:a1]
+        mb = re.search(r'\n*<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t[a1:], flags=re.S)
+        fee_was = re.search(r'<p class="fee-was">.*?</p>\n', blk, flags=re.S); fr_on = re.search(r'<p class="fr-on" hidden>.*?</p>\n', blk, flags=re.S); ac = re.search(r'data-acct="([\d-]+)"', blk)
+        assert mb and fee_was and fr_on and ac, f'{path} 결제 구역 조각을 못 찾음'
+        amt_html = '<span class="fr-fee">' + won(f['fee']) + '</span>'
+        new_blk = ('<div class="pay-card">\n<p class="t">참가비<span class="req">*</span></p>\n'
+                   '<ol class="pay-steps"><li><b>1</b>토스로 송금</li><li><b>2</b>이 화면으로 돌아오기</li><li><b>3</b>이름 적고 제출</li></ol>\n'
+                   + fee_was.group(0) + fr_on.group(0) + mb.group(0).strip() + '\n</div>\n'
+                   '<div class="q pay-q" data-name="name">\n'
+                   f' <a class="pay" id="pay" href="{f["pay"]}" rel="noopener" data-acct-raw="{ac.group(1).replace("-", "")}">토스로 {amt_html}원 송금하기</a>\n'
+                   f' <button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>직접 입금 계좌 복사 {ac.group(1)}</span></button>\n'
+                   ' <p class="pay-owner">토스뱅크, 예금주 최o현</p>\n'
+                   ' <ul class="pay-trust"><li>시작 전날 18시 이후 초대 코드를 문자로 보내드려요</li><li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li><li>궁금한 건 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a></li></ul>\n'
+                   ' <p class="pay-back" id="payBack" hidden>송금을 마쳤다면 이름 적고 제출해 주세요</p>\n'
+                   ' <p class="t pay-name">송금자 이름 (실명)<span class="req">*</span></p>\n <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'
+                   ' <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive">' + name_end)
+        t = t[:a0] + new_blk + t[a1:].replace(mb.group(0), '\n\n', 1)
+        foot = '<p class="foot">'; assert t.count(foot) == 1
+        t = t.replace(foot, PAY_V3_TAIL + foot, 1)
+        arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
+        assert arm_line, f'{path} ARM 줄을 못 찾음'
+        t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 
@@ -543,5 +615,6 @@ built = 0
 for path, f in FORMS.items():
     if f.get('variant') != 'v2': continue
     gen(path, f); built += 1
+    if f.get('abTest'): gen(path, dict(f, candidateB=True))   # B 팔을 _b/ 에 한 번 더
 assert built, '등록부에 개선판(variant v2) 폼이 없음'
 EOF
