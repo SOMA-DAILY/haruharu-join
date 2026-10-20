@@ -217,12 +217,12 @@ def gen(path, f):
     ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
     ld_flow = flow if (prealert or f.get('landingV3')) else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭). 랜딩 3판은 송금을 다시 넣음 (10/12)
     ld_steps = ''.join('<li>' + re.sub(r'^\d+\.\s*', '', s) + '</li>' for s in ld_flow.split('\n'))
-    # 10/14 운영자: 랜딩 3판의 신청 안내 구역에서는 참가비를 뺌 (칸도, 단계의 송금 말도). 신청서 맨 위 안내 카드(__LD_ROWS_A__)와 참가비 페이지에는 그대로
-    if f.get('landingV3'): ld_steps = ld_steps.replace('참가비를 송금한 뒤 ', '')
+    # 10/20 운영자: 신청 안내 구역에 참가비를 되돌림 (10/14 제거는 5기 한정 의도였는데 템플릿 공통이라 6/7기까지 샜음)
+    if f.get('landingV3'): ld_steps = ld_steps.replace('참가비를 송금한 뒤', f'참가비 <b>{fee}원</b>을 송금한 뒤')
     # 랜딩 3판 안내 카드 다섯 줄 + 첫 화면 칩 (짧은 날짜)
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
-              ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+              ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
         rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
@@ -281,7 +281,7 @@ def gen(path, f):
         '__LD_BADGE__': '지난 참가자 전용' if survey else f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
         '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
-        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells([r for r in rows_a if r[0] != '참가비']), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
+        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells(rows_a), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
