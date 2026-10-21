@@ -671,7 +671,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 <section class="page" data-page="2">
 <div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>
- <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive"><p class="err">010으로 시작하는 번호를 입력해 주세요</p></div>
+ <input type="tel" name="phone" inputmode="numeric" autocomplete="tel" placeholder="ex) 01012345678" required class="mp-sensitive"><p class="err">010으로 시작하는 번호를 입력해 주세요</p></div>
 
 <div class="q" data-name="consent"><p class="t">약관 동의<span class="req">*</span></p>
  <label class="chk ag-all"><input type="checkbox" id="agAll">모두 동의</label>
@@ -706,7 +706,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
  <a class="pay" id="pay" href="https://haruharu-pay.pages.dev/j/" target="_blank" rel="noopener">▶ 토스로 <span class="fr-fee">7,900</span>원 송금하기</a>
  <button type="button" class="acct-copy" id="acctCopy" data-acct="1000-0141-0988"><span>토스뱅크 1000-0141-0988 계좌번호 복사</span></button>
  <p class="note">송금 후 송금자 이름을 적어주세요.</p>
- <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"><p class="err">송금자 이름을 입력해 주세요</p></div>
+ <input type="text" name="name" autocomplete="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"><p class="err">송금자 이름을 입력해 주세요</p></div>
 
 <div class="q" data-name="buddy_room"><div class="fr-mini"><p>친구랑 같이 신청하면<br><b>둘 다 5,900원</b></p><button type="button" class="fr-toggle" aria-expanded="false">친구랑 신청해요</button></div> <div class="fr-more" hidden>
  <div class="opts">
