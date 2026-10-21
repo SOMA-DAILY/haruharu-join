@@ -145,3 +145,42 @@ test('6기 낮 1시 화면은 기존 한 페이지 구성에 6기 일정과 5,90
   assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 1);
   assert.ok(read('/6/seoul/').includes('name="source"'));
 });
+
+
+test('7기 정오 할인은 정오 직전까지 5,900원으로 접수하고 정각부터 저장을 거부한다', async () => {
+  const path = '/7/seoul/noon/', end = Date.parse('2026-10-22T12:00:00+09:00');
+  assert.equal(formStatus(path, end - 1).open, true);
+  assert.equal(formStatus(path, end - 1).deadline, end);
+  assert.equal(formStatus(path, end).open, false);
+  assert.equal(formStatus(path, end).next, '/7/seoul/');
+  assert.equal(formStatus('/7/seoul/', end).open, true);
+  assert.equal(formStatus('/7/seoul/', Date.parse('2026-10-22T18:00:00+09:00')).open, false);
+  const { source, ...noSource } = fields;
+  const ok = await submit(path, end - 1, { ...noSource, buddy_room: '같은 방', buddy: '01000000001' });
+  assert.equal(ok.res.status, 200);
+  assert.equal(ok.record.hidden.cohort, '7');
+  assert.equal(ok.record.hidden.plan, 'discount');
+  assert.equal(ok.record.friend_fee || 0, 0);
+  for (const now of [end, end + 1, end + 3600000]) {
+    const late = await submit(path, now, noSource);
+    assert.equal(late.res.status, 409);
+    assert.equal(late.record, null);
+  }
+});
+
+test('7기 할인 화면과 관리자 카드의 금액, 정오 마감, 진행 날짜 및 종료 안내가 일치한다', () => {
+  const html = read('/7/seoul/noon/');
+  for (const need of ['10월 22일 낮 12시까지만<br>', '<s>7,900원</s> <b>5,900원</b>',
+    '10월 22일(목) 낮 12시 마감', '10월 23일(금) ~ 10월 25일(일)',
+    '▶ 토스로 5,900원 송금하기', 'haruharu-pay.pages.dev/b/', 'id="cbBar"', 'id="cbClock"',
+    '<h2>5,900원 할인이 끝났어요</h2>', '7기 신청은 10월 22일(목) 18:00까지 받고 있어요.',
+    'href="/7/seoul/?src=h7-seoul-student-comeback-closed"']) assert.ok(html.includes(need), need);
+  for (const gone of ['name="source"', 'name="intent"', 'class="fr-share"', '__CB_', 'data-next=', 'data-prev='])
+    assert.ok(!html.includes(gone), gone);
+  assert.equal((html.match(/<section class="page[^"]*" data-page="\d">/g) || []).length, 1);
+  assert.ok(!listedForms().some(x => x.path === '/7/seoul/noon/'));
+  const admin = readFileSync(new URL('../public/admin/index.html', import.meta.url), 'utf8');
+  assert.ok(admin.includes('7기 서울 학생 정오 마감 할인'));
+  assert.ok(admin.includes('10월 22일(목) 낮 12시'));
+  assert.ok(admin.includes("m[3]==='noon'?' 정오 마감 할인':"));
+});

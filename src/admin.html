@@ -587,7 +587,7 @@ function srcName(s){if(!s)return '직접 들어옴';var l=linkOf(s);if(l&&l.labe
   var C={card3:{m:'옷가게 3장',f:'4분할 3장'},muhan:'무도짤',film4:'필름 4장',reel:'릴스'};
   var m=/^h[34]-(seoul|gwangju|work)-(m|f)-(.+)$/.exec(s);
   if(m){var c=C[m[3]];if(c&&typeof c==='object')c=c[m[2]];return (m[1]==='work'?'수도권 직장인':cityKo[m[1]])+' '+(m[2]==='m'?'남':'여')+' '+(c||m[3])}
-  m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':m[3]==='comeback'?' 자정 마감 할인':m[3]==='lunch'?' 낮 1시 마감 할인':m[3]==='evening'?' 저녁 6시 마감 할인':'');
+  m=/^h(\d)-msg-([a-z-]+)-(\w+)$/.exec(s);if(m)return m[1]+'기 메시지 '+(TRACK_KO[m[2]]||m[2])+(m[3]==='discount'?' 할인':m[3]==='prealert'?' 사전알림':m[3]==='comeback'?' 자정 마감 할인':m[3]==='lunch'?' 낮 1시 마감 할인':m[3]==='noon'?' 정오 마감 할인':m[3]==='evening'?' 저녁 6시 마감 할인':'');
   m=/^h(\d+)-rejoin-(seoul-student|gwangju-student)-(f|m)$/.exec(s);if(m)return m[1]+'기 '+TRACK_KO[m[2]]+' '+(m[3]==='f'?'여자':'남자')+' 재참여';
   m=/^h(\d+)-friend-rejoin$/.exec(s);if(m)return m[1]+'기 재참여 친구 초대';
   if(s==='rejoin-msg')return '재참여 후기 폼 메시지';if(s==='rejoin-friend')return '재참여 후기 폼 친구 초대';
