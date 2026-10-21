@@ -268,9 +268,7 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
-    if cand:   # B 팔 (10/20 사용자): 진행 기간과 신청 마감을 한 칸으로, 확정 문자 대신 초대 코드 안내
-        rows_a = [('진행 일정', info.get('period', '추후 안내') + f'<small>{area} 00~07년생 대학생<br>신청 마감 <b>{deadline_ko}</b><br>초대 코드는 시작 전날 18시 이후 문자로 보내드려요</small>'),
-                  ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+    # B 팔 1페이지는 A 와 같게 (10/21 사용자): 변수는 송금 페이지(결제 구역)만. B 전용 랜딩/안내 카드는 안 씀
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
         rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내') + f'<small>참가 확정 문자는 {confirm_by}까지 보내드려요</small>'),
@@ -293,7 +291,7 @@ def gen(path, f):
         t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
-        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else (LANDING_V3B if cand else LANDING_V3) if f.get('landingV3') else LANDING), t, flags=re.S)
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
         if comeback and f.get('leftKo') == '':
             t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left" id="cbLeft" hidden></p>', 1)
