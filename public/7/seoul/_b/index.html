@@ -405,30 +405,6 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 .ld-calm-stat{margin-top:14px;font-size:15px;font-weight:700;color:var(--hh-ink)}
 .ld-calm .ld-cta{margin-top:18px}
 .ld-calm .ld-grid{margin-top:20px}
-/* 소재별 첫 화면 (10/20 로컬 후보, ?c=exhibit|examgrid): 광고 1장째 사진 + 광고 문장 그대로 + 일정/참가비 칩. 값이 없거나 모르면 기존 첫 화면 */
-.ld-hero-c{background:#fff;padding-bottom:22px;border-radius:0}
-.ld-hero-c[hidden],.ld-hero-a[hidden]{display:none}
-.ld-c-img{margin:10px calc(var(--hh-g)*-1) 0;background:#eef0f3}
-.ld-c-img img{display:block;width:100%;height:auto}
-.ld-c-pill{display:inline-block;margin-top:16px;padding:6px 11px;border-radius:7px;background:var(--hh-sky2);color:#1F5FA9;font-size:13.5px;font-weight:800;letter-spacing:-.01em}
-.ld-c-pill.blue{background:#2F6BFF;color:#fff}
-.ld-c-h1{margin-top:10px;font-size:clamp(24px,7.4vw,30px);line-height:1.3;font-weight:900;letter-spacing:-.035em}
-.ld-c-h1 em{font-style:normal;color:var(--hh-blue)}
-.ld-c-h1.blue em{color:#2F6BFF}
-.ld-hero-c .ld-sub{margin-top:8px;font-size:15px}
-.ld-c-proof{margin-top:10px;font-size:15px;font-weight:700;color:var(--hh-ink2)}
-.ld-c-proof b{font-size:18px;font-weight:900;color:var(--hh-blue);letter-spacing:-.02em}
-.ld-hero-c .ld-chips{margin-top:10px}
-.ld-hero-c .ld-chip{background:#F4F4F6;border:1px solid #E3E4E8;color:#333;border-radius:9px}
-.ld-hero-c .ld-chip.fee{background:var(--hh-ink);border-color:var(--hh-ink);color:#fff}
-.ld-more-wrap{margin-top:22px}
-.ld-more{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:0 10px 0 18px;border:0;border-radius:16px;background:var(--hh-sky);font:inherit;font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--hh-ink);text-align:left;cursor:pointer;box-shadow:0 2px 8px rgba(26,52,92,.08);transition:transform .12s,background .12s}
-.ld-more:active{transform:scale(.985);background:var(--hh-sky2)}
-.ld-more span{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;color:var(--hh-blue);font-size:15px;box-shadow:0 1px 4px rgba(26,52,92,.12);transition:transform .2s}
-.ld-more[aria-expanded="true"] span{transform:rotate(180deg)}
-.ld-fold[hidden]{display:none}
-.ld-fold .ld-life-a{margin-top:28px}
-.ld-hero-c.blue .ld-btn{background:#2F6BFF;box-shadow:0 8px 20px rgba(47,107,255,.28)}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
 <symbol id="hh-cloud" viewBox="10 5 197 142"><path d="M123.73 8.59C125.25 8.34 130.28 8.66 131.79 8.84C143.81 10.31 154.76 16.48 162.24 26.01C169.03 34.42 172.16 45.19 170.96 55.93C178.15 57.54 185.73 61.84 190.94 67C199.31 75.44 204.03 86.83 204.08 98.73C204.12 110.3 199.16 122.81 190.93 130.96C184.74 137.09 176.9 141.14 168.43 143.03C162.54 144.35 157.78 144.1 151.85 144.1L137.72 144.1L90.37 144.11L75.83 144.11C71.83 144.1 68 144.23 64.01 143.68C58.78 142.91 53.69 141.41 48.89 139.2C34.41 132.72 23.1 120.75 17.42 105.93C11.94 91.21 12.73 76.56 19.32 62.35C27.67 44.19 44.73 29.25 65.24 27.85C72.43 27.35 78.37 29.25 84.79 32.19C94.58 18.28 106.44 9.93 123.73 8.59Z" fill="white" stroke="#83BDF0" stroke-width="1.4"/><path d="M99.26 83C104.53 82.88 105.33 92.42 100.27 93.97C99.82 94 99.38 93.95 98.96 93.8C95 92.44 94.93 84.94 99.26 83Z" fill="#096EE3"/><path d="M124.46 83C129.73 82.88 130.53 92.42 125.46 93.97C125.02 94 124.58 93.95 124.16 93.8C120.2 92.44 120.12 84.94 124.46 83Z" fill="#096EE3"/><path d="M116.4 100.56C119.66 101.25 114.14 107.07 108.15 102.92C107.58 102.38 107.36 101.98 107.6 101.13C107.62 101.06 107.77 100.83 107.85 100.81C109.06 100.42 110.22 102.18 111.42 102.41C114.06 103.11 114.39 101.84 116.31 100.6C116.34 100.59 116.37 100.57 116.4 100.56Z" fill="#448BD1"/></symbol>
@@ -437,17 +413,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 <div class="ld">
 
-<header class="ld-band ld-hero ld-hero-c" id="ldHeroC" hidden>
-<div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>7기 신청</span></div>
-<div class="ld-c-img"><img id="ldCImg" width="780" height="580" src="" alt="" decoding="async"></div>
-<span class="ld-c-pill" id="ldCPill"></span>
-<h1 class="ld-h1 ld-c-h1" id="ldCH1"></h1>
-<p class="ld-sub" id="ldCSub"></p>
-<p class="ld-c-proof">매칭률 <b>40%</b>, 지금까지 <b>250명+</b> 참여</p>
-<div class="ld-chips"><span class="ld-chip">10/23(금) ~ 10/25(일)</span><span class="ld-chip fee">참가비 7,900원</span></div>
-<div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">소개팅 신청하기 💌</button></div>
-</header>
-<header class="ld-band ld-hero ld-hero-a ld-calm" id="ldHeroA">
+<header class="ld-band ld-hero ld-hero-a ld-calm">
 <div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span></div>
 <p class="ld-eye">하루하루 소개팅 7기 신청</p>
 <h1 class="ld-h1">솔로인 수도권 대학생을 모집합니다</h1>
@@ -457,36 +423,15 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">소개팅 신청하기 💌</button></div>
 <div class="ld-grid" id="ldHero"><img width="600" height="485" data-img="L_grid" src="/img/L_haru_grid.jpg" fetchpriority="high" decoding="async" alt="지난 기수 참가자들이 올린 카페, 고양이, 학교, 러닝, 드럼, 점심 일상 영상 6장"></div>
 </header>
-<script>(function(){
- // 소재별 첫 화면: 주소의 c 값이 아래 셋 중 하나면 광고와 같은 사진/문장으로 바꿈. src(귀속)와는 별개
- var C={
-  // 10/20 사용자: 첫 사진은 AI 광고 이미지 말고 실제 참가자 캡처 6칸. 남녀 같은 사진, 문구는 스케일 소재 훅
-  exhibit:{img:'L_haru_grid',h:630,pill:'서울 대학생 3일 소개팅',h1:'중간고사 끝나면,<br><em>연락할 사람 하나쯤은</em>',sub:'이렇게 서로의 하루 영상을 3일 보고, 마지막 날 서로를 골라요'},
-  examgrid:{img:'L_haru_grid',h:630,pill:'서울 대학생 3일 소개팅',h1:'중간고사 끝나면,<br><em>연락할 사람 하나쯤은</em>',sub:'이렇게 서로의 하루 영상을 3일 보고, 마지막 날 서로를 골라요'}
- };
- var c=''; try{ c=(new URLSearchParams(location.search).get('c')||'').toLowerCase(); }catch(e){}
- if(!C[c]) c=(HH_G==='f'?'exhibit':'examgrid');   // 소재 키가 없으면 성별별 스케일 소재 1장 (여 전시회, 남 그리드). 스케일 소재가 바뀔 때만 교체
- var d=C[c];
- var h=document.getElementById('ldHeroC'), im=document.getElementById('ldCImg');
- im.src='/img/'+d.img+'.jpg'; im.height=d.h; im.alt='광고에서 본 사진';
- document.getElementById('ldCPill').textContent=d.pill; document.getElementById('ldCH1').innerHTML=d.h1; document.getElementById('ldCSub').textContent=d.sub;
- if(d.blue){ h.classList.add('blue'); document.getElementById('ldCPill').classList.add('blue'); document.getElementById('ldCH1').classList.add('blue'); }
- h.hidden=false; document.getElementById('ldHeroA').hidden=true; document.documentElement.setAttribute('data-c',c); window.HH_C=c;
-})();</script>
 
 <section class="ld-sec ld-rv3" data-sec="review3">
 <p class="ld-k">그동안의 후기</p>
 <div class="ld-rv3-list ld-fx">
-<p class="ld-rv">연락하는 사람 생겼어요 !! ☺️☺️<span>지난 기수 참가자</span></p>
-<p class="ld-rv">일상을 보게되니 꾸며지지 않은 그 사람의 스타일이나 취향을 알게 되어 좋았습니다<span>지난 기수 참가자</span></p>
-<p class="ld-rv">새로운 종류의 소개팅을 해볼 수 있어서 재미있었어요! 그리고 익명 질문이 되게 재밌었습니당<span>지난 기수 참가자</span></p>
-<p class="ld-rv">상대의 일상을 볼 수 있어서 좋고 색다른 기분이었어요<span>지난 기수 참가자</span></p>
-<p class="ld-rv">혹시 다음에 또 참여해도 되나요..??ㅎㅎ<span>지난 기수 참가자</span></p>
+<p class="ld-rv">연락하는 사람 생겼어요 !! ☺️☺️<span>앱 2기 참가자</span></p>
+<p class="ld-rv">일상을 보게되니 꾸며지지 않은 그 사람의 스타일이나 취향을 알게 되어 좋았습니다<span>앱 1기 참가자</span></p>
+<p class="ld-rv">한 번 더 해보고 싶네요 ㅋㅋㅋㅋ<span>앱 2기 참가자</span></p>
 </div>
 </section>
-
-<div class="ld-more-wrap"><button type="button" class="ld-more" id="ldMore" aria-expanded="false">3일 동안 이렇게 진행돼요 💕<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button></div>
-<div class="ld-fold" id="ldFold" hidden>
 
 <section class="ld-life ld-band ld-life-a ld-fx" id="ld-life" data-sec="life">
 <h2>서로의 일상이<br>대화 소재로</h2>
@@ -507,7 +452,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <li><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="6.2" width="12.6" height="11.6" rx="3"/><path d="M15.8 10.6l4.9-2.7v8.2l-4.9-2.7"/></svg></i><div><b>각자 일상을 공유하면 돼요</b><span>3초짜리 영상이면 충분해요</span></div></li>
 <li><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6.2a3 3 0 0 1-3 3h-5.4l-3.9 3.2c-.4.3-1 0-1-.5v-2.7H7a3 3 0 0 1-3-3z"/><path d="M8.6 10.1h6.8"/></svg></i><div><b>방에서 다 같이 채팅해요</b><span>올라온 영상에 답장하며 이야기해요</span></div></li>
 </ul></li>
-<li class="ld-step ld-fx"><span class="ld-when">DAY 2</span>
+<li class="ld-step ld-fx" data-engage><span class="ld-when">DAY 2</span>
 <h3>익명으로 질문을 보내요</h3>
 <p>부담 없이 궁금한 걸 물어봐요.</p>
 <div class="ld-ui" aria-hidden="true"><div class="ld-card">
@@ -560,24 +505,35 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 </div>
 </section>
 
+<section class="ld-band ld-tint" id="ld-review" data-sec="review">
+<h2>그동안의 후기</h2>
+<div class="ld-best ld-fx"><p>연락하는 사람 생겼어요 !! ☺️☺️</p><span>앱 2기 참가자</span></div>
+<div class="ld-rvs">
+<p class="ld-rv">일상을 보게되니 꾸며지지 않은 그 사람의 스타일이나 취향을 알게 되어 좋았습니다<span>앱 1기 참가자</span></p>
+<p class="ld-rv">한 번 더 해보고 싶네요 ㅋㅋㅋㅋ<span>앱 2기 참가자</span></p>
+<p class="ld-rv">여러 상대를 동시에 알아볼 수 있는 좋은 방법 같다<span>앱 1기 참가자</span></p>
+<p class="ld-rv">새로운 종류의 소개팅을 해볼 수 있어서 재미있었어요! 그리고 익명 질문이 되게 재밌었습니당<span>앱 1기 참가자</span></p>
+<p class="ld-rv">상대의 일상을 볼 수 있어서 좋고 색다른 기분이었어요<span>앱 2기 참가자</span></p>
+<p class="ld-rv">혹시 다음에 또 참여해도 되나요..??ㅎㅎ<span>앱 출시 전 기수 참가자</span></p>
 </div>
+</section>
 
 <section class="ld-sec" id="ld-guide" data-sec="guide">
 <p class="ld-k">신청 안내</p>
 <h2>신청부터 방 입장까지</h2>
-<dl class="ld-if"><div><dt>진행 일정</dt><dd>10월 23일(금) ~ 10월 25일(일), 3일<small>서울 경기 인천 00~07년생 대학생<br>신청 마감 <b>10월 22일(목) 18:00</b><br>초대 코드는 시작 전날 18시 이후 문자로 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl>
+<dl class="ld-if"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>10월 23일(금) ~ 10월 25일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>10월 22일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl>
 <div class="ld-al"><button type="button" class="ld-al-open" id="ldAlOpen">지금은 말고, 다음 기수 알림만 받을래요</button><div class="ld-al-box" id="ldAlBox" hidden><p class="ld-al-t">다음 기수, 가장 먼저 알려드릴게요</p><p class="ld-al-s">모집이 열리면 문자 한 통만 보내요.</p><div class="ld-al-g"><button type="button" data-g="여성">여성</button><button type="button" data-g="남성">남성</button></div><input type="text" id="ldAlBirth" inputmode="numeric" placeholder="출생년도 (2003)" maxlength="4"><input type="tel" id="ldAlPhone" inputmode="numeric" placeholder="전화번호 (01012345678)" maxlength="13" autocomplete="tel" class="mp-sensitive"><label class="ld-al-c"><input type="checkbox" id="ldAlAgree">모집 알림 문자를 보내기 위해 성별, 출생년도, 전화번호를 받아요. 알림을 보낸 뒤 6개월이 지나면 지워요.</label><button type="button" class="ld-al-go" id="ldAlGo" disabled>알림 받기</button></div><p class="ld-al-done" id="ldAlDone" hidden>알림 신청이 끝났어요 🙌<span>모집이 열리면 문자로 먼저 알려드릴게요.</span></p></div>
-<ol class="ld-steps" data-engage><li>이 폼을 작성하고 참가비 <b>7,900원</b>을 송금한 뒤 제출해요.</li><li>방이 열리면 초대 코드를 문자로 보내드려요.</li><li>앱에 코드를 넣으면 시작이에요.</li></ol>
+<ol class="ld-steps"><li>이 폼을 작성하고 참가비 <b>7,900원</b>을 송금한 뒤 제출해요.</li><li>방이 열리면 초대 코드를 문자로 보내드려요.</li><li>앱에 코드를 넣으면 시작이에요.</li></ol>
 <div class="ld-gn"><p>궁금한 점은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
 </section>
 
 </div>
-<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">7기 모집 중</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows"><div><dt>진행 일정</dt><dd>10월 23일(금) ~ 10월 25일(일), 3일<small>서울 경기 인천 00~07년생 대학생<br>신청 마감 <b>10월 22일(목) 18:00</b><br>초대 코드는 시작 전날 18시 이후 문자로 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
+<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">7기 모집 중</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>10월 23일(금) ~ 10월 25일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>10월 22일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
 <div class="ld-sticky off" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">소개팅 신청하기 💌</button></div>
 <script>
 (function(){
  document.documentElement.classList.add('ld-js');
- function mp(name,props){ try{ if(window.mixpanel&&mixpanel.track) mixpanel.track(name,Object.assign({path:location.pathname,g:HH_G,c:window.HH_C||''},props||{})); }catch(e){} }
+ function mp(name,props){ try{ if(window.mixpanel&&mixpanel.track) mixpanel.track(name,Object.assign({path:location.pathname,g:HH_G},props||{})); }catch(e){} }
  var IO=window.IntersectionObserver;
  // 성별 판 채우기 (진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화): 여성용(f)은 남성 참가자, 남성용(m)과 기본(x)은 여성 참가자. 질문/대화 상대는 pick 의 첫 사람
  (function(){
@@ -623,9 +579,6 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
   function day(ms){ return Math.floor((ms+9*3600e3)/864e5); }
   var left=day(DEADLINE-1)-day(Date.now()); if(left>30||left<0) return;
   b.textContent=left?'D-'+left:'오늘 마감'; })();
- // 진행 과정/걱정 문답 접기 (10/20 후보): 누르면 펼침, Mixpanel landing_more
- (function(){ var b=document.getElementById('ldMore'), f=document.getElementById('ldFold'); if(!b||!f) return;
-  b.addEventListener('click',function(){ var open=f.hidden; f.hidden=!open; b.setAttribute('aria-expanded',open?'true':'false'); if(open){ mp('landing_more'); fx.forEach(function(x){ if(f.contains(x)&&!x.classList.contains('in')){ if(IO&&fo) fo.observe(x); else x.classList.add('in'); } }); } }); })();
  var st=document.getElementById('ldSticky');
  function target(){ return document.querySelector('.q[data-name="gender"]'); }
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
@@ -654,7 +607,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
  // 신청 버튼은 아래 고정 하나뿐 (10/8 사용자). 처음부터 보이고, 신청서 구간에 들어간 뒤와 1페이지가 아닐 때는 숨김
  function upd(){
   var t=target(), p1=document.querySelector('.page[data-page="1"]');
-  var hb=document.querySelector('.ld-hero:not([hidden]) .ld-btn'), heroOn=hb&&hb.getBoundingClientRect().bottom>0;
+  var hb=document.querySelector('.ld-hero .ld-btn'), heroOn=hb&&hb.getBoundingClientRect().bottom>0;
   var off=!p1||!p1.classList.contains('on')||heroOn||document.documentElement.getAttribute('data-mode')==='form'||(t&&t.getBoundingClientRect().top<innerHeight*0.9);
   st.classList.toggle('off',!!off);
  }
