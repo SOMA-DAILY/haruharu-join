@@ -647,8 +647,12 @@ async function admin(sub, request, env, kv, url) {
     const st = url.searchParams.get('state');
     const extra = st === 'partial' ? ' AND started = 1 AND submitted = 0' : st === 'submitted' ? ' AND submitted = 1' : st === 'bounce' ? ' AND started = 0 AND submitted = 0' : '';
     const lim = Math.min(Number(url.searchParams.get('limit')) || 300, 2000);
-    const rows = await DB.prepare(`SELECT sid, path, city, src, channel, utm_campaign, utm_content, ref, device, in_app, is_return, first_ts, last_ts, active_ms, max_scroll, started, max_page, last_field, fields, filled, next_click, submitted, submitted_ts, application_id
-      FROM sessions WHERE ${where}${extra} ORDER BY first_ts DESC LIMIT ${lim}`).bind(...args).all();
+    // arm (10/20): 50/50 팔 표시. 열이 없으면(마이그레이션 전) 없이 다시 읽음
+    let rows;
+    for (const c of ['arm, ', '']) {
+      try { rows = await DB.prepare(`SELECT ${c}sid, path, city, src, channel, utm_campaign, utm_content, ref, device, in_app, is_return, first_ts, last_ts, active_ms, max_scroll, started, max_page, last_field, fields, filled, next_click, submitted, submitted_ts, application_id
+        FROM sessions WHERE ${where}${extra} ORDER BY first_ts DESC LIMIT ${lim}`).bind(...args).all(); break; } catch (e) { if (!c) throw e; }
+    }
     return json({ rows: rows.results });
   }
 

@@ -612,7 +612,7 @@ function renderVisits(){var rs=S.visits,out=[],g={};
     if(!r.started&&!r.submitted&&!L){var k=(r.src||'')+'|'+r.path+'|'+Math.floor(r.first_ts/600000);if(g[k]){g[k].n++;return}g[k]={r:r,i:i,n:1};out.push(g[k])}
     else out.push({r:r,i:i,n:1})});
   $('vCount').textContent=rs.length+'건'+(out.length<rs.length?' ('+out.length+'줄로 묶음)':'')+(rs.length>=300?' (최근 300건)':'');$('visitEmpty').classList.toggle('hidden',rs.length>0);
-  $('visitRows').innerHTML=out.map(function(o){var r=o.r,L=isLanding(r.path);return '<tr class="click" data-i="'+o.i+'"><td class="num">'+kst(r.first_ts)+'</td><td>'+esc(formName(r.path))+'</td><td>'+srcCell(r.src)+'</td>'+
+  $('visitRows').innerHTML=out.map(function(o){var r=o.r,L=isLanding(r.path);return '<tr class="click" data-i="'+o.i+'"><td class="num">'+kst(r.first_ts)+'</td><td>'+esc(formName(r.path))+(r.arm==='b'?' <span class="badge" title="50/50 B 팔">개선판</span>':'')+'</td><td>'+srcCell(r.src)+'</td>'+
     '<td>'+stepsHtml(r,L)+(o.n>1?' <b class="num">'+o.n+'건</b>':'')+'</td><td>'+esc(L||!r.started?'-':(FL[r.last_field]||r.last_field||'-'))+'</td><td>'+filledSummary(r)+'</td></tr>'}).join('')}
 $('visitRows').addEventListener('click',function(e){var tr=e.target.closest('tr');if(!tr)return;var r=S.visits[+tr.dataset.i];var f=r.fields?JSON.parse(r.fields):{};
   var info=[['폼',formName(r.path)+' '+r.path],['도착',kst(r.first_ts)],['마지막 활동',kst(r.last_ts)],['체류',dur(r.active_ms)],['스크롤',r.max_scroll?r.max_scroll+'%':'-'],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['광고명(utm)',r.utm_content||'-'],['캠페인',r.utm_campaign||'-'],['기기',(r.device||'')+(r.in_app?' / '+r.in_app:'')],['재방문',r.is_return?'예':'아니오'],['유입 페이지',r.ref||'-'],['마지막 문항',FL[r.last_field]||r.last_field||'-']];
