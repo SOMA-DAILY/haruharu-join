@@ -36,6 +36,14 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
   assert.equal(entryTarget('/seoul/student/', after6), '/7/seoul/');
   assert.equal(entryTarget('/seoul/student/', after6, undefined, 'f'), '/7/seoul/');
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-21T18:01:00+09:00'), undefined, 'm'), '/7/seoul/');   // 7기도 닫히면 마감 안내
+  // 8기, 9기 미리 올려 둠 (10/21): 7기 마감(10/22 18:00) 전엔 7기, 뒤엔 8기, 8기 마감(10/29 18:00) 뒤엔 9기, 9기 마감(11/5 18:00) 뒤엔 9기 마감 안내. 남녀 같음
+  for (const g of ['', 'm', 'f']) {
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T17:59:59+09:00'), undefined, g), '/7/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T18:00:00+09:00'), undefined, g), '/8/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/8/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T18:00:00+09:00'), undefined, g), '/9/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/9/seoul/', g);
+  }
 });
 
 test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기, 여자 광고와 바이오는 6기 (10/18)', async () => {
