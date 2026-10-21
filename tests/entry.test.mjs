@@ -57,7 +57,7 @@ test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기
     const { onRequest } = await import('../functions/_middleware.js');
     const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
     assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-m-film-2137'), [302, '/8/seoul/?src=ad-seoul-m-film-2137&g=m']);   // 옛 기수 남자 광고 주소도 8기 (10/22)
-    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/7/seoul/?src=ad-seoul-f-film-1360&g=f']);   // 지금 기수 7기 (6기 마감 뒤 병합)
+    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/8/seoul/?src=ad-seoul-f-film-1360&g=f']);   // 지금 기수 8기 (7기 마감 뒤 병합)
     assert.equal((await hit('/6/seoul/?g=m'))[0], 200);   // 열린 6기 폼에 직접 온 건 그대로
   } finally { Date.now = o; }
 });
@@ -68,9 +68,9 @@ test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 30
   const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
   try {
     assert.deepEqual(await hit('/4/seoul/?src=h4t-stu-m-bike'), [302, '/8/seoul/?src=h4t-stu-m-bike&g=m']);   // 10/22: 남자는 8기 먼저
-    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/7/seoul/?src=h4t-stu-f-ieum&g=f']);   // 지금 기수 7기
+    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/8/seoul/?src=h4t-stu-f-ieum&g=f']);   // 지금 기수 8기
     assert.equal((await hit('/4/gwangju/'))[0], 200);
-    assert.deepEqual(await hit('/seoul/'), [302, '/7/seoul/']);
+    assert.deepEqual(await hit('/seoul/'), [302, '/8/seoul/']);
     assert.equal((await hit('/4/seoul/x7q2/'))[0], 200);
     assert.equal((await hit('/4/seoul/rejoin/'))[0], 200);
     assert.equal((await hit('/4/seoul-work/pre/'))[0], 200);
