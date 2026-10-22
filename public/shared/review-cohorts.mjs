@@ -73,6 +73,6 @@ export function reviewRows(applications, registry) {
     return { id: row.application_id, survey, cohorts, source, estimated,
       participant: cohorts[0] === 'unknown' ? '기수 미확인 참가자' : cohorts.map(cohortLabel).join(', ') + ' 참가자',
       gender: ['남성', '여성'].includes(row.gender) ? row.gender : '성별 미확인',
-      author: row.name || '익명', time: submittedTime(row) };
+      author: row.name || '익명', phone: /^01\d{8,9}$/.test(digits) ? digits : '', time: submittedTime(row) };
   }).sort((a, b) => b.time - a.time);
 }
