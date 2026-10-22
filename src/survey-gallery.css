@@ -24,9 +24,16 @@
 .sg-gender,.sg-date{color:var(--sg-sub);font-size:12px;white-space:nowrap;border-left:1px solid var(--sg-line);padding-left:12px}
 .sg-date{font-variant-numeric:tabular-nums}
 .sg-text{margin:12px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:keep-all;text-wrap:pretty;font-size:17px;line-height:1.85;letter-spacing:-.025em;font-weight:450}
+.sg-details{margin-top:14px;font-size:13px;line-height:1.7}
+.sg-details summary{width:fit-content;min-height:44px;display:list-item;align-content:center;cursor:pointer;color:#3674bf}
+.sg-contact{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 0;border-top:1px solid var(--sg-line)}
+.sg-contact>span:first-child,.sg-contact-empty,.sg-copy-status{color:var(--sg-sub)}
+.sg-contact a{color:var(--sg-ink);font-variant-numeric:tabular-nums;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.sg-copy-status{flex-basis:100%;overflow-wrap:anywhere}
+.sg-contact-empty{margin:0}
 .sg-empty{border:1px dashed var(--sg-line);padding:60px 20px;text-align:center;color:var(--sg-sub);font-size:14px;line-height:1.8;border-radius:10px}
 .sg-empty button{margin-top:16px}
-.sg-shell :is(button,a):focus-visible{outline:3px solid #90baff;outline-offset:3px}
+.sg-shell :is(button,a,summary):focus-visible{outline:3px solid #90baff;outline-offset:3px}
 @media(max-width:720px){
  .sg-overlay{padding:0}
  .sg-shell{max-height:100%;height:100%;border-radius:0;scrollbar-gutter:auto;padding-bottom:env(safe-area-inset-bottom)}

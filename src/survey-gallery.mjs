@@ -2,7 +2,12 @@ import { cohortLabel, reviewRows } from '../shared/review-cohorts.mjs';
 
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const topicLabel = (topic) => topic === 'sv_wish' ? '바라는 점' : '후기';
-const focusable = (root) => [...root.querySelectorAll('button:not(:disabled),a[href],input,select,textarea,[tabindex="0"]')].filter((el) => el.getClientRects().length);
+const focusable = (root) => [...root.querySelectorAll('button:not(:disabled),a[href],summary,input,select,textarea,[tabindex="0"]')]
+  .filter((el) => el.getClientRects().length && (!el.closest('details:not([open])') || el.matches('summary')));
+const contactDetails = (row) => '<details class="sg-details"><summary>자세히 보기</summary>' + (row.phone ?
+  '<div class="sg-contact"><span>전화번호</span><a href="tel:' + row.phone + '">' + row.phone.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3') + '</a>' +
+  '<button class="sg-close" data-copy-phone="' + row.phone + '">전화번호 복사</button><span class="sg-copy-status" role="status"></span></div>' :
+  '<p class="sg-contact-empty">등록된 전화번호 없음</p>') + '</details>';
 
 export function createSurveyGallery({ getRows, registry }) {
   const overlay = document.createElement('div');
@@ -40,7 +45,7 @@ export function createSurveyGallery({ getRows, registry }) {
       '<article class="sg-card"><div class="sg-card-head"><span class="sg-cohort" title="' + escape(row.source) + '">' + escape(row.participant) + '</span>' +
       '<span class="sg-gender">' + escape(row.gender) + '</span><time class="sg-date">' +
       (row.time ? new Date(row.time + 9 * 3600e3).toISOString().slice(0, 10).replaceAll('-', '.') : '날짜 미확인') + '</time></div>' +
-      '<p class="sg-text">' + escape(row.survey[topic]) + '</p></article>'
+      '<p class="sg-text">' + escape(row.survey[topic]) + '</p>' + contactDetails(row) + '</article>'
     ).join('') + '</div>' : '<div class="sg-empty">이 기수에 남겨진 ' + topicLabel(topic) + '가 아직 없어요.<br><button class="sg-close" data-cohort="all">전체 보기</button></div>';
   }
 
@@ -50,8 +55,28 @@ export function createSurveyGallery({ getRows, registry }) {
     if (originFocus?.isConnected) originFocus.focus();
   }
 
+  async function copyPhone(button) {
+    const status = button.parentElement.querySelector('[role="status"]');
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(button.dataset.copyPhone);
+      else {
+        const input = document.createElement('textarea');
+        input.value = button.dataset.copyPhone; input.readOnly = true;
+        input.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.append(input);
+        try { input.select(); if (!document.execCommand('copy')) throw new Error('Copy unavailable'); }
+        finally { input.remove(); button.focus(); }
+      }
+      status.textContent = '복사됨';
+    } catch {
+      status.textContent = '복사하지 못했어요. 번호를 길게 눌러 복사해 주세요.';
+    }
+  }
+
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay || event.target.closest('[data-close]')) return close();
+    const copy = event.target.closest('[data-copy-phone]');
+    if (copy) { copyPhone(copy); return; }
     const tab = event.target.closest('[data-topic]');
     if (tab) { topic = tab.dataset.topic; render(); overlay.querySelector('[data-topic="' + topic + '"]').focus(); return; }
     const filter = event.target.closest('[data-cohort]');
