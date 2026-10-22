@@ -432,3 +432,11 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - `CURRENT_COHORT` 는 7기 마감 전까지 `7` 유지 (지역 선택, 마감된 옛 폼의 다음 기수 버튼과 302). 7기 마감 뒤 `8`, 8기 마감 뒤 `9` 로 바꾸고 build
 - 재참여 후기 폼(`/rejoin/seoul/`)의 참여 기수 선택지(`joins` 6기/7기)는 그대로 둠 (요청 범위 밖)
 - 테스트 `tests/entry.test.mjs` (기수 경계 시각별 고정 링크 목적지)
+
+
+## 후기 링크 성별 저장 (10/22)
+- 기존 후기폼(`/rejoin/seoul/`)과 6기 전용 폼(`/rejoin/6/seoul/`)의 `?g=f`/`?g=m`을 방문·제출 payload에 전달. `g`는 f/m만 허용하며 KV hidden에도 보관.
+- 후기만 제출해도 링크 성별을 KV fields.gender 및 D1 submissions.gender에 저장. 전화번호/이름/친구 정보는 계속 저장하지 않음. 유효한 성별 링크가 없으면 미확인 유지.
+- 재신청은 전화번호로 찾은 이전 신청 성별이 우선이고, 이전 성별이 없으면 링크 성별을 사용. 일반 신청폼의 직접 응답 성별은 영향 없음.
+- sessions.fields에도 링크 성별을 보관하지만 자동 성별만으로 filled/started를 올리지 않음. 늦은 빈 방문 요청이 작성 중 fields를 덮지 않게 유지.
+- 기존에 저장된 미확인 후기의 성별을 추정해 소급 수정하지 않음. tests/review-link-gender.test.mjs.

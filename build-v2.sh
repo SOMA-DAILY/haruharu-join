@@ -559,6 +559,10 @@ def gen(path, f):
             t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>재참여 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1 and not re.search(r'__[A-Z0-9_]+__', SV_TAIL)
             t = t.replace(foot, SV_TAIL + foot, 1)
+            # 남녀 후기 링크의 g 값을 방문/제출 및 분석 이벤트에 함께 전달.
+            gender_hook = "var HID=['src',"
+            assert t.count(gender_hook) == 1, f'{path} 링크 성별 전달 위치를 못 찾음'
+            t = t.replace(gender_hook, "var HID=['g','src',", 1)
             if f.get('reviewCohort'):
                 title = f'{f["reviewCohort"]}기, 어땠어요?'
                 t = t.replace('지난 기수, 어땠어요?', title).replace('지난 참가자 전용', f'{f["reviewCohort"]}기 참가자 전용')
