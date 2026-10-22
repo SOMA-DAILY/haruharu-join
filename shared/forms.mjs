@@ -31,11 +31,13 @@ const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
-const S7 = { ...S3, cohort: '7' };
+const S7 = { ...S3, cohort: '7', closedFor: ['m'] }; // 10/22 운영자: 남성 7기 접수 종료, 8기만 신청
 const S8 = { ...S3, cohort: '8' };
 const S9 = { ...S3, cohort: '9' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
 const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
+// 6기 참가자 전용 후기: 재신청 5,900원 고정, 친구 동반/방 배정 문항만 받음(추가 할인 없음). 후기 기수와 신청 기수는 별도.
+const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, phoneOnly: true, survey: true, noPage: true, buddyOnly: true, reviewCohort: '6' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -99,7 +101,7 @@ export const FORMS = {
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
   //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
-  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', abTest: true },   // abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
+  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryEnd: '2026-10-22T17:00:00+09:00', alert: '/alert/seoul/', abTest: true },   // entryEnd (10/22 17시 사용자): 여자/바이오도 지금부터 8기, 고정 링크만 8기로 (7기 폼 직접 온 건 18:00 까지 그대로). abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // 7기 정오 할인 (10/21 요청): 6기 lunch와 같은 구성, 10/22 12:00 KST에 이 할인만 마감.
@@ -120,6 +122,10 @@ export const FORMS = {
                               joins: { '6기': '/6/seoul/rejoin/', '7기': '/7/seoul/rejoin/', '후기만': '/rejoin/seoul/' }, joinFor: { '6기': 'f', '7기': 'm' } },
   '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
   '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
+  '/rejoin/6/seoul/':       { ...S6, cohort: 'review', ...REVIEW6, noPage: false, label: '6기 참가자 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
+                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' }, joinExclude: { '7기': ['m'] } },
+  '/7/seoul/rejoin/from-6/': { ...S7, ...REVIEW6, rejoin: true, label: '6기 참가자 7기 재신청 (후기 폼)' },
+  '/8/seoul/rejoin/from-6/': { ...S8, ...REVIEW6, rejoin: true, label: '6기 참가자 8기 재신청 (후기 폼)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -161,14 +167,17 @@ export function cohortDeadline(cohort, env) {
   return iso ? Date.parse(iso) : null;
 }
 // 폼 하나의 열림/마감 상태. 등록부에 없는 경로는 마감 취급. 마감된 기수면 현재 기수의 같은 트랙 폼 경로를 next 로 줌
-export function formStatus(path, now = Date.now(), env) {
+export function formStatus(path, now = Date.now(), env, g = '') {
   const f = formOf(path);
   if (!f) return { open: false, unknown: true, deadline: null, serverNow: now, next: '/' };
   let deadline = f.noDeadline ? null : cohortDeadline(f.cohort, env);
   const own = formDeadline(f, env);   // 폼 하나만 먼저 닫는 마감 (자정 마감 할인). 기수 마감과 견줘 이른 쪽
   if (own != null && !f.noDeadline) deadline = deadline == null ? own : Math.min(deadline, own);
-  const open = deadline == null ? true : now < deadline;
-  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan, next: open ? null : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
+  const genderClosed = !!g && !!f.closedFor?.includes(g);
+  const open = !genderClosed && (deadline == null ? true : now < deadline);
+  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan,
+    ...(genderClosed ? { genderClosed: true } : {}),
+    next: open ? null : genderClosed ? '/8/seoul/' : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
 }
 // 폼 자체 마감 (등록부 deadline). 로컬 시험용 환경값 FORM_DEADLINE 은 자체 마감이 있는 폼에만 먹음 (ISO 문자열 또는 ms)
 export function formDeadline(f, env) {
@@ -197,9 +206,9 @@ export function nextFormPath(f) {
 //   단 성별 g 가 폼의 entryFirst 와 같으면 그 폼이 먼저 (10/18: 남자는 7기 먼저). 열린 게 없으면 가장 최근 기수 폼(마감 안내가 뜸)
 export function entryTarget(entry, now = Date.now(), env, g = '') {
   const e = normalizePath(entry);
-  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e);
+  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e && !(FORMS[p].entryEnd && now >= Date.parse(FORMS[p].entryEnd)));   // entryEnd: 기수 마감 전에 고정 링크만 다음 기수로
   if (!cand.length) return null;
-  const st = cand.map((p) => ({ p, ...formStatus(p, now, env), n: Number(FORMS[p].cohort) || 0 }));
+  const st = cand.map((p) => ({ p, ...formStatus(p, now, env, g), n: Number(FORMS[p].cohort) || 0 }));
   const first = (x) => (g && FORMS[x.p].entryFirst === g ? 0 : 1);
   const open = st.filter((x) => x.open).sort((a, b) => first(a) - first(b) || (a.deadline ?? Infinity) - (b.deadline ?? Infinity) || a.n - b.n);
   if (open.length) return open[0].p;

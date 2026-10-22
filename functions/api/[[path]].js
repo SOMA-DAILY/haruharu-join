@@ -3,6 +3,7 @@ import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCa
 import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
 import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey } from '../../shared/rejoin-survey.mjs';
+import { genderCookie } from '../../shared/entry.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -23,7 +24,7 @@ const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
 const WORK_FIELDS = ['schedule_pref'];
 // 캡처 이미지는 FIELDS 에 넣지 않음: /partial(D1 sessions.fields)로는 절대 안 들어가게 제출 본문의 capture 로만 받음
 const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS, ...WORK_FIELDS];
-const HIDDEN = ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto', 'arm'];   // arm (10/20): 50/50 팔 a|b (functions/7/seoul 쿠키)
+const HIDDEN = ['g', 'src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto', 'arm'];   // arm (10/20): 50/50 팔 a|b (functions/7/seoul 쿠키)
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebot|meta-externalagent|preview|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
 
 async function readBody(request) {
@@ -37,8 +38,10 @@ function clean(fields) {
 function cleanHidden(h) {
   const o = {};
   for (const k of HIDDEN) if (h && typeof h[k] === 'string') o[k] = h[k].slice(0, 200);
+  if (o.g !== 'f' && o.g !== 'm') delete o.g;
   return o;
 }
+function linkedGender(h) { return h.g === 'f' ? '여성' : h.g === 'm' ? '남성' : ''; }
 function normPhone(p) { return (p || '').replace(/\D/g, ''); }
 // 전화번호만 받는 재참여 폼(등록부 phoneOnly): 같은 번호의 지난 신청에서 성별/출생년도/학교/기기를 가져옴 (칸마다 가장 최근에 적은 값).
 //   못 찾아도 접수는 받음(번호가 등록돼 있는지 화면으로 알 수 없게). 그때는 칸이 빈 채로 남고 관리 화면에 [이전 기록 없음]
@@ -125,8 +128,11 @@ async function trackSession(env, request, b) {
   const path = normPath(b.path, h.city);
   const ua = String(b.ua || request.headers.get('user-agent') || '').slice(0, 300);
   const f = clean(b.fields);
+  const review = !!formOf(path)?.survey;
+  const gender = review ? linkedGender(h) : '';
+  if (review) { delete f.gender; if (gender) f.gender = gender; }
   // 자동으로 채운 기기값만 있는 건 입력으로 안 침 (9/28: 아무것도 안 쓴 방문이 입력 시작으로 잡혔음)
-  const filled = Object.keys(f).filter((k) => !(k === 'device' && h.device_auto)).length;
+  const filled = Object.keys(f).filter((k) => !(k === 'device' && h.device_auto) && !(review && k === 'gender')).length;
   const now = Date.now();
   // 알림 신청(alert_submit, 10/11)은 신청서 입력이 아니라서 그것만으로는 입력 시작으로 안 셈 (5기 퍼널 [쓰다 나감] 오염 방지)
   const started = filled > 0 || (!!b.last_field && b.last_field !== 'alert_submit') ? 1 : 0;
@@ -145,14 +151,14 @@ async function trackSession(env, request, b) {
         started_ts = COALESCE(sessions.started_ts, excluded.started_ts),
         max_page = MAX(sessions.max_page, excluded.max_page),
         last_field = CASE WHEN excluded.last_field <> '' THEN excluded.last_field ELSE sessions.last_field END,
-        fields = CASE WHEN excluded.filled > 0 AND sessions.submitted = 0 THEN excluded.fields ELSE sessions.fields END,
+        fields = CASE WHEN (excluded.filled > 0 OR (sessions.fields IS NULL AND excluded.fields IS NOT NULL)) AND sessions.submitted = 0 THEN excluded.fields ELSE sessions.fields END,
         filled = CASE WHEN excluded.filled > 0 AND sessions.submitted = 0 THEN excluded.filled ELSE sessions.filled END,
         next_click = COALESCE(excluded.next_click, sessions.next_click)`)
       .bind(String(b.sid).slice(0, 64), path, h.city || null, h.src || null, h.utm_content || h.src || 'direct',
         h.utm_source || null, h.utm_medium || null, h.utm_campaign || null, h.utm_content || null, h.utm_term || null, h.fbclid ? 1 : 0,
         String(b.ref || '').slice(0, 300), ua, device(ua), inApp(ua), isBot(ua, b.ref, h.fbclid) ? 1 : 0, b.returning ? 1 : 0,
         now, num(b.active_ms, 6 * 3600e3), num(b.max_scroll, 100), started, started ? now : null,
-        num(b.page, 9) || 1, String(b.last_field || '').slice(0, 40), filled ? JSON.stringify(f) : null, filled,
+        num(b.page, 9) || 1, String(b.last_field || '').slice(0, 40), (filled || gender) ? JSON.stringify(f) : null, filled,
         typeof b.next_click === 'string' ? b.next_click.slice(0, 40) : null),
   ]);
   // 사람 단위 퍼널용 (migrations/0012). 기기 id 는 페이지당 첫 기록, 송금은 누른 뒤에만 와서 방문당 1~2줄만 더 씀. 열이 없으면 조용히 넘어감
@@ -174,7 +180,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
   if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
-  if (request.method === 'GET' && path === '/cohort') { const fp = url.searchParams.get('path'); return json(fp ? formStatus(fp, Date.now(), env) : cohortStatus(Date.now(), env)); }
+  if (request.method === 'GET' && path === '/cohort') {
+    const fp = url.searchParams.get('path'), g = url.searchParams.get('g');
+    return json(fp ? formStatus(fp, Date.now(), env, ['m','f'].includes(g) ? g : genderCookie(request)) : cohortStatus(Date.now(), env));
+  }
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -236,12 +245,17 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
     if (reviewOnly) h.plan = 'review';   // 후기만 (참가 신청 아님, 참가비 없음)
     // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
-    if (form) { const st = formStatus(b.path, now, env); if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409); }
+    const phoneOnly = !!(form && form.phoneOnly);
+    if (form) {
+      // 일반 신청의 직접 응답을 우선. 재참여 폼은 아래에서 이전 프로필을 읽은 뒤 성별 마감을 판단.
+      const g = phoneOnly ? '' : f.gender === '남성' ? 'm' : f.gender === '여성' ? 'f' : h.g;
+      const st = formStatus(b.path, now, env, g);
+      if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409);
+    }
     const preRegistration = form && form.plan === 'early';
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
-    const phoneOnly = !!(form && form.phoneOnly);
     const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
@@ -250,8 +264,20 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
     // 재참여 설문 폼(등록부 survey): 설문을 다 해야 할인이라 빠진 문항이 있으면 받지 않음. 값은 선택지에 있는 것만 남김
-    const sv = form && form.survey ? cleanSurvey(b.fields) : null;
+    // 전용 폼의 후기 기수는 서버 등록부가 확정한다. 신청 기수/클라이언트 응답으로 덮어쓰지 않음.
+    const reviewCohort = page?.reviewCohort || form?.reviewCohort;
+    const sv = form && form.survey ? cleanSurvey(reviewCohort ? { ...b.fields, sv_cohorts: [reviewCohort] } : b.fields) : null;
     if (sv) miss.push(...sv.miss);
+    if (form && form.buddyOnly && !reviewOnly) {
+      const room = f.buddy_room || '혼자';
+      if (!['혼자', '같은 방', '다른 방', '상관없음'].includes(room)) miss.push('buddy_room');
+      if (room !== '혼자') {
+        const buddy = normPhone(f.buddy);
+        if (!/^01[016789]\d{7,8}$/.test(buddy) || buddy === normPhone(f.phone)) miss.push('buddy');
+        else f.buddy = buddy;
+      } else delete f.buddy;
+      f.buddy_room = room;
+    }
     let capture = null;
     if (festival) {
       capture = decodeCapture(b.capture);
@@ -265,10 +291,18 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (reviewOnly) for (const k of ['phone', 'name', 'buddy', 'buddy_room']) delete f[k];   // 후기만 (10/18 운영자: 전화번호는 신청하는 사람만): 전화번호, 참가비, 친구 칸은 화면에서 숨겨짐. 익명 후기
       const prior = reviewOnly ? {} : await priorProfile(env, normPhone(f.phone));
       for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
+      // 후기만 남겨도 남녀 링크 성별을 보관. 재신청은 이전 신청 성별이 우선.
+      if (form.survey && !f.gender && linkedGender(h)) f.gender = linkedGender(h);
       const ua = String(b.ua || '');
       const dv = /iphone|ipad|ipod/i.test(ua) ? 'iPhone' : /android/i.test(ua) ? 'Android' : '';
       if (dv) f.device = dv;
       priorFrom = reviewOnly ? null : prior.from || '';   // 후기만은 번호가 없어 지난 신청을 안 찾음
+    }
+    if (form && !reviewOnly) {
+      // 링크 g를 바꿔도 이전 신청의 실제 성별이 남성이면 7기에 접수하지 않는다. 저장 전에 종료.
+      const g = f.gender === '남성' ? 'm' : f.gender === '여성' ? 'f' : h.g;
+      const st = formStatus(b.path, now, env, g);
+      if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409);
     }
     if (capture && capture.error) return json({ ok: false, error: capture.error }, capture.error === 'capture_too_large' ? 413 : 400);
     if (festival) f.avoid_same_major = AVOID_MAJOR_VALUES.includes(f.avoid_same_major) ? f.avoid_same_major : '';
