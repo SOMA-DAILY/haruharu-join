@@ -31,7 +31,7 @@ const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
-const S7 = { ...S3, cohort: '7' };
+const S7 = { ...S3, cohort: '7', closedFor: ['m'] }; // 10/22 운영자: 남성 7기 접수 종료, 8기만 신청
 const S8 = { ...S3, cohort: '8' };
 const S9 = { ...S3, cohort: '9' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
@@ -123,7 +123,7 @@ export const FORMS = {
   '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
   '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
   '/rejoin/6/seoul/':       { ...S6, cohort: 'review', ...REVIEW6, noPage: false, label: '6기 참가자 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
-                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' } },
+                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' }, joinExclude: { '7기': ['m'] } },
   '/7/seoul/rejoin/from-6/': { ...S7, ...REVIEW6, rejoin: true, label: '6기 참가자 7기 재신청 (후기 폼)' },
   '/8/seoul/rejoin/from-6/': { ...S8, ...REVIEW6, rejoin: true, label: '6기 참가자 8기 재신청 (후기 폼)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
@@ -167,14 +167,17 @@ export function cohortDeadline(cohort, env) {
   return iso ? Date.parse(iso) : null;
 }
 // 폼 하나의 열림/마감 상태. 등록부에 없는 경로는 마감 취급. 마감된 기수면 현재 기수의 같은 트랙 폼 경로를 next 로 줌
-export function formStatus(path, now = Date.now(), env) {
+export function formStatus(path, now = Date.now(), env, g = '') {
   const f = formOf(path);
   if (!f) return { open: false, unknown: true, deadline: null, serverNow: now, next: '/' };
   let deadline = f.noDeadline ? null : cohortDeadline(f.cohort, env);
   const own = formDeadline(f, env);   // 폼 하나만 먼저 닫는 마감 (자정 마감 할인). 기수 마감과 견줘 이른 쪽
   if (own != null && !f.noDeadline) deadline = deadline == null ? own : Math.min(deadline, own);
-  const open = deadline == null ? true : now < deadline;
-  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan, next: open ? null : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
+  const genderClosed = !!g && !!f.closedFor?.includes(g);
+  const open = !genderClosed && (deadline == null ? true : now < deadline);
+  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan,
+    ...(genderClosed ? { genderClosed: true } : {}),
+    next: open ? null : genderClosed ? '/8/seoul/' : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
 }
 // 폼 자체 마감 (등록부 deadline). 로컬 시험용 환경값 FORM_DEADLINE 은 자체 마감이 있는 폼에만 먹음 (ISO 문자열 또는 ms)
 export function formDeadline(f, env) {
@@ -205,7 +208,7 @@ export function entryTarget(entry, now = Date.now(), env, g = '') {
   const e = normalizePath(entry);
   const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e);
   if (!cand.length) return null;
-  const st = cand.map((p) => ({ p, ...formStatus(p, now, env), n: Number(FORMS[p].cohort) || 0 }));
+  const st = cand.map((p) => ({ p, ...formStatus(p, now, env, g), n: Number(FORMS[p].cohort) || 0 }));
   const first = (x) => (g && FORMS[x.p].entryFirst === g ? 0 : 1);
   const open = st.filter((x) => x.open).sort((a, b) => first(a) - first(b) || (a.deadline ?? Infinity) - (b.deadline ?? Infinity) || a.n - b.n);
   if (open.length) return open[0].p;

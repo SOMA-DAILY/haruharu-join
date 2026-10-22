@@ -69,6 +69,9 @@ def join_html(f):
         reg = next((q for q, x in FORMS.items() if x['cohort'] == g['cohort'] and x.get('track') == g.get('track') and x['plan'] == 'regular' and x.get('entry')), '')
         assert period and dko and g.get('fee') == f['fee'], f'{path} 일정/마감/금액이 없음'
         at = f'data-path="{path}" data-g="{f.get("joinFor", {}).get(v, "")}" data-reg="{reg}"'
+        excluded = ','.join(f.get('joinExclude', {}).get(v, []))
+        if excluded:
+            at += f' data-exclude-g="{E(excluded)}"'
         cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
         yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
     assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
