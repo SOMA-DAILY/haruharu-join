@@ -77,3 +77,21 @@ test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 30
     assert.equal((await hit('/5/seoul/'))[0], 200);
   } finally { Date.now = o; }
 });
+
+test('성별 쿠키 (10/22): 광고로 지나간 남자는 바이오(g 없음)로 와도 8기, 쿠키 없으면 7기, 링크 성별이 쿠키보다 우선', async () => {
+  const o = Date.now; Date.now = () => Date.parse('2026-10-22T15:00:00+09:00');   // 7기 마감 전
+  const hit = async (qs, cookie) => { const r = await entryHandler('/seoul/student/')({ request: new Request('https://join.haruharu.co.kr/seoul/student/' + qs, { headers: cookie ? { cookie } : {} }), env: {} }); return [r.headers.get('location'), r.headers.get('set-cookie') || '']; };
+  try {
+    const [loc1, set1] = await hit('?src=ad-seoul-m-exhibit-2137');   // 광고 클릭: 8기 + 쿠키 심음
+    assert.equal(loc1, '/8/seoul/?src=ad-seoul-m-exhibit-2137&g=m'); assert.match(set1, /^hh_g=m; Path=\/; Max-Age=604800; SameSite=Lax; Secure$/);
+    const [loc2, set2] = await hit('?src=h7-seoul-insta-bio', 'hh_ab_7seoul=a; hh_g=m');   // 같은 폰 바이오: 쿠키로 남자 → 8기, 쿠키 다시 안 심음
+    assert.equal(loc2, '/8/seoul/?src=h7-seoul-insta-bio&g=m'); assert.equal(set2, '');
+    assert.equal((await hit('?src=h7-seoul-insta-bio'))[0], '/7/seoul/?src=h7-seoul-insta-bio');   // 쿠키 없는 바이오는 7기
+    assert.equal((await hit('?src=h7-seoul-insta-bio', 'hh_g=f'))[0], '/7/seoul/?src=h7-seoul-insta-bio&g=f');   // 여자 쿠키는 7기
+    assert.equal((await hit('?src=ad-seoul-f-film-1360', 'hh_g=m'))[0], '/7/seoul/?src=ad-seoul-f-film-1360&g=f');   // 링크 성별이 쿠키보다 우선
+    const { onRequest } = await import('../functions/_middleware.js');
+    const mw = async (u, cookie) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u, { headers: cookie ? { cookie } : {} }), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location'), r.headers.get('set-cookie') || '']; };
+    assert.deepEqual((await mw('/5/seoul/?src=h5-seoul-insta-bio', 'hh_g=m')).slice(0, 2), [302, '/8/seoul/?src=h5-seoul-insta-bio&g=m']);   // 마감된 옛 폼 주소도 쿠키로 8기
+    assert.match((await mw('/5/seoul/?src=ad-seoul-m-film-2137'))[2], /^hh_g=m; /);   // 옛 광고 주소로 지나가도 쿠키 심음
+  } finally { Date.now = o; }
+});
