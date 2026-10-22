@@ -441,3 +441,10 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - 재신청은 전화번호로 찾은 이전 신청 성별이 우선이고, 이전 성별이 없으면 링크 성별을 사용. 일반 신청폼의 직접 응답 성별은 영향 없음.
 - sessions.fields에도 링크 성별을 보관하지만 자동 성별만으로 filled/started를 올리지 않음. 늦은 빈 방문 요청이 작성 중 fields를 덮지 않게 유지.
 - 기존에 저장된 미확인 후기의 성별을 추정해 소급 수정하지 않음. tests/review-link-gender.test.mjs.
+
+## 8·9기 일반 신청 남성 요금 (10/22)
+
+- `/8/seoul/`(A/B)·`/9/seoul/` 등록부의 `maleFee` 10,000원 / `maleFriendFee` 8,000원. 여성은 `fee` 7,900 / `friendFee` 5,900원, 별도 재참여 폼은 기존대로.
+- `src/gender-fee.html`은 위 폼에만 포함. 링크 성별(HH_G)로 안내하고, 실제 성별 문항 선택이 우선. 성별 미상은 가격 범위 표시. `build-v2.sh`가 텍스트 금액에 `data-price` 표시를 달고, 원래 친구 할인 스크립트 뒤에서 표시/송금 경로를 동기화한다. 기존 폼 산출물에는 들어가지 않는다.
+- 서버 `friendFee`와 관리 화면은 `feeFor`를 공유. `friend_fee` 저장값이 있으면 기존 신청자의 실제 할인 안내 금액을 유지한다.
+- 송금 페이지 `haruharu-pay` `/m/` 10,000원, `/mf/` 8,000원. pay를 먼저 배포하고 join을 배포해야 한다. 기존 `/j/` 7,900 / `/b/` 5,900은 유지.

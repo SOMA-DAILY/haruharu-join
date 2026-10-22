@@ -11,5 +11,16 @@ export function friendFee(form, fields) {
   var digits = function (v) { return String(v || '').replace(/\D/g, ''); };
   var buddy = digits(fields.buddy), me = digits(fields.phone);
   if (!/^01[016789]\d{7,8}$/.test(buddy) || buddy === me) return 0;   // 친구 번호가 휴대폰 번호 꼴이고 내 번호와 달라야 함
-  return form.friendFee;
+  return feeFor(form, fields.gender).friendFee;
+}
+
+// 성별별 금액과 송금 경로. 성별 변경 시 화면과 서버가 같은 등록부를 따른다.
+export function feeFor(form, gender) {
+  var male = gender === '남성' || gender === 'm';
+  return {
+    fee: male && form.maleFee ? form.maleFee : form.fee,
+    pay: male && form.malePay ? form.malePay : form.pay,
+    friendFee: male && form.maleFriendFee ? form.maleFriendFee : form.friendFee,
+    friendPay: male && form.maleFriendPay ? form.maleFriendPay : form.friendPay
+  };
 }

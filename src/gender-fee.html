@@ -1,0 +1,20 @@
+<script>
+(function(){
+ var form=document.getElementById('f'), prices=__GENDER_PRICES__; if(!form) return;
+ function picked(name){ var e=form.querySelector('input[name="'+name+'"]:checked'); return e?e.value:''; }
+ function sync(){
+  var g=picked('gender')||(typeof HH_G==='string'?HH_G:''), male=g==='남성'||g==='m', known=male||g==='여성'||g==='f';
+  var won=function(n){ return n.toLocaleString('ko-KR'); };
+  var full=won(male?prices.maleFee:prices.fee), off=won(male?prices.maleFriendFee:prices.friendFee);
+  if(!known){ full=won(prices.fee)+'~'+won(prices.maleFee); off=won(prices.friendFee)+'~'+won(prices.maleFriendFee); }
+  var room=picked('buddy_room'), friend=!!room&&room!=='혼자';
+  [].forEach.call(document.querySelectorAll('[data-price="full"]'),function(e){ e.textContent=full; });
+  [].forEach.call(document.querySelectorAll('[data-price="friend"]'),function(e){ e.textContent=off; });
+  [].forEach.call(document.querySelectorAll('.fr-fee'),function(e){ e.textContent=friend?off:full; });
+  var pay=document.getElementById('pay'); if(pay) pay.setAttribute('href',friend?(male?prices.maleFriendPay:prices.friendPay):(male?prices.malePay:prices.pay));
+ }
+ // 기본 친구 할인 동작 뒤에 금액을 맞춘다. 입력 복원과 브라우저 뒤로가기도 반영.
+ form.addEventListener('change',sync); window.addEventListener('pageshow',sync);
+ sync(); setTimeout(sync,0); setTimeout(sync,700);
+})();
+</script>

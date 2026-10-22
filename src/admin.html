@@ -349,7 +349,7 @@ function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var 
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
 // 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
-function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?f.fee:(plan==='regular'?7900:4900);
+function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?feeFor(f,r.gender).fee:(plan==='regular'?7900:4900);
   if(cohortOf(r)==='review')return '후기만 (참가 안 함)';if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.invite)return '친구 초대 '+won;if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
 // 전화번호만 받는 재참여 폼: 같은 번호의 지난 신청을 못 찾아 성별이 빈 사람 (번호가 바뀌었거나 처음 온 사람). 연락해서 확인
 // 재참여 설문 (10/17~, 등록부 survey 폼): 답은 D1 submissions.survey (JSON, migrations/0014). 문항 글자는 REG.SURVEY (shared/rejoin-survey.mjs)
@@ -361,15 +361,15 @@ function feeBadge(r){var f=regOf(r.path);var plan=r.plan||(f&&f.plan);if(cohortO
 // 친구 할인 (10/8~, 등록부에 friendFee 가 있는 폼): 서버가 제출 때 남긴 friend_fee 가 그 사람이 안내받은 금액(0 이면 정가).
 //   원격 D1 에 0009 가 아직 없어 열이 비면 친구 문항으로 추정함(같은 판정 함수). 친구 쌍은 불러온 목록 안에서 전화번호로 맞춤
 /*FRIEND_FN*/
-function friendPaid(r){var f=regOf(r.path);if(!f||!f.friendFee||cohortOf(r)==='review')return 0;if(r.friend_fee!=null&&r.friend_fee!=='')return Number(r.friend_fee)||0;return friendFee(f,{buddy_room:r.buddy_room,buddy:r.buddy,phone:r.phone_digits})}
+function friendPaid(r){var f=regOf(r.path);if(!f||!f.friendFee||cohortOf(r)==='review')return 0;if(r.friend_fee!=null&&r.friend_fee!=='')return Number(r.friend_fee)||0;return friendFee(f,{buddy_room:r.buddy_room,buddy:r.buddy,phone:r.phone_digits,gender:r.gender})}
 // 나를 친구로 적은 다른 신청자 (먼저 신청한 사람을 친구가 나중에 적은 경우)
 function namedBy(r){return S.apps.filter(function(x){return x.application_id!==r.application_id&&String(x.buddy||'').replace(/\D/g,'')===r.phone_digits&&cohortOf(x)===cohortOf(r)})[0]||null}
 // ok: 할인 금액으로 안내받았고 친구도 신청함 / wait: 할인 금액으로 안내받았는데 친구가 목록에 없음(연락 필요) / refund: 정가로 안내받았는데 친구 쌍이 확인됨(차액 환급)
-function friendState(r){var f=regOf(r.path);if(!f||!f.friendFee||cohortOf(r)==='review')return null;var paid=friendPaid(r),pal=buddyOf(r)||namedBy(r),w=function(n){return n.toLocaleString('ko-KR')+'원'};
+function friendState(r){var f=regOf(r.path);if(!f||!f.friendFee||cohortOf(r)==='review')return null;f=Object.assign({},f,feeFor(f,r.gender));var paid=friendPaid(r),pal=buddyOf(r)||namedBy(r),w=function(n){return n.toLocaleString('ko-KR')+'원'};
   if(paid>0)return pal?{k:'ok',pal:pal,t:'친구 할인 '+w(paid)}:{k:'wait',t:'친구 할인 '+w(paid)+' (친구 미신청)'};
   return pal?{k:'refund',pal:pal,t:'환급 '+w(f.fee-f.friendFee)}:null}
 function friendBadge(r){var s=friendState(r);return s?' <span class="badge '+(s.k==='ok'?'green':s.k==='refund'?'blue':'amber')+'">'+esc(s.t)+'</span>':''}
-function friendText(r){var s=friendState(r);if(!s)return '';var f=regOf(r.path),w=function(n){return n.toLocaleString('ko-KR')+'원'},who=s.pal?s.pal.name+' ('+(s.pal.status||'미처리')+')':'';
+function friendText(r){var s=friendState(r);if(!s)return '';var f=Object.assign({},regOf(r.path),feeFor(regOf(r.path),r.gender)),w=function(n){return n.toLocaleString('ko-KR')+'원'},who=s.pal?s.pal.name+' ('+(s.pal.status||'미처리')+')':'';
   return s.k==='ok'?w(friendPaid(r))+' 송금 대상. 친구 '+who:s.k==='refund'?(f.rejoin?'재참여 ':'정가 ')+w(f.fee)+' 송금 대상. 친구 '+who+' 확인되면 '+w(f.fee-f.friendFee)+' 환급':w(friendPaid(r))+' 송금 대상인데 친구가 아직 신청 안 함. 끝까지 안 하면 연락해서 '+w(f.fee-f.friendFee)+' 더 받기'}
 // 사전알림 → 같은 기수 유료 폼에 같은 번호로 제출했으면 결제함
 function paidLater(r){var c=cohortOf(r);return S.apps.some(function(x){return x.application_id!==r.application_id&&x.phone_digits===r.phone_digits&&cohortOf(x)===c&&(regOf(x.path)||{}).plan!=='prealert'})}
@@ -699,6 +699,7 @@ function buddyBadge(r){var t=buddyText(r),m=r.buddy_room&&r.buddy_room!=='혼자
 var SHARE3={regular:'msg',discount:'discount',early:'early'};   // 3기는 위 규칙 전에 쓴 코드 그대로 (h3-msg-seoul 등)
 function shareOf(p){var f=REG.FORMS[p];
   var fee=f.plan==='prealert'?'무료 사전알림 (문자로 할인 링크 보냄)':(f.fee.toLocaleString('ko-KR')+'원'+(f.plan==='discount'?' 할인, 메시지 전용':''));
+  if(f.maleFee)fee='여성 '+f.fee.toLocaleString('ko-KR')+'원 / 남성 '+f.maleFee.toLocaleString('ko-KR')+'원';
   var rejoin=f.plan==='regular'&&f.variant?Object.keys(REG.FORMS).filter(function(q){var r=REG.FORMS[q];return r.rejoin&&!r.invite&&!r.noPage&&r.cohort===f.cohort&&r.track===f.track&&r.variant===f.variant})[0]:null;
   var rejoinLinks=rejoin?['f','m'].map(function(g){return rejoin+'?src=h'+f.cohort+'-rejoin-'+f.track+'-'+g+'-'+f.variant+'&g='+g}).concat([REG.FORMS[rejoin].fee.toLocaleString('ko-KR')+'원'+(REG.FORMS[rejoin].survey?', 후기 쓰면':REG.FORMS[rejoin].phoneOnly?', 전화번호만':'')]):null;
   if(f.joins)return [f.label.replace(/ \(후기만\)$/,''),f.reviewCohort?f.reviewCohort+'기 참가자 후기, 재신청 '+f.fee.toLocaleString('ko-KR')+'원 고정. 후기만도 받음.':'후기 남기고 참여하면 '+f.fee.toLocaleString('ko-KR')+'원, 후기만도 받음. 여자 링크는 '+Object.keys(f.joinFor||{}).filter(function(k){return f.joinFor[k]==='f'}).join(', ')+', 남자 링크는 '+Object.keys(f.joinFor||{}).filter(function(k){return f.joinFor[k]==='m'}).join(', '),p+'?src='+(f.reviewCohort?'rejoin-'+f.reviewCohort+'-msg':'rejoin-msg'),!f.reviewCohort,null];   // 전용 후기 폼은 남녀 공통 링크

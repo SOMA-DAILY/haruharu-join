@@ -627,6 +627,17 @@ def gen(path, f):
         arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
         assert arm_line, f'{path} ARM 줄을 못 찾음'
         t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if f.get('maleFee'):
+        # 화면 금액에만 표시를 달고 링크/실제 선택 성별로 갱신. 스크립트, 속성, 12,900 정가는 제외.
+        chunks = re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]*>)', t, flags=re.S|re.I)
+        for i in range(0, len(chunks), 2):
+            for key, amount, upper in [('full', f['fee'], f['maleFee']), ('friend', f['friendFee'], f['maleFriendFee'])]:
+                chunks[i] = re.sub(r'(?<![\d,])' + f'{amount:,}' + r'(?![\d,])', f'<bdi data-price="{key}">{amount:,}~{upper:,}</bdi>', chunks[i])
+        t = ''.join(chunks).replace('둘 다 <b><bdi data-price=', '1인 <b><bdi data-price=').replace('둘 다 <bdi data-price=', '1인 <bdi data-price=')
+        assert 'data-price="full"' in t and 'data-price="friend"' in t
+        prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
+        tail = open('src/gender-fee.html',encoding='utf-8').read().replace('__GENDER_PRICES__',prices)
+        t = t.replace('<p class="foot">', tail + '<p class="foot">', 1)
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 
