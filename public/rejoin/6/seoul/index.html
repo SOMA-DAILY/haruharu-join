@@ -521,11 +521,11 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
  <p class="sv-hint">이전에 만났던 분과는 다른 방으로 배정해 드려요.</p>
  <p class="sv-off">재참여하면 <b>2,000원 할인</b>돼요<small><s>7,900원</s> → 5,900원</small></p>
  <div class="sv-cos">
-  <p class="sv-co" data-path="/7/seoul/rejoin/from-6/" data-g="" data-reg="/7/seoul/"><b>7기</b>10/23(금) ~ 10/25(일) 진행<small>신청 마감 10/22(목) 18:00</small></p>
+  <p class="sv-co" data-path="/7/seoul/rejoin/from-6/" data-g="" data-reg="/7/seoul/" data-exclude-g="m"><b>7기</b>10/23(금) ~ 10/25(일) 진행<small>신청 마감 10/22(목) 18:00</small></p>
   <p class="sv-co" data-path="/8/seoul/rejoin/from-6/" data-g="" data-reg="/8/seoul/"><b>8기</b>10/30(금) ~ 11/1(일) 진행<small>신청 마감 10/29(목) 18:00</small></p>
  </div>
  <div class="opts sv-join">
-  <label class="opt fr-card" data-path="/7/seoul/rejoin/from-6/" data-g="" data-reg="/7/seoul/"><span class="k">A</span><input type="radio" name="sv_join" value="7기"><span class="fr-l">네, <span class="sv-c">7기 </span>신청할래요</span></label>
+  <label class="opt fr-card" data-path="/7/seoul/rejoin/from-6/" data-g="" data-reg="/7/seoul/" data-exclude-g="m"><span class="k">A</span><input type="radio" name="sv_join" value="7기"><span class="fr-l">네, <span class="sv-c">7기 </span>신청할래요</span></label>
   <label class="opt fr-card" data-path="/8/seoul/rejoin/from-6/" data-g="" data-reg="/8/seoul/"><span class="k">A</span><input type="radio" name="sv_join" value="8기"><span class="fr-l">네, <span class="sv-c">8기 </span>신청할래요</span></label>
   <label class="opt" hidden><input type="radio" name="sv_join" value="후기만" checked></label>
  </div>
@@ -703,7 +703,7 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    var reg=join&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
    if(btn&&form.dataset.submitting!=='true') btn.textContent=join?'신청하기':'후기 보내기';
    if(dh){ dh.textContent=join?d0[0]:'후기 고마워요 💌'; dp.innerHTML=join?d0[1]:'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수 소식은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.'; if(ap) ap.hidden=!join; } }
-  function vis(){ var live=yes.filter(function(o){ return open[o.getAttribute('data-path')]!==false; });
+  function vis(){ var live=yes.filter(function(o){ return open[o.getAttribute('data-path')]!==false && (o.getAttribute('data-exclude-g')||'').split(',').indexOf(G)<0; });
    var mine=live.filter(function(o){ return G==='x'||!o.getAttribute('data-g')||o.getAttribute('data-g')===G; }), show=mine.length?mine:live;
    yes.forEach(function(o){ var on=show.indexOf(o)>=0, c=co(o), r=o.querySelector('input'); o.hidden=!on; if(c) c.hidden=!on;
     var tag=o.querySelector('.sv-c'); if(tag) tag.hidden=show.length<2;   // 기수가 둘 다 보일 때만 [네, 6기 신청할래요]
@@ -717,9 +717,9 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    o.addEventListener('click',function(e){ if(was&&r.checked){ e.preventDefault(); was=false; r.checked=false; o.classList.remove('on'); toNo(); } else was=false; }); });
   form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); var ph=form.querySelector('.q[data-name="phone"]'); if(picked()!=='후기만'&&ph) setTimeout(function(){ ph.scrollIntoView({behavior:'smooth',block:'center'}); },60); } });
   yes.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
-   fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
-   if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });
-  setInterval(function(){ yes.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
+   fetch('/api/cohort?path='+encodeURIComponent(p)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
+   if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });
+  setInterval(function(){ yes.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
   // 제출했는데 고른 기수가 그새 마감됨 (서버 409): 페이지는 그대로 두고 그 기수만 숨기고 다시 고르게 함
   window.hhSvClosed=function(){ var r=jq.querySelector('input:checked'); if(r&&r.closest('.opt').getAttribute('data-path')) open[r.closest('.opt').getAttribute('data-path')]=false; vis();
    if(btn) btn.disabled=false;
