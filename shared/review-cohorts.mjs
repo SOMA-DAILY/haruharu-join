@@ -46,7 +46,7 @@ export function reviewRows(applications, registry) {
     const survey = surveyOf(row);
     const allowed = new Set(cohortChoices(registry.DEADLINES, submittedTime(row) || Date.now(), registry.INFO).map((choice) => choice.value));
     let cohorts = readCohorts(survey.sv_cohorts).filter((key) => allowed.has(key));
-    let source = cohorts.length ? '본인 응답' : '';
+    let source = cohorts.length ? (registry.FORMS[row.path]?.reviewCohort ? registry.FORMS[row.path].reviewCohort + '기 전용 폼' : '본인 응답') : '';
     let estimated = false;
     // Past paid applications can estimate participation when operators have not
     // recorded room assignments. Keep this distinct from self-reported cohorts.
