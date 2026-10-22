@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '7';   // 10/18 18:00 6기 마감 뒤 병합: 지역 선택, 마감된 6기 폼의 다음 기수 버튼과 302 를 7기로
+export const CURRENT_COHORT = '8';   // 10/22 18:00 7기 마감 뒤 병합: 지역 선택, 마감된 7기 폼의 다음 기수 버튼과 302 를 8기로. 8기 마감(10/29 18:00) 뒤엔 '9'
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -101,7 +101,7 @@ export const FORMS = {
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
   //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
-  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', abTest: true },   // abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
+  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryEnd: '2026-10-22T17:00:00+09:00', alert: '/alert/seoul/', abTest: true },   // entryEnd (10/22 17시 사용자): 여자/바이오도 지금부터 8기, 고정 링크만 8기로 (7기 폼 직접 온 건 18:00 까지 그대로). abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // 7기 정오 할인 (10/21 요청): 6기 lunch와 같은 구성, 10/22 12:00 KST에 이 할인만 마감.
@@ -206,7 +206,7 @@ export function nextFormPath(f) {
 //   단 성별 g 가 폼의 entryFirst 와 같으면 그 폼이 먼저 (10/18: 남자는 7기 먼저). 열린 게 없으면 가장 최근 기수 폼(마감 안내가 뜸)
 export function entryTarget(entry, now = Date.now(), env, g = '') {
   const e = normalizePath(entry);
-  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e);
+  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e && !(FORMS[p].entryEnd && now >= Date.parse(FORMS[p].entryEnd)));   // entryEnd: 기수 마감 전에 고정 링크만 다음 기수로
   if (!cand.length) return null;
   const st = cand.map((p) => ({ p, ...formStatus(p, now, env, g), n: Number(FORMS[p].cohort) || 0 }));
   const first = (x) => (g && FORMS[x.p].entryFirst === g ? 0 : 1);

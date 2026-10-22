@@ -39,7 +39,8 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
   // 8기, 9기 미리 올려 둠 (10/21): 7기 마감(10/22 18:00) 전엔 7기, 뒤엔 8기, 8기 마감(10/29 18:00) 뒤엔 9기, 9기 마감(11/5 18:00) 뒤엔 9기 마감 안내. 남녀 같음
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T14:00:00+09:00'), undefined, 'm'), '/8/seoul/');   // 10/22 14시 사용자: 남자는 지금부터 8기
   for (const g of ['', 'f']) {
-    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T17:59:59+09:00'), undefined, g), '/7/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T16:59:59+09:00'), undefined, g), '/7/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T17:00:00+09:00'), undefined, g), '/8/seoul/', g);   // 10/22 17시 사용자: 여자/바이오도 8기 (entryEnd)
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T18:00:00+09:00'), undefined, g), '/8/seoul/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/8/seoul/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T18:00:00+09:00'), undefined, g), '/9/seoul/', g);
@@ -57,7 +58,7 @@ test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기
     const { onRequest } = await import('../functions/_middleware.js');
     const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
     assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-m-film-2137'), [302, '/8/seoul/?src=ad-seoul-m-film-2137&g=m']);   // 옛 기수 남자 광고 주소도 8기 (10/22)
-    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/7/seoul/?src=ad-seoul-f-film-1360&g=f']);   // 지금 기수 7기 (6기 마감 뒤 병합)
+    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/8/seoul/?src=ad-seoul-f-film-1360&g=f']);   // 지금 기수 8기 (7기 마감 뒤 병합)
     assert.equal((await hit('/6/seoul/?g=m'))[0], 200);   // 열린 6기 폼에 직접 온 건 그대로
   } finally { Date.now = o; }
 });
@@ -68,9 +69,9 @@ test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 30
   const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
   try {
     assert.deepEqual(await hit('/4/seoul/?src=h4t-stu-m-bike'), [302, '/8/seoul/?src=h4t-stu-m-bike&g=m']);   // 10/22: 남자는 8기 먼저
-    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/7/seoul/?src=h4t-stu-f-ieum&g=f']);   // 지금 기수 7기
+    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/8/seoul/?src=h4t-stu-f-ieum&g=f']);   // 지금 기수 8기
     assert.equal((await hit('/4/gwangju/'))[0], 200);
-    assert.deepEqual(await hit('/seoul/'), [302, '/7/seoul/']);
+    assert.deepEqual(await hit('/seoul/'), [302, '/8/seoul/']);
     assert.equal((await hit('/4/seoul/x7q2/'))[0], 200);
     assert.equal((await hit('/4/seoul/rejoin/'))[0], 200);
     assert.equal((await hit('/4/seoul-work/pre/'))[0], 200);
@@ -86,8 +87,8 @@ test('성별 쿠키 (10/22): 광고로 지나간 남자는 바이오(g 없음)�
     assert.equal(loc1, '/8/seoul/?src=ad-seoul-m-exhibit-2137&g=m'); assert.match(set1, /^hh_g=m; Path=\/; Max-Age=604800; SameSite=Lax; Secure$/);
     const [loc2, set2] = await hit('?src=h7-seoul-insta-bio', 'hh_ab_7seoul=a; hh_g=m');   // 같은 폰 바이오: 쿠키로 남자 → 8기, 쿠키 다시 안 심음
     assert.equal(loc2, '/8/seoul/?src=h7-seoul-insta-bio&g=m'); assert.equal(set2, '');
-    assert.equal((await hit('?src=h7-seoul-insta-bio'))[0], '/7/seoul/?src=h7-seoul-insta-bio');   // 쿠키 없는 바이오는 7기
-    assert.equal((await hit('?src=h7-seoul-insta-bio', 'hh_g=f'))[0], '/7/seoul/?src=h7-seoul-insta-bio&g=f');   // 여자 쿠키는 7기
+    assert.equal((await hit('?src=h7-seoul-insta-bio'))[0], '/7/seoul/?src=h7-seoul-insta-bio');   // 쿠키 없는 바이오는 7기 (17시 전)
+    assert.equal((await hit('?src=h7-seoul-insta-bio', 'hh_g=f'))[0], '/7/seoul/?src=h7-seoul-insta-bio&g=f');   // 여자 쿠키는 7기 (17시 전)
     assert.equal((await hit('?src=ad-seoul-f-film-1360', 'hh_g=m'))[0], '/7/seoul/?src=ad-seoul-f-film-1360&g=f');   // 링크 성별이 쿠키보다 우선
     const { onRequest } = await import('../functions/_middleware.js');
     const mw = async (u, cookie) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u, { headers: cookie ? { cookie } : {} }), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location'), r.headers.get('set-cookie') || '']; };
