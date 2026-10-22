@@ -747,7 +747,7 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
 (function(){
  var API='/api';
  var Q=new URLSearchParams(location.search);
- var HID=['src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'];
+ var HID=['g','src','utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'];
  var hidden={city:CITY,cohort:COHORT,plan:PLAN}; HID.forEach(function(k){ if(Q.get(k)) hidden[k]=Q.get(k); });
  var ARM=(function(){ var m=new RegExp('(?:^|;\\s*)hh_ab_'+location.pathname.replace(/[^a-z0-9]/gi,'')+'=(a|b)(?:;|$)').exec(document.cookie||''); return m?m[1]:''; })(); if(ARM) hidden.arm=ARM;   // 50/50 팔 (10/20): 서버 함수가 준 쿠키. 세션/제출 기록과 Mixpanel 에 같이 남김
  var offerControl = PLAN === 'early' ? window.setupEarlyOffer(hidden, goRegular) : null;
