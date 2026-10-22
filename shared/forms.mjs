@@ -12,8 +12,10 @@ export const COHORT_DEADLINES = {
   '5': '2026-10-14T18:00:00+09:00', // 신청 마감 10/14(수) 18:00. 진행 10/15(목)~10/17(토) (10/10 사용자)
   '6': '2026-10-18T18:00:00+09:00', // 진행 10/19(월)~10/21(수) (10/14 사용자). 마감은 5기처럼 시작 전날 18:00 (가안)
   '7': '2026-10-22T18:00:00+09:00', // 10/20 사용자: 7기 마감 10/22(목) 18:00 로 연장 (진행 10/23~25 그대로)
+  '8': '2026-10-29T18:00:00+09:00', // 10/21 사용자: 진행 10/30(금)~11/1(일), 마감은 시작 전날 18:00
+  '9': '2026-11-05T18:00:00+09:00', // 10/21 사용자: 진행 11/6(금)~11/8(일), 마감은 시작 전날 18:00
 };
-export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 22일(목) 18:00' };
+export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 22일(목) 18:00', '8': '10월 29일(목) 18:00', '9': '11월 5일(목) 18:00' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
@@ -30,6 +32,8 @@ const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
 const S7 = { ...S3, cohort: '7' };
+const S8 = { ...S3, cohort: '8' };
+const S9 = { ...S3, cohort: '9' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
 const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
@@ -100,6 +104,11 @@ export const FORMS = {
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // 7기 정오 할인 (10/21 요청): 6기 lunch와 같은 구성, 10/22 12:00 KST에 이 할인만 마감.
   '/7/seoul/noon/':        { ...S7, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '7기 서울 학생 정오 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-22T12:00:00+09:00', deadlineKo: '10월 22일(목) 낮 12시', untilKo: '10월 22일 낮 12시', leftKo: '', noSource: true, remind: true },
+  // ---- 8기, 9기 (10/21 사용자, 미리 올려 둠): 7기 서울 폼 그대로, 기수와 날짜만 다름. 금토일 진행, 마감은 시작 전날 18:00 (공통 COHORT_INFO/COHORT_DEADLINES)
+  //   entry 가 같으니 고정 링크는 앞 기수 마감 시각에 저절로 다음 기수로 (7기 10/22 18:00 → 8기 10/29 18:00 → 9기). entryFirst(7기 남자 먼저)는 안 가져옴
+  //   abTest: 7기 50/50(랜딩 v3b + 결제 v3)의 판정은 8기까지 팔당 LPV 2,000 원칙이라 8기만 이어감 (functions/8/seoul/). 9기는 없음
+  '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', abTest: true },
+  '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
   //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
@@ -126,6 +135,8 @@ export const COHORT_INFO = {
   '5': { period: '10월 15일(목) ~ 10월 17일(토), 3일', deadlineKo: '10월 14일(수) 18:00' },
   '6': { period: '10월 19일(월) ~ 10월 21일(수), 3일', deadlineKo: '10월 18일(일) 18:00' },
   '7': { period: '10월 23일(금) ~ 10월 25일(일), 3일', deadlineKo: '10월 22일(목) 18:00' },
+  '8': { period: '10월 30일(금) ~ 11월 1일(일), 3일', deadlineKo: '10월 29일(목) 18:00' },
+  '9': { period: '11월 6일(금) ~ 11월 8일(일), 3일', deadlineKo: '11월 5일(목) 18:00' },
 };
 
 export function normalizePath(p) {
