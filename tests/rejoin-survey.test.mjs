@@ -46,8 +46,8 @@ test('재참여 후기 폼: 한 장(/rejoin/seoul/)에서 6기/7기/후기만, �
   // 6기 마감(오늘 18:00) 뒤에도 페이지와 7기는 열려 있음
   const after = Date.parse('2026-10-18T18:30:00+09:00');
   assert.equal(formStatus(J6, after).open, false); assert.equal(formStatus(J7, after).open, true); assert.equal(formStatus(PAGE, after).open, true);
-  assert.equal(formStatus(J7, Date.parse('2026-10-21T17:59:59.999+09:00')).open, true);
-  assert.equal(formStatus(J7, Date.parse('2026-10-21T18:00:00+09:00')).open, false);
+  assert.equal(formStatus(J7, Date.parse('2026-10-22T17:59:59.999+09:00')).open, true);
+  assert.equal(formStatus(J7, Date.parse('2026-10-22T18:00:00+09:00')).open, false);
 });
 
 test('주관식 두 문항: 둘 다 필수, 짧으면 빠진 것으로, 길면 자름', () => {
@@ -85,9 +85,9 @@ test('서버: 고른 값으로 기수 줄에 접수하고, 방문 기록은 페�
   assert.equal(late6.res.status, 409); assert.equal((await late6.res.json()).error, 'cohort_closed');
   const late7 = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: 'a' }, {}, '2026-10-18T18:00:01+09:00');
   assert.equal(late7.res.status, 200);
-  const before7 = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: 'a' }, {}, '2026-10-21T17:59:59.999+09:00');
+  const before7 = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: 'a' }, {}, '2026-10-22T17:59:59.999+09:00');
   assert.equal(before7.res.status, 200);
-  const closed7 = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: 'a' }, {}, '2026-10-21T18:00:00+09:00');
+  const closed7 = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: 'a' }, {}, '2026-10-22T18:00:00+09:00');
   assert.equal(closed7.res.status, 409); assert.equal((await closed7.res.json()).error, 'cohort_closed');
 });
 
@@ -120,7 +120,7 @@ test('화면: 소개 없이 한 페이지에 후기, 바라는 점, 다음 기�
   assert.ok(jq.includes('<label class="opt" hidden><input type="radio" name="sv_join" value="후기만" checked></label>') && !jq.includes('아니요') && jq.includes('네, <span class="sv-c">6기 </span>신청할래요'));
   assert.ok(jq.includes('재참여하면 <b>2,000원 할인</b>돼요<small><s>7,900원</s> → 5,900원</small>'));
   assert.ok(jq.includes('data-path="/6/seoul/rejoin/" data-g="f" data-reg="/6/seoul/"') && jq.includes('data-path="/7/seoul/rejoin/" data-g="m" data-reg="/7/seoul/"'));
-  assert.ok(jq.includes('<b>6기</b>10/19(월) ~ 10/21(수) 진행<small>신청 마감 10/18(일) 18:00</small>') && jq.includes('<b>7기</b>10/23(금) ~ 10/25(일) 진행<small>신청 마감 10/21(수) 18:00</small>'));
+  assert.ok(jq.includes('<b>6기</b>10/19(월) ~ 10/21(수) 진행<small>신청 마감 10/18(일) 18:00</small>') && jq.includes('<b>7기</b>10/23(금) ~ 10/25(일) 진행<small>신청 마감 10/22(목) 18:00</small>'));
   for (const k of SURVEY_KEYS) assert.ok(p1.includes(`<textarea name="${k}"`) && p1.includes(`<input type="text" name="${k}_ok" value="" hidden required>`), k);
   const fq = p1.slice(at('<div class="q" data-name="buddy_room">'), at('<div class="q" data-name="name">'));
   assert.ok(/혼자 신청해요<\/span><b class="fr-p">5,900원/.test(fq) && /친구랑 같이 신청해요<small>친구는 5,900원<\/small><\/span><b class="fr-p">3,900원/.test(fq));

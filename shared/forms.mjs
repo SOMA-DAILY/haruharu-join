@@ -36,6 +36,8 @@ const S8 = { ...S3, cohort: '8' };
 const S9 = { ...S3, cohort: '9' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
 const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
+// 6기 참가자 전용 후기: 재신청 5,900원 고정, 친구 동반/방 배정 문항만 받음(추가 할인 없음). 후기 기수와 신청 기수는 별도.
+const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, phoneOnly: true, survey: true, noPage: true, buddyOnly: true, reviewCohort: '6' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -120,6 +122,10 @@ export const FORMS = {
                               joins: { '6기': '/6/seoul/rejoin/', '7기': '/7/seoul/rejoin/', '후기만': '/rejoin/seoul/' }, joinFor: { '6기': 'f', '7기': 'm' } },
   '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
   '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
+  '/rejoin/6/seoul/':       { ...S6, cohort: 'review', ...REVIEW6, noPage: false, label: '6기 참가자 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
+                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' } },
+  '/7/seoul/rejoin/from-6/': { ...S7, ...REVIEW6, rejoin: true, label: '6기 참가자 7기 재신청 (후기 폼)' },
+  '/8/seoul/rejoin/from-6/': { ...S8, ...REVIEW6, rejoin: true, label: '6기 참가자 8기 재신청 (후기 폼)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
