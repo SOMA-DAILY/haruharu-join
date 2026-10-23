@@ -1,6 +1,6 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
-import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
+import { cohortStatus, formOf, formStatus, pickTarget, CURRENT_COHORT } from '../../shared/forms.mjs';
 import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey } from '../../shared/rejoin-survey.mjs';
 import { genderCookie } from '../../shared/entry.mjs';
@@ -239,6 +239,14 @@ export async function onRequest({ request, env, params, waitUntil }) {
       reviewOnly = target.path === page.path;
       b.path = target.path;
     }
+    // 기수 고르기 (10/23, 등록부 pick): 신청서의 기수 카드로 다른 기수를 골랐으면(cohort_pick) 그 기수 줄로 접수. 방문 기록은 위 재참여 후기 폼처럼 페이지 경로
+    let picked = false;
+    if (page && page.pick && (b.fields || {}).cohort_pick) {
+      const target = pickTarget(page.path, b.fields.cohort_pick);
+      if (!target) return json({ ok: false, error: 'missing', miss: ['cohort_pick'] }, 400);
+      picked = target !== page.path;
+      b.path = target;
+    }
     // 등록부(shared/forms.mjs)로 요금제/기수/지역을 서버가 확정 (클라이언트 hidden 값은 안 믿음). 등록부에 없는 경로는 받지 않음
     const form = festival ? null : formOf(b.path);
     if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
@@ -328,7 +336,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (ff != null) rec.friend_fee = ff;
     if (priorFrom != null) rec.prior_from = priorFrom;   // 가져온 지난 신청 ID ('' = 못 찾음)
     if (sv) rec.survey = sv.survey;
-    if (page && page.joins) rec.from_page = page.path;   // 재참여 후기 폼에서 고른 기수로 접수됨
+    if (page && (page.joins || picked)) rec.from_page = page.path;   // 재참여 후기 폼, 기수 고르기(10/23)에서 고른 기수로 접수됨
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
