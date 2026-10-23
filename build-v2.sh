@@ -23,6 +23,7 @@ LANDING=open('src/landing.v2.html',encoding='utf-8').read()
 LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
 LANDING_V3B=open('src/landing.v3b.html',encoding='utf-8').read()   # 랜딩 3판 B (10/20): 등록부 abTest 폼의 B 팔. 첫 화면 실제 캡처 6칸 + 훅 + 금액 칩, 후기 5, 진행 과정/걱정 접힘, 결제 구역 v3 (PAY_V3_TAIL)
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+PICK_TAIL=open('src/cohort-pick.html',encoding='utf-8').read()   # 기수 고르기 (10/23): 등록부 pick 폼의 신청 안내 아래 기수 카드 모양과 동작
 # 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
 COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
 V3_STYLE=re.search(r'<style>.*?</style>\n', LANDING_V3, flags=re.S).group(0)
@@ -599,6 +600,28 @@ def gen(path, f):
         assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
         t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
         assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
+    if f.get('pick'):
+        # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
+        #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
+        g_open = '<div class="q" data-name="gender">'
+        assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
+        rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == f.get('entry')], key=lambda x: int(ms(DL[x[1]['cohort']])))
+        assert len(rows) >= 2 and any(p == path for p, _ in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
+        pk_short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
+        def pk_card(p, g):
+            c = g['cohort']; on = p == path; per, dko = INFO[c]['period'], DLKO[c]
+            return (f'<button type="button" class="pk-c{" on" if on else ""}" role="radio" aria-checked="{"true" if on else "false"}" data-cohort="{c}" data-deadline="{ms(DL[c])}"'
+                    f' data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
+                    f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
+                    f'<span class="pk-chips"><span class="pk-chip p">🗓️ {pk_short(per)}</span><span class="pk-chip d">⏰ {pk_short(dko)} 신청 마감</span></span></button>')
+        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
+                      + '\n'.join(pk_card(p, g) for p, g in rows) + '\n</div>\n\n' + g_open, 1)
+        # 아래 고정 신청 버튼은 카드 구역이 보이면 숨김 (기준이 성별 문항이던 것을 카드 구역으로)
+        tgt = "function target(){ return document.querySelector('.q[data-name=\"gender\"]'); }"
+        assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+        t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
+        foot = '<p class="foot">'; assert t.count(foot) == 1
+        t = t.replace(foot, PICK_TAIL + foot, 1)
     bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):

@@ -580,7 +580,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
   var left=day(DEADLINE-1)-day(Date.now()); if(left>30||left<0) return;
   b.textContent=left?'D-'+left:'오늘 마감'; })();
  var st=document.getElementById('ldSticky');
- function target(){ return document.querySelector('.q[data-name="gender"]'); }
+ function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name="gender"]'); }
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
   mp('landing_cta',{where:b.getAttribute('data-cta')});
   // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
@@ -616,6 +616,12 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 </script>
 
 
+
+<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="8"><p class="pk-t">참여할 기수</p>
+<input type="hidden" name="cohort_pick" value="">
+<button type="button" class="pk-c on" role="radio" aria-checked="true" data-cohort="8" data-deadline="1793264400000" data-period="10월 30일(금) ~ 11월 1일(일), 3일" data-dl="10월 29일(목) 18:00" data-ps="10/30(금) ~ 11/1(일)" data-ds="10/29(목) 18:00"><span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">8기</b><span class="pk-badge">모집 중</span></span><span class="pk-chips"><span class="pk-chip p">🗓️ 10/30(금) ~ 11/1(일)</span><span class="pk-chip d">⏰ 10/29(목) 18:00 신청 마감</span></span></button>
+<button type="button" class="pk-c" role="radio" aria-checked="false" data-cohort="9" data-deadline="1793869200000" data-period="11월 6일(금) ~ 11월 8일(일), 3일" data-dl="11월 5일(목) 18:00" data-ps="11/6(금) ~ 11/8(일)" data-ds="11/5(목) 18:00"><span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">9기</b><span class="pk-badge">모집 중</span></span><span class="pk-chips"><span class="pk-chip p">🗓️ 11/6(금) ~ 11/8(일)</span><span class="pk-chip d">⏰ 11/5(목) 18:00 신청 마감</span></span></button>
+</div>
 
 <div class="q" data-name="gender"><p class="t">성별<span class="req">*</span></p>
  <div class="opts">
@@ -833,6 +839,73 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
  function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} try{ document.dispatchEvent(new Event('hh-pay')); }catch(e){} }
  function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=n; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,n.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) done(); else s.textContent=n; }
  c.addEventListener('click',function(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(n).then(done,old); else old(); });
+})();
+</script>
+<!-- 기수 고르기 (10/23 사용자: 8기, 9기 일정을 적어 두고 둘 중에 골라서 신청, 신청 안내 바로 아래에, 고를 때 스크롤 이동이나 화면 바뀜 없이). 등록부 pick 폼만 build-v2.sh 가 끼움.
+     카드(#pick)는 성별 문항 바로 앞, 지금 폼 기수가 골라진 채(.on). 다른 기수를 누르면 그 자리에서 골라지고 숨은 칸 cohort_pick 에 그 기수가 담김 → 서버가 그 기수 줄로 접수(shared/forms.mjs pickTarget).
+     지금 폼 기수면 칸을 비워 둠(빈 값은 제출, 임시 저장, 입력 시작 지표에 안 들어감). 고른 기수에 맞춰 화면의 진행 기간, 신청 마감, 'N기' 글자를 바꿔 씀(마감 안내 #closed 는 그대로).
+     성비, 지역, 나이 표기는 넣지 않음(사용자). 마감 지난 카드는 서버 시각으로 숨기고, 열린 카드가 하나뿐이면 구역째 숨김 -->
+<style>
+.pk{margin-top:26px}
+.pk[hidden]{display:none}
+.pk-t{margin:0 0 10px;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--hh-ink,#131A26)}
+.pk-c{display:block;width:100%;margin-top:10px;padding:16px 16px 15px 18px;background:#fff;border:1.5px solid var(--hh-line,#E3E8EF);border-radius:18px;font:inherit;text-align:left;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;transition:transform .12s,border-color .12s,background .12s}
+.pk-c[hidden]{display:none}
+.pk-c:active{transform:scale(.985)}
+.pk-c:focus-visible{outline:2px solid var(--hh-blue,#2F7BD6);outline-offset:2px}
+.pk-c.on{border-color:var(--hh-blue,#2F7BD6);background:#F2F8FF}
+.pk-top{display:flex;align-items:center;gap:10px}
+.pk-k{flex:none;box-sizing:border-box;width:22px;height:22px;border:1.5px solid #C3CCD8;border-radius:50%;background:#fff}
+.pk-c.on .pk-k{border:6.5px solid var(--hh-blue,#2F7BD6)}
+.pk-no{font-size:26px;font-weight:900;line-height:1;letter-spacing:-.04em;color:var(--hh-ink,#131A26)}
+.pk-badge{margin-left:auto;flex:none;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:-.01em;background:#E7F6EC;color:#1E7A45}
+.pk-badge.soon{background:#FFEFE0;color:#C2560F}
+.pk-chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0 32px}
+.pk-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.pk-chip.p{background:var(--hh-sky,#EEF5FD);color:#1F5FAE}
+.pk-chip.d{background:#F3F5F8;color:var(--hh-ink2,#465061)}
+.pk-c.on .pk-chip.p,.pk-c.on .pk-chip.d{background:#fff}
+@media(max-width:359px){.pk-chips{margin-left:0}.pk-chip{font-size:13px;padding:6px 10px}}
+</style>
+<script>
+(function(){
+ var box=document.getElementById('pick'); if(!box) return;
+ var own=box.getAttribute('data-own'), inp=box.querySelector('input[name="cohort_pick"]');
+ var cards=[].slice.call(box.querySelectorAll('.pk-c'));
+ function card(c){ for(var i=0;i<cards.length;i++) if(cards[i].getAttribute('data-cohort')===c) return cards[i]; return null; }
+ var me=card(own); if(!me||!inp) return;
+ // 지금 폼 기수 글자(진행 기간, 신청 마감, 'N기')가 든 글자 조각을 원래 모양으로 기억해 두고, 고른 기수 값으로 바꿔 씀
+ var keys=['data-period','data-dl','data-ps','data-ds'], texts=[];
+ var walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){ return n.parentNode.closest('#pick,#closed,script,style,noscript')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT; }});
+ for(var n=walk.nextNode(); n; n=walk.nextNode()){ var v=n.nodeValue; if(v.indexOf(own+'기')>=0||keys.some(function(k){ return v.indexOf(me.getAttribute(k))>=0; })) texts.push([n,v]); }
+ var cur=own;
+ function select(c,byUser){
+  var to=card(c); if(!to) return;
+  cards.forEach(function(a){ var on=a===to; a.classList.toggle('on',on); a.setAttribute('aria-checked',on?'true':'false'); });
+  inp.value=c===own?'':c;
+  texts.forEach(function(x){ var v=x[1]; keys.forEach(function(k){ v=v.split(me.getAttribute(k)).join(to.getAttribute(k)); }); x[0].nodeValue=v.split(own+'기').join(c+'기'); });
+  if(byUser&&c!==cur){ try{ if(window.mixpanel&&mixpanel.__loaded) mixpanel.track('cohort_pick',{from:cur,to:c,page_cohort:own}); }catch(e){} }
+  cur=c;
+ }
+ cards.forEach(function(a){ a.addEventListener('click',function(){ select(a.getAttribute('data-cohort'),true); }); });
+ // 임시 저장 복원(폼 스크립트가 숨은 칸 값을 되살림) 뒤 화면을 그 값에 맞춤
+ document.addEventListener('DOMContentLoaded',function(){ if(inp.value&&card(inp.value)) select(inp.value,false); });
+ // 마감까지 남은 날 (한국 날짜, 사흘 안이면 주황). 마감 지난 카드는 숨기고(골라 둔 카드면 지금 폼 기수로), 열린 카드가 하나뿐이면 구역째 숨김
+ var off=0;
+ function day(t){ return Math.floor((t+9*36e5)/864e5); }
+ function paint(){
+  var now=Date.now()+off, open=0;
+  cards.forEach(function(a){
+   var dl=Number(a.getAttribute('data-deadline')), b=a.querySelector('.pk-badge'), ok=now<dl;
+   a.hidden=!ok; if(!ok) return; open++;
+   var d=day(dl)-day(now); b.textContent=d<=0?'오늘 마감':'마감 D-'+d; b.classList.toggle('soon',d<=3);
+  });
+  if(card(cur).hidden||open<2) select(own,false);
+  box.hidden=open<2;
+ }
+ paint();
+ fetch('/api/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){ if(s&&isFinite(s.serverNow)){ off=Number(s.serverNow)-Date.now(); paint(); } }).catch(function(){});
+ setInterval(paint,30000);
 })();
 </script>
 <style>
