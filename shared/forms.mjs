@@ -96,7 +96,7 @@ export const FORMS = {
   '/5/gwangju/evening/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
   // ---- 6기 (10/14~): 서울 학생 정가 폼 하나만 (광주 없음, 10/14 사용자). 화면/문항/금액은 5기 서울 폼 그대로.
   //   remind (10/14 사용자): [모두 동의] + (선택) 모집 소식 문자 대신 필수 동의 하나, 목적에 '신청 진행과 마감 안내(작성 중인 신청 포함)'. 이 근거로는 본인 신청 마감 안내만 (할인/홍보 넣으면 광고성 → 수신 동의 필요)
-  //   noRecord (10/14 사용자): 성과 구역(250명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 250명+ 참여' 줄은 그대로
+  //   noRecord (10/14 사용자): 성과 구역(300명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 300명+ 참여' 줄은 그대로
   //   entry (10/14 사용자): 고정 링크 /seoul/student/ (광고 남녀, 바이오) 가 5기 마감 뒤 이 폼으로. 광주는 안 함 → /gwangju/student/ 는 5기 마감 안내 + 지역 선택 버튼
   '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
