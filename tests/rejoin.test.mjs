@@ -27,7 +27,8 @@ test('서울/광주 재참여는 개선 화면을 쓰는 4,900원 할인 폼이�
     assert.equal(feeLabel(form), '재참여 4,900원');
     assert.equal(friendFee(form, fields), 0);
     assert.equal(form.friendFee, undefined);
-    assert.equal(form.listFee, 12900);
+    assert.equal(form.listFee, undefined);
+    assert.equal(form.showFee, true);
     assert.ok(!listedForms().some((f) => f.path === path));
     assert.equal(formStatus(path, Date.parse(COHORT_DEADLINES['4']) - 1).open, true);
     assert.equal(formStatus(path, Date.parse(COHORT_DEADLINES['4'])).open, false);
@@ -89,7 +90,8 @@ test('재참여 폼은 연락처/동의와 참가비 페이지가 나뉘고 참�
     for (const word of ['참가비', '송금', '4,900원']) assert.equal((p1 + p2).includes(word), false, path + ' ' + word);
     assert.match(p3, /재참여[\s\S]*4,900원/);
     assert.match(p3, /id="pay" href="https:\/\/haruharu-pay.pages.dev\/e\/"/);
-    assert.ok(p3.includes('<p class="fee-was"><s>12,900원</s> → <strong>4,900원</strong></p>'), path + ' 할인 표시');
+    assert.equal(html.includes('12,900'), false, '비교용 정가 제거');
+    assert.ok(p3.includes('<p class="fee-was"><strong>4,900원</strong></p>'), path + ' 할인 표시');
     assert.equal((p3.match(/class="fr-share"/g) || []).length, 1, path + ' 친구 공유 버튼');
     assert.ok(p3.indexOf('data-name="buddy_room"') < p3.indexOf('data-name="name"'), path + ' 친구 문항 먼저');
     for (const word of ['7,900원', '5,900원', '사전 알림을 신청해', 'class="fr-on"', 'class="fr-fee"']) assert.equal(p3.includes(word), false, path + ' ' + word);

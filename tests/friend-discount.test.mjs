@@ -94,7 +94,8 @@ test('개선판 정가 폼: 3페이지(기본 문항 / 전화번호와 동의 / 
     assert.ok(html.includes(FORMS[p].friendPay), p);
     assert.equal((html.match(/class="fr-share"/g) || []).length, 1, p + ' 공유 버튼은 친구 문항에만');
     assert.ok(p3.split('data-name="name"')[0].includes('class="fr-share"'), p);
-    assert.ok(p3.includes('<p class="fee-was"><s>12,900원</s> → <strong>7,900원</strong></p>'), p + ' 정가 표시');
+    assert.equal(html.includes('12,900'), false, '비교용 정가 제거');
+    assert.ok(p3.includes('<p class="fee-was"><strong>7,900원</strong></p>'), p + ' 정가 표시');
   }
 });
 

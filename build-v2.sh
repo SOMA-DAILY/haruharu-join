@@ -261,8 +261,8 @@ def gen(path, f):
     else:
         # 1페이지에는 참가비를 드러내지 않음(10/8 사용자: 1페이지 이탈과 2페이지 이탈을 견줘 참가비가 적절한지 보려고). 금액, 송금, 환불 문구는 2페이지 참가비 안내에서 처음 나옴
         ld_rows = [('신청 마감', deadline_ko), ('참가 안내', '신청 마감일까지 참가 확정 문자를&nbsp;보내드려요')]
-        if f.get('feeFirst'):   # 10/11 사용자: 참가비는 첫 화면 말고 신청 안내에만 (12,900 → 7,900), 그 바로 아래 다음 기수 알림. 결제 페이지에서 금액을 처음 보고 나가는 이탈 때문에 10/8 숨김 결정을 바꿈
-            ld_rows.insert(1, ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
+        if f.get('feeFirst'):   # 10/11 사용자: 참가비는 첫 화면 말고 신청 안내에만 (실제 참가비), 그 바로 아래 다음 기수 알림. 결제 페이지에서 금액을 처음 보고 나가는 이탈 때문에 10/8 숨김 결정을 바꿈
+            ld_rows.insert(1, ('참가비', f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
         ld_notes = []
     ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
     ld_flow = flow if (prealert or f.get('landingV3')) else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭). 랜딩 3판은 송금을 다시 넣음 (10/12)
@@ -272,7 +272,7 @@ def gen(path, f):
     # 랜딩 3판 안내 카드 다섯 줄 + 첫 화면 칩 (짧은 날짜)
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
-              ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+              ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     # B 팔 1페이지는 A 와 같게 (10/21 사용자): 변수는 송금 페이지(결제 구역)만. B 전용 랜딩/안내 카드는 안 씀
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
@@ -492,7 +492,7 @@ def gen(path, f):
             won = lambda n: f'{n:,}'
             share_only = bool(f.get('rejoin')) and not f.get('friendFee')   # 재참여 폼은 고정 금액 (설문 폼만 친구 할인으로 금액이 바뀜)
             off = won(f['fee'] - f.get('friendFee', f['fee']))
-            was = f.get('listFee') or (f.get('wasFee') if survey else None)   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
+            was = f.get('wasFee') if survey else None   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
             frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])), '__PAL_FEE__': won(pal_fee) if survey else '',
                    '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(was) + '원</s> → ') if was else '',
                    '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("(window.HH_SHARE_PATH||'" + f['friendForm'] + "')" if survey else "'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': 'rejoin-friend' if survey else f'h{cohort}-friend' + ('-rejoin' if f.get('rejoin') else ''),
@@ -550,15 +550,15 @@ def gen(path, f):
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
             if comeback: t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
-        if f.get('listFee'):
-            # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
+        if f.get('showFee'):
+            # 참가비 안내 제목 아래 실제 금액만 크게 표시한다.
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
-            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["listFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><strong>{fee}원</strong></p>\n', 1)
         if survey:
             # 재참여 할인 표시 (10/17): 참가비 안내 제목 아래 '재참여 할인 7,900원 → 5,900원'. 친구 선택지를 고르면 이 줄은 숨고 친구 할인 안내가 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
-            assert t.count(ftitle) == 1 and not f.get('listFee'), f'{path} 참가비 안내 제목을 못 찾음'
+            assert t.count(ftitle) == 1 and not f.get('showFee'), f'{path} 참가비 안내 제목을 못 찾음'
             t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>재참여 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1 and not re.search(r'__[A-Z0-9_]+__', SV_TAIL)
             t = t.replace(foot, SV_TAIL + foot, 1)
@@ -585,7 +585,7 @@ def gen(path, f):
             t = t[:d1] + '\n' + APP_GET.rstrip('\n') + t[d1:]
         if not prealert and not phone_only:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄. 한 페이지짜리 재참여 폼은 해당 없음
             page1 = t.split('data-page="1"', 1)[1].split(f'data-page="{lastp}"', 1)[0]
-            for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ())):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
+            for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원')):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
         for v in ('' if comeback else 'fm'):   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
             assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 앱 화면 이미지 없음: L_store_feed_{v}.webp'
@@ -628,7 +628,7 @@ def gen(path, f):
         assert arm_line, f'{path} ARM 줄을 못 찾음'
         t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
     if f.get('maleFee'):
-        # 화면 금액에만 표시를 달고 링크/실제 선택 성별로 갱신. 스크립트, 속성, 12,900 정가는 제외.
+        # 화면 금액에만 표시를 달고 링크/실제 선택 성별로 갱신. 스크립트와 속성은 제외.
         chunks = re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]*>)', t, flags=re.S|re.I)
         for i in range(0, len(chunks), 2):
             for key, amount, upper in [('full', f['fee'], f['maleFee']), ('friend', f['friendFee'], f['maleFriendFee'])]:
