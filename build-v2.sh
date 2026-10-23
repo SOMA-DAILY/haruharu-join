@@ -318,12 +318,12 @@ def gen(path, f):
                          ('<p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl>', '<h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p>'),   # 10/18: 후기가 먼저라 위에는 금액 카드 대신 제목
                          ('<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>', '<h2>신청이 마감됐어요</h2><p>'),   # 이 페이지는 마감이 없어 안 보이지만 기수 글자가 남지 않게
                          ('<title>하루하루 소개팅 __COHORT__기 신청폼 💕</title>', '<title>하루하루 지난 기수 후기 💌</title>'),
-                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
+                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 300명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
                          ('<button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button>', ''),
                          ('<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">', '<meta property="og:title" content="지난 기수 어땠어요? 후기를 들려주세요 💌">')):
                 assert t.count(a) == 1, f'{path} 설문 폼 자리를 못 찾음: {a[:30]}'
                 t = t.replace(a, b, 1)
-        # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
+        # 성과 구역(300명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
         if f.get('landingV3') and f.get('noRecord'):
             t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
             assert n == 1 or (cand and 'id="ld-record"' not in LANDING_V3B), f'{path} 성과 구역을 못 찾음'   # B 팔 랜딩은 성과 구역 자체가 없음
