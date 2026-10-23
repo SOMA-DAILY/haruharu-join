@@ -80,7 +80,8 @@ test('전화번호만 받는 폼 화면: 한 페이지에 전화번호, 친구 �
     for (const id of ['ld-flow', 'ld-qa', 'ld-review', 'ld-guide']) assert.ok(p1.includes('id="' + id + '"'), path + ' ' + id);   // 소개는 다른 개선판 폼과 같게 둠
     assert.ok(p1.includes('10월 15일(목) ~ 10월 17일(토)') && p1.includes('먼저 신청한 순서대로'));
     assert.equal((p1.match(/class="fr-share"/g) || []).length, 1);
-    assert.ok(p1.includes('<p class="fee-was"><s>12,900원</s> → <strong>5,900원</strong></p>'));
+    assert.equal(html.includes('12,900'), false, '비교용 정가 제거');
+    assert.ok(p1.includes('<p class="fee-was"><strong>5,900원</strong></p>'));
     assert.match(p1, /id="pay" href="https:\/\/haruharu-pay.pages.dev\/b\/"/);
     assert.ok(html.includes("var url=location.origin+'" + path + "friend/'+'?'+g+'src=h5-friend-rejoin';"));
   }
