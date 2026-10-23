@@ -1,0 +1,739 @@
+<!-- 신청폼 랜딩 이야기판 (10/22). landing.v3.html 에서 갈라 나옴: 구성은 ucling.co.kr 참고 (첫 화면 마감 D-day + 큰 버튼 → 후기 띠 → 공감(소개팅이 피곤한 까닭) → 해결 01~05 → 실제 미션 띠 → 진행 과정 → 걱정 문답 → 후기 → 신청 안내(지그재그 단계) → 마무리 D-day + 버튼). 등록부 landingV4 폼만 build-v2.sh 가 씀(landingV3 조립은 그대로 타고 랜딩 파일만 이것).
+     첫 화면의 사진 6칸 자리는 도트 장면(canvas #ldPx, 그림은 그 아래 스크립트의 글자 그림. 10/22 밤 사용자: ucling 처럼 도트 캐릭터가 움직이게).
+     색, 글꼴, 가명/프로필(성별 판), 진행 과정, 걱정 문답, 신청 안내 칸은 3판 그대로. 하루는 AI 가 아니라 운영진(10/18 사용자)이라 AI 표기를 뺌. 미션 띠의 그림 여섯 장(L_m_*.webp)은 운영 방에 실제로 나간 미션 그림(output/mission-images/prod-upload-20261010).
+     이 파일은 1페이지에 들어간다: feeFirst 폼이 아니면 참가비 말이 빌드 검사에 걸림 -->
+<script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
+  if(g!=='f'&&g!=='m'){ var m=/^(?:h\d+|ad)-[a-z]+-(m|f)-/.exec(q.get('src')||'')||/^(?:h\d+|ad)-[a-z]+-(m|f)-/.exec(q.get('utm_content')||''); g=m?m[1]:''; }   // g 가 없으면 광고 코드(h4-seoul-f-...)의 성별
+ }catch(e){} return g==='f'||g==='m'?g:'x'; })();</script>
+<style>
+:root{--hh-g:20px;--hh-ink:#131A26;--hh-ink2:#465061;--hh-mute:#6B7586;--hh-line:#E3E8EF;--hh-blue:#2F7BD6;--hh-sky:#EEF5FD;--hh-sky2:#DCEBFA}
+.wrap{max-width:520px;padding:0 var(--hh-g) 120px}
+.closed{margin-top:24px}
+@media(max-width:480px){:root{--hh-g:18px}.wrap{padding:0 var(--hh-g) 110px}}
+@media(min-width:700px){html,body{background:#EDF1F6}.wrap{background:#fff;min-height:100vh}}
+.ld{color:var(--hh-ink)}
+.ld-life{margin:28px calc(var(--hh-g)*-1) 0;padding:30px 0 0;background:linear-gradient(160deg,#E7F4FF 0%,#C5E4FB 100%);overflow:hidden}
+.ld .ld-life h2{margin:0;padding:0 var(--hh-g);font-size:clamp(28px,7.5vw,34px);line-height:1.25;letter-spacing:-.04em}
+.ld-life-media{position:relative;width:100%;aspect-ratio:1/1.07;margin-top:24px}
+.ld-life-img{display:block;position:absolute;height:auto}
+.ld-life-media #ldAppPreview{top:14px;left:-8%;width:84%;border-radius:28px;transform:rotate(-4deg);box-shadow:0 18px 35px rgba(27,71,107,.16)}
+.ld-life-media #ldHero{right:16px;bottom:28px;box-sizing:border-box;width:65%;border:6px solid #fff;border-radius:22px;transform:rotate(3deg);box-shadow:0 18px 34px rgba(27,71,107,.23)}
+:where(.ld) p,:where(.ld) h1,:where(.ld) h2,:where(.ld) h3,:where(.ld) ol,:where(.ld) ul,:where(.ld) dl,:where(.ld) dd,:where(.ld) figure{margin:0;padding:0}
+:where(.ld) ol,:where(.ld) ul{list-style:none}
+.ld h1,.ld h2,.ld h3{text-wrap:balance}
+.ld p,.ld li,.ld dd{text-wrap:pretty}
+.ld-band{margin-left:calc(var(--hh-g)*-1);margin-right:calc(var(--hh-g)*-1);padding-left:var(--hh-g);padding-right:var(--hh-g)}
+.ld-btn{display:block;width:100%;height:56px;margin:18px 0 0;border:0;border-radius:16px;background:var(--hh-blue);color:#fff;font:inherit;font-size:17px;font-weight:700;letter-spacing:-.01em;cursor:pointer;box-shadow:0 8px 20px rgba(47,123,214,.28);transition:transform .12s,background .12s}
+.ld-btn:active{transform:scale(.985);background:#2A6FC2}
+.ld-av{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#BFE0FB}
+.ld-av svg{display:block;width:26px;height:19px}
+.ld-av img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+/* 첫 화면 */
+.ld-hero{padding-top:12px;overflow:hidden;border-radius:0 0 28px 28px;background:linear-gradient(180deg,#CFE6FB 0%,#BEE1FB 100%)}
+.ld-top{display:flex;align-items:center;justify-content:space-between;height:44px}
+.ld-logo{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.ld-logo img{display:block;width:30px;height:30px;border-radius:7.5px;box-shadow:0 2px 6px rgba(26,52,92,.18)}
+.ld-live{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 10px;border-radius:14px;background:rgba(255,255,255,.78);font-size:12.5px;font-weight:700;color:#1F4E8C}
+.ld-live i{width:7px;height:7px;border-radius:50%;background:var(--hh-blue);animation:ld-pulse 2s infinite}
+.ld-live b{color:var(--hh-blue);font-weight:800}
+.ld-live b:empty{display:none}
+@keyframes ld-pulse{0%{box-shadow:0 0 0 0 rgba(47,123,214,.45)}70%,100%{box-shadow:0 0 0 7px rgba(47,123,214,0)}}
+.ld-eye{margin-top:22px;font-size:14px;font-weight:700;color:var(--hh-blue)}
+/* 제목 둘째 줄(마음에 드는 사람을 선택하세요)이 Android 기본 글꼴(Noto Sans, 글자 폭이 더 넓음)의 360 폭에서도 한 줄에 들어가는 크기. 7.4vw 에서는 2px 넘쳐 세 줄이 됐음 */
+.ld-h1{margin-top:8px;font-size:clamp(22px,7.2vw,32px);line-height:1.3;font-weight:800;letter-spacing:-.035em}
+.ld-sub{margin-top:10px;font-size:15.5px;line-height:1.55;color:var(--hh-ink2)}
+/* 첫 화면 그림: 앱 스토어 소개 이미지처럼 큰 앱 화면 뒤로 실제 일상 사진을 겹침. 앱 화면은 링크 성별에 맞추고 실제 사진은 공통. */
+/* 안내 칸: 이름표 + 값 상자 (첫 화면의 진행 일정/참여 대상/그룹 구성, 신청 안내의 마감/확정 문자) */
+.ld-if{margin-top:16px}
+.ld-if:empty{display:none}
+.ld-if>div{margin-top:9px}
+.ld-if dt{display:inline-block;padding:4px 11px 3px;border-radius:9px 9px 0 0;background:var(--hh-blue);color:#fff;font-size:12.5px;font-weight:800;line-height:1.4}
+.ld-if dd{padding:10px 14px;border:1.5px solid var(--hh-blue);border-radius:0 12px 12px 12px;background:#fff;font-size:15px;font-weight:700;line-height:1.4}
+.ld-if dd small{display:block;margin-top:3px;font-size:13px;font-weight:500;line-height:1.45;color:var(--hh-ink2)}
+.ld-if dd small b{font-weight:700;color:var(--hh-ink)}
+.ld-if dd s{margin-right:4px;font-weight:500;color:var(--hh-mute)}
+/* 다음 기수 알림 (10/11): 첫 화면 안내 칸 아래 작은 링크 → 그 자리에서 성별, 번호, 동의만 받음. 입력칸에 name 이 없어서 신청서 값/부분 저장에 안 섞임 */
+.ld-al{margin-top:14px}
+.ld-al-open{display:block;width:100%;padding:6px 0;border:0;background:none;font:inherit;font-size:14.5px;font-weight:600;color:#3C5A86;text-align:center;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ld-al-box{margin-top:8px;padding:16px;border-radius:18px;background:#fff;box-shadow:0 6px 18px rgba(26,52,92,.08)}
+.ld-al-box[hidden],.ld-al-done[hidden],.ld-al-open[hidden]{display:none}
+.closed .ld-al{margin-top:18px;text-align:left}
+.ld-al-t{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.ld-al-s{margin-top:3px;font-size:13.5px;color:var(--hh-ink2)}
+.ld-al-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ld-al-g button{height:46px;border:1.5px solid var(--hh-line);border-radius:12px;background:#fff;font:inherit;font-size:15px;font-weight:600;color:var(--hh-ink);cursor:pointer}
+.ld-al-g button.on{border-color:var(--hh-blue);background:#F2F8FF;color:#1F5FA9}
+.ld-al-box input[type=tel],.ld-al-box input[type=text]{display:block;width:100%;margin-top:8px;padding:13px 14px;border:1.5px solid var(--hh-line);border-radius:12px;font:inherit;font-size:16px;color:var(--hh-ink);outline:none;background:#fff}
+.ld-al-box input[type=tel]:focus,.ld-al-box input[type=text]:focus{border-color:var(--hh-blue)}
+.ld-al-c{display:flex;gap:9px;align-items:flex-start;margin-top:10px;font-size:13px;line-height:1.5;color:var(--hh-ink2);cursor:pointer}
+.ld-al-c input{flex:none;width:18px;height:18px;margin:1px 0 0;accent-color:var(--hh-blue)}
+.ld-al-go{display:block;width:100%;height:48px;margin-top:12px;border:0;border-radius:12px;background:var(--hh-blue);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.ld-al-go:disabled{background:#B9CDE6;cursor:default}
+.ld-al-done{margin-top:8px;padding:16px;border-radius:18px;background:#fff;text-align:center;font-size:15px;font-weight:700}
+.ld-al-done span{display:block;margin-top:4px;font-size:13.5px;font-weight:500;color:var(--hh-ink2)}
+
+/* 구역 공통 */
+.ld-sec{padding-top:56px}
+.ld-tint{margin-top:56px;padding-top:48px;padding-bottom:48px;background:var(--hh-sky)}
+.ld-k{font-size:13.5px;font-weight:700;color:var(--hh-blue)}
+.ld h2{margin-top:6px;font-size:24px;line-height:1.36;font-weight:800;letter-spacing:-.03em}
+.ld-lead{margin-top:8px;font-size:15px;line-height:1.55;color:var(--hh-ink2)}
+
+/* 진행 과정 */
+.ld-flow{position:relative;margin-top:28px;padding-left:26px}
+.ld-step{position:relative;padding-bottom:36px}
+.ld-step:last-child{padding-bottom:0}
+.ld-step:not(:last-child):after{content:"";position:absolute;left:-20px;top:19px;bottom:-1px;width:2px;background:#CFE2F6}
+.ld-step:before{content:"";position:absolute;left:-26px;top:3px;box-sizing:border-box;width:14px;height:14px;border:3px solid var(--hh-blue);border-radius:50%;background:#fff}
+.ld-when{font-size:12.5px;font-weight:800;letter-spacing:.02em;color:var(--hh-blue)}
+.ld-step h3{margin-top:4px;font-size:19px;line-height:1.38;font-weight:800;letter-spacing:-.03em}
+.ld-step>p{margin-top:5px;font-size:14.5px;line-height:1.55;color:var(--hh-ink2)}
+.ld-ui{margin-top:14px;padding:12px;border-radius:20px;background:linear-gradient(180deg,#D9E9FA,#EBF3FC)}
+.ld-card{padding:15px;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(26,52,92,.08)}
+/* DAY 1: 방에서 하는 일 세 가지(모인다, 일상 공유, 채팅)를 같은 무게로 나란히 */
+.ld-pts{margin:6px 0 0;padding:0;list-style:none}
+.ld-pts li{display:flex;align-items:center;gap:12px;padding:8px 0}
+.ld-pts i{flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:14px;background:var(--hh-sky2);color:var(--hh-blue)}
+.ld-pts svg{display:block;width:23px;height:23px}
+.ld-pts b{display:block;font-size:17px;line-height:1.35;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.ld-pts span{display:block;margin-top:1px;font-size:13.5px;line-height:1.45;color:var(--hh-ink2)}
+.ld-ask-to{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700}
+.ld-ask-to i{flex:none;overflow:hidden;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#C4CAD3,#E3D7CD)}
+.ld-ask-to i img{display:block;width:100%;height:100%;object-fit:cover}
+.ld-ask-box{margin-top:11px;padding:12px 14px;border:1.5px solid var(--hh-blue);border-radius:14px;background:#F5F9FE;font-size:15px;line-height:1.5;color:var(--hh-ink)}
+.ld-ui-btn{display:block;height:42px;margin-top:11px;border-radius:12px;background:var(--hh-blue);color:#fff;text-align:center;font-size:14.5px;font-weight:700;line-height:42px}
+.ld-pick-t{margin:4px 0 10px;text-align:center;font-size:15px;line-height:1.4;color:#22345A}
+.ld-pick li{display:flex;align-items:center;gap:11px;height:50px;margin-top:7px;padding:0 15px 0 12px;border:1.5px solid transparent;border-radius:15px;background:#fff;font-size:15.5px;font-weight:700}
+.ld-pick li:after{content:"";box-sizing:border-box;width:22px;height:22px;margin-left:auto;border:1.5px solid #B9C2CF;border-radius:50%}
+.ld-pick li.on{border-color:var(--hh-blue);box-shadow:0 6px 16px rgba(47,123,214,.18)}
+.ld-pick li.on:after{border:6.5px solid var(--hh-blue)}
+.ld-pick .ld-av{width:34px;height:34px}
+.ld-pick .ld-av svg{width:24px;height:17px}
+/* DAY 3 밤: 매칭된 둘의 1:1 대화. 앱의 1:1 채팅(상대 흰 말풍선 + 프로필과 이름, 내 말풍선 파랑, 옆에 시각)을 옮겨 그림 */
+.ld-chat{display:flex;flex-direction:column;gap:10px;padding:13px 12px 15px;border-radius:16px;background:linear-gradient(180deg,#F0F6FE,#F8FBFF);box-shadow:0 6px 18px rgba(26,52,92,.08)}
+.ld-chat-t{align-self:center;margin-bottom:2px;padding:5px 12px;border-radius:999px;background:#fff;font-size:12.5px;font-weight:700;color:#3C5A86;box-shadow:0 1px 4px rgba(26,52,92,.08)}
+.ld-chat-p{display:flex;align-items:flex-start;gap:8px}
+.ld-chat-p .ld-av{width:32px;height:32px;margin-top:1px}
+.ld-chat-n{display:block;margin:0 0 4px 2px;font-size:12px;font-weight:600;color:#4D6385}
+.ld-chat-r{display:flex;align-items:flex-end;gap:6px}
+.ld-chat-r.me{flex-direction:row-reverse;align-self:flex-end;max-width:94%}
+.ld-chat-c{margin:-4px 0 0 40px}   /* 같은 사람이 이어서 보낸 말: 프로필 자리만큼 들여서 붙임 */
+.ld-chat-c .ld-chat-b{border-radius:18px}
+.ld-chat-r time{flex:none;padding-bottom:2px;font-size:10.5px;color:#8A9AB0}
+.ld-chat-b{padding:9px 13px;border-radius:5px 18px 18px 18px;background:#fff;font-size:14.5px;line-height:1.45;color:var(--hh-ink);box-shadow:0 1px 5px rgba(26,52,92,.07)}
+.ld-chat-r.me .ld-chat-b{border-radius:18px 18px 5px 18px;background:var(--hh-blue);color:#fff;box-shadow:none}
+@media(max-width:379px){.ld-chat-r time{display:none}}   /* 좁은 화면: 시각을 빼고 말풍선에 자리를 줌 */
+
+/* 걱정과 기능: 하루와의 문답 */
+.ld-qas{display:flex;flex-direction:column;gap:20px;margin-top:26px}
+.ld-qa{display:flex;flex-direction:column;gap:9px}
+.ld-q{align-self:flex-end;max-width:84%;padding:11px 15px;border-radius:18px 18px 5px 18px;background:var(--hh-ink);color:#fff;font-size:15.5px;font-weight:600;line-height:1.45}
+.ld-a{display:flex;align-items:flex-start;gap:9px;max-width:94%}
+/* 하루 프로필은 앱 채팅의 운영 글 프로필 그대로: 앱 아이콘을 원으로(36) + 테두리 + 오른쪽 아래 마이크(17, 3 밖으로), 이름은 파랑 굵게 */
+.ld-hv{flex:none;position:relative;width:36px;height:36px;margin-top:2px}
+.ld-hv img{display:block;width:36px;height:36px;border-radius:50%}
+.ld-hv:after{content:"";position:absolute;left:0;right:0;top:0;bottom:0;border:1px solid #D6E8FA;border-radius:50%}
+.ld-hv svg{position:absolute;z-index:1;right:-3px;bottom:-3px;width:17px;height:17px}
+.ld-a-n{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:12.5px;font-weight:800;color:var(--hh-blue)}
+.ld-a-n em{padding:2px 7px;border-radius:6px;background:#E3EFFC;color:#1F5FA9;font-size:11px;font-style:normal;font-weight:800}
+.ld-a-b{padding:12px 15px;border-radius:5px 18px 18px 18px;background:#fff;box-shadow:0 4px 14px rgba(26,52,92,.07);font-size:15px;line-height:1.58}
+.ld-a-b b{color:#1F5FA9;font-weight:800}
+.ld-ms{margin-top:8px;padding:13px 14px 14px;border:1.5px solid #6FA9EE;border-radius:5px 18px 18px 18px;background:#fff;box-shadow:0 4px 14px rgba(26,52,92,.07)}
+/* 미션 카드: 앱의 운영 미션 말풍선 순서(그림, 오늘의 미션, 내용, 촬영 버튼)를 따름. 내용은 앱 3기 방에 실제로 나간 것(OOTD 미션과 그림, 닮은꼴 이야기 거리) */
+.ld-ms img{display:block;width:100%;height:auto;margin-bottom:11px;border-radius:12px;background:var(--hh-sky2)}
+.ld-ms span{display:block;margin-bottom:5px;font-size:12.5px;font-weight:800;color:var(--hh-blue)}
+.ld-ms b{display:block;font-size:15px;line-height:1.45;font-weight:700}
+.ld-ms p{margin-top:3px;font-size:14.5px;line-height:1.5;color:var(--hh-ink2)}
+.ld-ms i{display:block;height:40px;margin-top:11px;border-radius:11px;background:var(--hh-blue);color:#fff;text-align:center;font-size:14px;font-style:normal;font-weight:700;line-height:40px}
+
+/* 성과 */
+.ld-vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ld-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ld-stat{padding:18px 16px;border-radius:18px;background:var(--hh-sky)}
+.ld-stat b{display:block;font-size:36px;line-height:1.1;font-weight:800;letter-spacing:-.03em;color:var(--hh-blue);font-variant-numeric:tabular-nums}
+.ld-stat b small{margin-left:2px;font-size:18px;font-weight:800;color:var(--hh-ink)}
+.ld-stat b small.ld-abt{margin:0 4px 0 0}
+.ld-stat>span{display:block;margin-top:7px;font-size:13.5px;font-weight:600;color:var(--hh-ink2)}
+/* 앱 기수별 매칭률: 운영 DB 에서 운영/테스트 계정을 뺀 실참가자 기준 (서로 고른 사람 수 / 실참가자 수). 1기 8/15, 2기 8/18. 3기는 결과가 나오면 숫자로 바꿈 */
+.ld-co{margin-top:10px;padding:2px 18px;border-radius:18px;background:var(--hh-sky)}
+.ld-co li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0}
+.ld-co li+li{border-top:1px solid #D6E4F3}
+.ld-stats.ld-stats-1{grid-template-columns:1fr}
+.ld-co li>span{flex:none;margin:0;font-size:14.5px;font-weight:600}   /* 10/14 운영자: 매칭률과 인원은 빼고 앱을 진행한 날짜만 */
+.ld-co b{display:block;font-size:15.5px;font-weight:800}
+.ld-co span{display:block;margin-top:2px;font-size:13px;color:var(--hh-ink2)}
+.ld-co em{flex:none;display:flex;align-items:baseline;gap:7px;font-size:13px;font-style:normal;font-weight:600;color:var(--hh-ink2)}
+.ld-co strong{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--hh-blue)}
+.ld-co em.ing{align-items:center;padding:5px 11px;border-radius:10px;background:#fff;font-weight:800;color:var(--hh-blue)}
+
+/* 후기 */
+.ld-best{margin-top:22px;padding:22px 20px;border-radius:22px;background:var(--hh-blue);color:#fff}
+.ld-best p{font-size:clamp(19px,5.6vw,22px);line-height:1.4;font-weight:800;letter-spacing:-.03em}
+.ld-best span{display:block;margin-top:10px;font-size:13px;font-weight:600;opacity:.86}
+.ld-rvs{columns:2;column-gap:10px;margin:10px 0 -10px}
+.ld-rv{break-inside:avoid;-webkit-column-break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin:0 0 10px;padding:14px;border-radius:16px;background:#fff;font-size:14px;line-height:1.55}
+.ld-rv span{display:block;margin-top:8px;font-size:12px;font-weight:600;color:var(--hh-mute)}
+
+/* 신청 안내 + 신청서 머리말 */
+.ld-steps{margin-top:24px;counter-reset:s}
+.ld-steps li{position:relative;padding:2px 0 20px 40px;font-size:15px;line-height:1.5;counter-increment:s}
+.ld-steps li:last-child{padding-bottom:0}
+.ld-steps li:before{content:counter(s);position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--hh-sky2);color:#1F5FA9;font-size:13.5px;font-weight:800}
+.ld-steps li:not(:last-child):after{content:"";position:absolute;left:13px;top:30px;bottom:2px;width:2px;background:var(--hh-sky2)}
+.ld-gn{margin-top:20px;padding:14px 15px;border-radius:14px;background:#F6F8FB;font-size:14px;line-height:1.6;color:var(--hh-ink2)}
+.ld-gn p+p{margin-top:6px}
+.ld-gn a{color:var(--hh-ink);font-weight:700}
+.ld{padding-bottom:30px;border-bottom:1px solid var(--hh-line)}
+.q[data-name="gender"]{scroll-margin-top:22px}
+
+/* 아래 고정 버튼 */
+/* 바닥은 불투명한 흰색으로 둠: iOS 26+ 사파리가 아래 고정 요소의 색으로 주소창 뒤를 칠해서, 비워 두면 버튼의 파랑이 번짐 */
+.ld-sticky{position:fixed;left:50%;bottom:0;z-index:8;box-sizing:border-box;width:100%;max-width:520px;padding:4px var(--hh-g) calc(12px + env(safe-area-inset-bottom));background-color:#fff;transform:translateX(-50%);transition:opacity .2s,transform .2s}
+.ld-sticky:before{content:"";position:absolute;left:0;right:0;bottom:100%;height:22px;background:linear-gradient(rgba(255,255,255,0),#fff);pointer-events:none}
+.ld-sticky .ld-btn{margin:0}
+.ld-sticky.off{opacity:0;transform:translate(-50%,100%);pointer-events:none}
+
+/* 스크롤 등장 (스크립트가 켜졌을 때만 숨김) + 선택되는 순간, 매칭 구름, 한 박자 늦는 답 */
+.ld-js .ld-fx{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.ld-js .ld-fx.in{opacity:1;transform:none}
+.ld-js .ld-pick li.on{border-color:transparent;box-shadow:none;transition:border-color .3s .7s,box-shadow .3s .7s}
+.ld-js .ld-pick li.on:after{border:1.5px solid #B9C2CF;transition:border .25s .7s}
+.ld-js .in .ld-pick li.on{border-color:var(--hh-blue);box-shadow:0 6px 16px rgba(47,123,214,.18)}
+.ld-js .in .ld-pick li.on:after{border:6.5px solid var(--hh-blue)}
+.ld-js .ld-chat>*{opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.ld-js .ld-chat>:nth-child(1){transition-delay:.2s}.ld-js .ld-chat>:nth-child(2){transition-delay:.45s}.ld-js .ld-chat>:nth-child(3){transition-delay:.85s}.ld-js .ld-chat>:nth-child(4){transition-delay:1.25s}.ld-js .ld-chat>:nth-child(5){transition-delay:1.5s}.ld-js .ld-chat>:nth-child(6){transition-delay:1.9s}
+.ld-js .ld-ui.in .ld-chat>*{opacity:1;transform:none}   /* 대화 카드가 화면에 들어올 때 말풍선이 차례로 뜸 */
+.ld-js .ld-qa .ld-a{opacity:0;transform:translateY(8px);transition:opacity .4s .3s,transform .4s .3s}
+.ld-js .ld-qa.in .ld-a{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.ld-js .ld-fx,.ld-js .ld-qa .ld-a,.ld-js .ld-chat>*{opacity:1;transform:none;transition:none}.ld-js .ld-pick li.on,.ld-js .ld-pick li.on:after{transition:none}.ld-live i{animation:none}}
+
+/* 신청서 문항/버튼 모양 (랜딩 있는 폼만) */
+.q{margin-top:26px}
+.q .t{margin-bottom:10px;font-size:17px;letter-spacing:-.01em;color:var(--hh-ink)}
+.q .t .req{color:#E0457B}
+.opt{gap:12px;padding:14px;border:1.5px solid var(--hh-line);border-radius:14px;font-weight:500;color:var(--hh-ink)}
+.opt .k{box-sizing:border-box;border:1.5px solid #C3CCD8;border-radius:50%;background:#fff;font-size:0}
+.opt.on{border-color:var(--hh-blue);background:#F2F8FF}
+.opt.on .k{border:6.5px solid var(--hh-blue);background:#fff}
+.xp .opt .k{border-radius:7px}
+.xp .opt.on .k{border:0;background:var(--hh-blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6 11.5l3.4 3.3L16 8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat}
+input[type=text],input[type=tel],input[type=number]{padding:14px;border:1.5px solid var(--hh-line);border-radius:14px;color:var(--hh-ink)}
+input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-color:var(--hh-blue);box-shadow:0 0 0 3px rgba(47,123,214,.14)}
+.chk{padding:14px;border:1.5px solid var(--hh-line);border-radius:14px;font-weight:600}
+.chk.on{border-color:var(--hh-blue);background:#F2F8FF}
+.chk input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--hh-blue)}
+.note{font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
+.q[data-name="consent"] .note,.q[data-name="name"] .t+.note,.q[data-name="name"] .fee-was+.note{padding:13px 15px;border-radius:14px;background:#F6F8FB;font-size:14px}
+.fee-was{margin:-2px 0 10px;font-size:16px;line-height:1.4;color:var(--hh-ink)}   /* 정가에 줄 긋고 실제 금액을 크게 (등록부에 listFee 가 있는 폼). 이 파일은 1페이지에 들어가서 금액 관련 낱말을 쓰면 빌드 검사에 걸림 */
+.fee-was[hidden]{display:none}
+.fee-was s{color:var(--hh-mute)}
+.fee-was strong{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.btn{min-height:54px;padding:0 22px;border-radius:14px;background:var(--hh-blue);font-size:17px}
+.btn.sec2{border:0;background:#F1F4F8;color:var(--hh-ink2)}
+.nav{margin-top:32px}
+.nav .btn{flex:1}
+.nav .btn.sec2{flex:0 0 auto}
+.prog{background:var(--hh-blue)}
+.pay{padding:16px;border-radius:14px;font-size:17px;box-shadow:0 8px 18px rgba(0,100,255,.2)}
+.done{padding:56px 0 40px}
+.done:before{content:"";display:block;width:112px;height:81px;margin:0 auto 14px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='10 5 197 142'%3E%3Cpath d='M123.7 8.6C125.2 8.3 130.3 8.7 131.8 8.8C143.8 10.3 154.8 16.5 162.2 26C169 34.4 172.2 45.2 171 55.9C178.1 57.5 185.7 61.8 190.9 67C199.3 75.4 204 86.8 204.1 98.7C204.1 110.3 199.2 122.8 190.9 131C184.7 137.1 176.9 141.1 168.4 143C162.5 144.3 157.8 144.1 151.9 144.1L137.7 144.1L90.4 144.1L75.8 144.1C71.8 144.1 68 144.2 64 143.7C58.8 142.9 53.7 141.4 48.9 139.2C34.4 132.7 23.1 120.8 17.4 105.9C11.9 91.2 12.7 76.6 19.3 62.4C27.7 44.2 44.7 29.3 65.2 27.8C72.4 27.4 78.4 29.2 84.8 32.2C94.6 18.3 106.4 9.9 123.7 8.6Z' fill='%23F6F7F8' stroke='%235ABAFF'/%3E%3Cpath d='M128 84.5C128 85 123.3 101.8 120 91C119.5 89.5 118.4 84.8 118.7 84C118.7 83.9 118.8 83.7 118.9 83.6C120.1 83.3 120.8 83.1 122.1 83.6C123.4 84.2 126.2 84.6 127.4 83.4C127.9 83.2 128 84 128 84.5Z' fill='%238DBDF9'/%3E%3Cpath d='M122.1 101.1C123.1 99.8 123.7 99 125.1 98C129.9 94.6 137 95.6 140 100.7C134.1 104.2 130.3 110.8 132.1 117.3C131 117.6 123.8 122.1 122 123C120.5 122.1 113 117.5 112 117.3C113.5 110.4 110 104.4 104 100.6C106.6 97.9 107.7 96.2 112.1 96C116.6 95.8 119.6 97.9 122.1 101.1Z' fill='%23D4E8FB'/%3E%3Cpath d='M88 131C93.3 133.1 112.4 126.3 112.5 115.6C112.5 112.3 112.6 111.5 111 108C108.3 103.5 107 102.5 104.5 101C97.9 98.6 94.4 103.2 92.5 104.5' fill='none' stroke='%235ABAFF' stroke-linecap='round'/%3E%3Cpath d='M156.5 130C151.2 132.1 132.2 126 132 115.3C132 112 131.9 111.2 133.5 107.7C136.2 103.1 137.5 102.2 140 100.7C146.6 98.3 150.1 101.7 152 103' fill='none' stroke='%235ABAFF' stroke-linecap='round'/%3E%3Cpath d='M108 69C108 69 119.5 75 118 75C116.5 75 108 75 108 75' fill='none' stroke='%23096EE3' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M139.1 69C139.1 69 127.6 75 129.1 75C130.7 75 139.2 75 139.1 75' fill='none' stroke='%23096EE3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.done h2{letter-spacing:-.02em;color:var(--hh-ink)}
+/* ---- 랜딩 3판 (10/12) ---- */
+.ld-hero-a{padding-bottom:26px}
+.ld-hero-a .ld-h1 b{color:#1F5FA9}
+.ld-statline{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:7px 12px;border-radius:999px;background:#fff;font-size:14px;font-weight:800;color:#1F5FA9;box-shadow:0 2px 8px rgba(26,52,92,.08)}
+.ld-statline:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--hh-blue)}
+.ld-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.ld-chip{display:inline-flex;align-items:center;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.72);font-size:13.5px;font-weight:700;color:#1F4E8C}
+.ld-chip.fee{background:var(--hh-ink);color:#fff}
+.ld-grid{position:relative;margin-top:18px;border-radius:18px;overflow:hidden;background:#DCEBFA;box-shadow:0 14px 30px rgba(27,71,107,.2)}
+.ld-grid img{display:block;width:100%;height:auto}
+.ld-grid i{position:absolute;width:50%;height:33.34%;background:#DCEBFA;transition:opacity .55s ease,transform .55s ease}
+.ld-grid i:nth-child(2){left:0;top:0}.ld-grid i:nth-child(3){left:50%;top:0}.ld-grid i:nth-child(4){left:0;top:33.33%}.ld-grid i:nth-child(5){left:50%;top:33.33%}.ld-grid i:nth-child(6){left:0;top:66.66%}.ld-grid i:nth-child(7){left:50%;top:66.66%}
+.ld-grid.in i{opacity:0;transform:scale(1.04)}
+.ld-grid.in i:nth-child(2){transition-delay:.05s}.ld-grid.in i:nth-child(3){transition-delay:.25s}.ld-grid.in i:nth-child(4){transition-delay:.45s}.ld-grid.in i:nth-child(5){transition-delay:.65s}.ld-grid.in i:nth-child(6){transition-delay:.85s}.ld-grid.in i:nth-child(7){transition-delay:1.05s}
+html:not(.ld-js) .ld-grid i{display:none}
+.ld-js .ld-grid.ld-fx{opacity:1;transform:none}
+.ld-cta{margin-top:18px}
+.ld-cta-note{margin-top:9px;text-align:center;font-size:13px;color:var(--hh-ink2)}
+.ld-rv3{padding-top:40px}
+.ld-rv3-list{display:grid;gap:8px;margin-top:12px}
+.ld-rv3-list .ld-rv{display:block;margin:0;background:var(--hh-sky);border-radius:16px 16px 16px 4px}
+.ld-life-a{margin-top:40px;padding-bottom:0}
+.ld-life-a .ld-life-media{aspect-ratio:1/0.98}
+.ld-life-a #ldAdGrid{left:4%;top:6px;width:92%;box-sizing:border-box;border:6px solid #fff;border-radius:22px;transform:rotate(-2deg);box-shadow:0 18px 34px rgba(27,71,107,.23)}
+.ld-fcard{display:none;margin-bottom:6px}
+.ld-fcard .ld-top{margin:0 0 14px}
+.ld-fcard .ld-k{display:block}
+.ld-fcard .ld-if{margin-top:8px;padding:4px 14px 14px;border-radius:18px;background:var(--hh-sky)}
+.ld-back{display:inline-block;margin-top:12px;padding:0;border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--hh-ink2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ld-flash{animation:ld-flash 1.4s ease}
+@keyframes ld-flash{0%{box-shadow:0 0 0 0 rgba(47,123,214,0)}20%{box-shadow:0 0 0 4px rgba(47,123,214,.35)}100%{box-shadow:0 0 0 0 rgba(47,123,214,0)}}
+html[data-mode="form"] .ld,html[data-mode="form"] .ld-sticky{display:none}
+html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
+@keyframes ld-pgin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.acct-copy{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:48px;margin:-8px 0 18px;border:1.5px solid var(--hh-line);border-radius:14px;background:#fff;color:var(--hh-ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.acct-copy:before{content:"";width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232F7BD6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a2 2 0 0 1 2-2h10'/%3E%3C/svg%3E") center/contain no-repeat}
+/* 2페이지: 접힌 친구 할인 (송금자 이름 아래) */
+.fr-mini{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;padding:12px 13px;border:1.5px dashed #BFD3EC;border-radius:14px;background:#fff}
+.fr-mini p{margin:0;font-size:14.5px;line-height:1.4;color:#22345A;font-weight:700}
+.fr-mini b{color:#1F5FA9;font-weight:800;white-space:nowrap}
+.fr-toggle{flex:none;height:36px;padding:0 12px;border:0;border-radius:11px;background:var(--hh-sky);color:#1F5FA9;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.fr-more{margin-top:10px}
+.fr-more[hidden],.fr-toggle[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.ld-grid.in i{opacity:0;transition:none}.ld-flash{animation:none}html[data-mode="form"] .ld-fcard{animation:none}}
+/* 첫 화면 담담판 (10/13 로컬 시안): 기존폼 문구와 배치 그대로, 하루하루 배경만. 점 달린 알약, 일정/참가비 칩 없음 */
+.ld-calm .ld-h1{font-size:clamp(22px,6.6vw,28px)}
+.ld-calm-chip{margin-top:16px;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,.72);font-size:15px;font-weight:700;color:var(--hh-ink)}
+.ld-calm-stat{margin-top:14px;font-size:15px;font-weight:700;color:var(--hh-ink)}
+.ld-calm .ld-cta{margin-top:18px}
+.ld-calm .ld-grid{margin-top:20px}
+/* ---- 이야기판 (10/22, ucling.co.kr 구성 참고): 공감 → 해결 01~05 → 미션 띠 → 진행 → 걱정 → 후기 → 안내(지그재그 단계) → 마무리. 색/글꼴은 그대로 ---- */
+@media(min-width:700px){html,body{background-color:#E8EEF5;background-image:linear-gradient(rgba(255,255,255,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.55) 1px,transparent 1px);background-size:24px 24px}.wrap{box-shadow:0 0 0 1px #E3E8EF,0 0 48px rgba(26,52,92,.1)}}
+.ld-hero-s{padding-bottom:24px}
+.ld-hero-s .ld-grid{margin-top:16px}
+/* 첫 화면 도트 장면 (10/22): 사진 6칸 자리. 장면 스크립트가 canvas 에 그리고 높이도 화면 밀도에 맞춰 다시 잡음(280px 은 그 전 자리 맡기) */
+.ld-px{position:relative;height:280px;margin:14px calc(var(--hh-g)*-1) 0;overflow:hidden}
+.ld-px canvas{display:block}
+.ld-dl{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:14px;font-weight:600;color:var(--hh-ink2)}
+.ld-dl b{font-weight:800;color:var(--hh-ink)}
+.ld-dl em{display:none;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:var(--hh-ink);color:#fff;font-size:12.5px;font-style:normal;font-weight:800;letter-spacing:.02em}
+.ld-dl em.on{display:inline-flex}
+.ld-dl[hidden]{display:none}
+.ld-hero-s .ld-cta{margin-top:10px}
+.ld-btn-ar{display:flex;align-items:center;justify-content:center;gap:6px}
+.ld-btn-ar svg{flex:none;width:18px;height:18px}
+.ld-cta-note{margin-top:10px;text-align:center;font-size:14px;font-weight:700;color:var(--hh-ink)}
+/* 가로로 흐르는 띠 (후기, 미션): 스크립트가 카드 한 벌을 두 번 이어 붙이고 천천히 흘림. 손대면 멈춤 */
+.ld-mq{margin:12px calc(var(--hh-g)*-1) 0;padding:4px 0 8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.ld-mq::-webkit-scrollbar{display:none}
+.ld-mq-track{display:flex;align-items:stretch;gap:10px;width:max-content;padding:0 var(--hh-g)}
+.ld-rvmq{padding-top:56px}
+.ld-rvmq .ld-mq{margin-top:16px}
+.ld-rvmq .ld-rv{display:flex;flex-direction:column;justify-content:space-between;width:250px;margin:0;border-radius:16px 16px 16px 4px;background:var(--hh-sky)}
+.ld-rvmq .ld-rv span{margin-top:10px}
+/* 공감: 소개팅이 피곤한 까닭 */
+.ld-pain{padding-top:48px;display:flex;flex-direction:column}
+.ld-pain-list{display:flex;flex-direction:column;gap:9px;margin-top:18px}
+.ld-pain-list li{padding:13px 15px;border:1.5px solid var(--hh-line);border-radius:16px 16px 16px 4px;background:#fff;font-size:15px;line-height:1.55;color:var(--hh-ink2);box-shadow:0 4px 12px rgba(26,52,92,.05)}
+.ld-pain-end{align-self:flex-end;max-width:86%;margin-top:16px;padding:12px 16px;border-radius:18px 18px 5px 18px;background:var(--hh-ink);color:#fff;font-size:15.5px;font-weight:700;line-height:1.5}
+/* 해결: 01~05 */
+.ld-solve{margin-top:48px}
+.ld-callout{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;font-size:16px;font-weight:800;color:#1F5FA9;white-space:nowrap}
+.ld-callout .ar{display:inline-block;color:var(--hh-blue);animation:ld-nudge 1.2s ease-in-out infinite}
+.ld-callout .ar.flip{animation-name:ld-nudge-l}
+@keyframes ld-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes ld-nudge-l{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}
+.ld-sv{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.ld-sv li{position:relative;padding:18px;border-radius:18px;background:#fff;box-shadow:0 6px 18px rgba(26,52,92,.07)}
+.ld-sv .n{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--hh-blue)}
+.ld-sv b{display:block;margin-top:6px;font-size:17.5px;line-height:1.35;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.ld-sv p{margin-top:7px;font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
+.ld-sv-life{margin:12px 0 4px}
+.ld-sv-life img{display:block;box-sizing:border-box;width:100%;height:auto;border:5px solid #fff;border-radius:18px;box-shadow:0 12px 26px rgba(27,71,107,.2);transform:rotate(-1.5deg)}
+.ld-mq-h{margin-top:28px;font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--hh-ink)}
+.ld-mq-m{margin-top:10px}
+.ld-ms2{box-sizing:border-box;width:150px;padding:8px 8px 11px;border-radius:16px;background:#fff;box-shadow:0 6px 16px rgba(26,52,92,.07)}
+.ld-ms2 img{display:block;width:100%;height:auto;border-radius:11px;background:var(--hh-sky2)}
+.ld-ms2 b{display:block;margin-top:9px;font-size:14px;line-height:1.3;font-weight:800;letter-spacing:-.02em}
+.ld-ms2 span{display:block;margin-top:3px;font-size:12px;line-height:1.45;color:var(--hh-ink2)}
+/* 신청 안내: 지그재그 단계 (번호 상자 사이를 점선이 잇는다) */
+.ld-zig{margin-top:24px;padding:0;counter-reset:z}
+.ld-zig li{position:relative;box-sizing:border-box;padding:0 36% 22px 0;counter-increment:z;background-image:repeating-linear-gradient(180deg,#BFD3EC 0 6px,transparent 6px 12px);background-size:2px calc(100% - 20px);background-repeat:no-repeat;background-position:right 19px top 20px}
+.ld-zig li:nth-child(even){padding:0 0 22px 36%;text-align:right;background-position:left 19px top 20px}
+.ld-zig li:last-child{padding-bottom:0;background:none}
+.ld-zig li:before{content:counter(z);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:13px;background:var(--hh-blue);color:#fff;font-size:19px;font-weight:800;box-shadow:0 6px 14px rgba(47,123,214,.3)}
+.ld-zig li:nth-child(even):before{margin-left:auto}
+.ld-zig li:not(:last-child):after{content:"";position:absolute;top:19px;left:44px;right:20px;height:2px;background:repeating-linear-gradient(90deg,#BFD3EC 0 6px,transparent 6px 12px)}
+.ld-zig li:nth-child(even):not(:last-child):after{left:20px;right:44px}
+.ld-zig b{display:block;margin-top:8px;font-size:16.5px;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.ld-zig span{display:block;margin-top:2px;font-size:13.5px;line-height:1.5;color:var(--hh-ink2)}
+/* 마무리 */
+.ld-final{margin-top:36px;padding-top:44px;padding-bottom:40px;border-radius:28px 28px 0 0;background:linear-gradient(180deg,#F5F9FE,#E3F0FC);text-align:center}
+.ld-final .ld-dl{margin-top:0}
+.ld-final h2{margin-top:12px;font-size:26px}
+.ld-final .ld-lead{margin-top:8px}
+.ld-final .ld-btn{margin-top:18px}
+.ld-btn-sec{display:flex;align-items:center;justify-content:center;margin-top:10px;background:#fff;color:#1F5FA9;box-shadow:inset 0 0 0 1.5px #C9DCF2;text-decoration:none}
+.ld-btn-sec:active{background:#F2F8FF}
+.ld{padding-bottom:0;border-bottom:0}
+@media(prefers-reduced-motion:reduce){.ld-callout .ar{animation:none}}
+/* 진행 방식 (10/23 사용자: golmoking.kr/dating 처럼 기능 설명 대신 번호 다섯 줄로 큰 흐름만) */
+.ld-st{margin-top:24px;display:flex;flex-direction:column;gap:22px}
+.ld-st li{display:flex;align-items:flex-start;gap:12px}
+.ld-st li>i{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-top:1px;border-radius:50%;background:var(--hh-blue);color:#fff;font-size:15px;font-style:normal;font-weight:800;box-shadow:0 5px 12px rgba(47,123,214,.28)}
+.ld-st li>div{flex:1;min-width:0}
+.ld-st b{display:block;font-size:17.5px;line-height:1.35;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.ld-st b+p{margin-top:5px;font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
+.ld-bb{margin-top:12px;padding:11px 14px 12px;border-radius:5px 18px 18px 18px;background:#fff;box-shadow:0 4px 14px rgba(26,52,92,.08)}
+.ld-bb-n{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12.5px;font-weight:800;color:var(--hh-blue)}
+.ld-bb-n img{display:block;border-radius:50%}
+.ld-bb p{margin:0;font-size:14.5px;line-height:1.55;color:var(--hh-ink)}
+.ld-st-grid{margin-top:12px;border-radius:16px;overflow:hidden;box-shadow:0 12px 26px rgba(27,71,107,.18)}
+.ld-st-grid img{display:block;width:100%;height:auto}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="hh-cloud" viewBox="10 5 197 142"><path d="M123.73 8.59C125.25 8.34 130.28 8.66 131.79 8.84C143.81 10.31 154.76 16.48 162.24 26.01C169.03 34.42 172.16 45.19 170.96 55.93C178.15 57.54 185.73 61.84 190.94 67C199.31 75.44 204.03 86.83 204.08 98.73C204.12 110.3 199.16 122.81 190.93 130.96C184.74 137.09 176.9 141.14 168.43 143.03C162.54 144.35 157.78 144.1 151.85 144.1L137.72 144.1L90.37 144.11L75.83 144.11C71.83 144.1 68 144.23 64.01 143.68C58.78 142.91 53.69 141.41 48.89 139.2C34.41 132.72 23.1 120.75 17.42 105.93C11.94 91.21 12.73 76.56 19.32 62.35C27.67 44.19 44.73 29.25 65.24 27.85C72.43 27.35 78.37 29.25 84.79 32.19C94.58 18.28 106.44 9.93 123.73 8.59Z" fill="white" stroke="#83BDF0" stroke-width="1.4"/><path d="M99.26 83C104.53 82.88 105.33 92.42 100.27 93.97C99.82 94 99.38 93.95 98.96 93.8C95 92.44 94.93 84.94 99.26 83Z" fill="#096EE3"/><path d="M124.46 83C129.73 82.88 130.53 92.42 125.46 93.97C125.02 94 124.58 93.95 124.16 93.8C120.2 92.44 120.12 84.94 124.46 83Z" fill="#096EE3"/><path d="M116.4 100.56C119.66 101.25 114.14 107.07 108.15 102.92C107.58 102.38 107.36 101.98 107.6 101.13C107.62 101.06 107.77 100.83 107.85 100.81C109.06 100.42 110.22 102.18 111.42 102.41C114.06 103.11 114.39 101.84 116.31 100.6C116.34 100.59 116.37 100.57 116.4 100.56Z" fill="#448BD1"/></symbol>
+<symbol id="hh-mic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2F7BD6" stroke="#FFFFFF" stroke-width="2"/><g transform="translate(11.24 11.24) rotate(-45) scale(0.8)"><circle cx="0" cy="-5" r="3.7" fill="#FFFFFF"/><path d="M-3.38 -3.5H3.38L1.85 -0.5H-1.85Z" fill="#FFFFFF"/><path d="M-4.2 -3.7Q0 -2.1 4.2 -3.7" fill="none" stroke="#2F7BD6" stroke-width="1.15"/><path d="M-1.85 0.3H1.85L1.25 6.6A1.25 1.25 0 0 1 -1.25 6.6Z" fill="#FFFFFF"/><rect x="-0.55" y="1.7" width="1.1" height="2.8" rx="0.55" fill="#2F7BD6"/></g><path d="M15.6 15.6C16.4 17 17.4 18.3 18.6 17.3" fill="none" stroke="#FFFFFF" stroke-width="1.15" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<div class="ld">
+
+<header class="ld-band ld-hero ld-hero-a ld-calm ld-hero-s">
+<div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>__COHORT__기 모집 중</span></div>
+<p class="ld-eye">하루하루 소개팅 __COHORT__기</p>
+<h1 class="ld-h1">솔로인 __LD_WHO__을 모집합니다</h1>
+<p class="ld-sub">3일 동안 서로의 하루를 보고,<br>마지막 날 서로를 고르는 소개팅이에요.</p>
+<p class="ld-calm-chip">00년생~07년생 __LD_WHO__끼리 모여요 💕</p>
+<div class="ld-px" id="ldPxWrap"><canvas id="ldPx" role="img" aria-label="카페, 거울 앞, 고양이 옆, 공원에서 각자 일상을 3초 영상으로 찍어 올리고 서로의 영상에 하트를 보내는 도트 그림"></canvas></div>
+<script>
+// 첫 화면 도트 장면 (10/22 사용자: ucling 처럼 도트 캐릭터가 움직이게 → "너무 많은 게 담겼다, 서로 일상 영상을 찍는 것 중심으로").
+// 한 바퀴 8.4초: 넷이 차례로 각자 일상을 3초 영상으로 찍음 → 영상 칸이 하루(구름) 아래 피드로 올라가 움직이며 재생 → 다 같이 올려다보며 서로의 영상에 하트 → 흐려지고 다음 바퀴는 다른 날의 영상.
+// 그림은 전부 아래 글자 그림(한 글자 = 한 칸). 화면 밀도에 맞춰 칸 크기를 정수배로 잡아 흐리지 않게 그리고, 폭이 넓으면 하늘과 바닥만 늘어남. 움직임 줄이기면 멈춘 한 장면만.
+(function(){
+ var wrap=document.getElementById('ldPxWrap'), cv=document.getElementById('ldPx');
+ if(!wrap||!cv||!cv.getContext) return;
+ var ctx=cv.getContext('2d'), lc=document.createElement('canvas'), lx=lc.getContext('2d');
+ if(!ctx||!lx) return;
+ var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ var CORE=70, ROWS=56, LOOP=8.4, W=80, H=ROWS, S=4, OX=0, offX=0, devW=0, devH=0;
+ function mix(a,b){ var r={},k; for(k in a) r[k]=a[k]; for(k in b) r[k]=b[k]; return r; }
+ function rep(a,i,s){ a=a.slice(); a[i]=s; return a; }
+ var cache={};
+ function bake(rows,pal,flip){ var h=rows.length,w=0,i,j; for(i=0;i<h;i++) w=Math.max(w,rows[i].length);
+  var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d');
+  for(i=0;i<h;i++) for(j=0;j<rows[i].length;j++){ var col=pal[rows[i].charAt(j)]; if(!col) continue; x.fillStyle=col; x.fillRect(flip?w-1-j:j,i,1,1); }
+  return c; }
+ function spr(key,rows,pal,flip){ key+=flip?'<':''; return cache[key]||(cache[key]=bake(rows,pal,flip)); }
+ function put(c,x,y,a){ if(a!=null&&a<1){ if(a<=0) return; lx.globalAlpha=a; lx.drawImage(c,Math.round(x),Math.round(y)); lx.globalAlpha=1; } else lx.drawImage(c,Math.round(x),Math.round(y)); }
+ function dot(x,y,col){ lx.fillStyle=col; lx.fillRect(Math.round(x),Math.round(y),1,1); }
+ function seg(t,a,b){ return t<=a?0:t>=b?1:(t-a)/(b-a); }
+ function ease(p){ return p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; }
+ function steps(a){ return Math.round(a*3)/3; }
+
+ // ── 사람 넷 (8칸 너비, 15칸 키. film 은 폰 든 자세, up 은 피드를 올려다보는 눈)
+ var BASE={e:'#2A3142',s:'#FCDCC6',b:'#F6A3A8',w:'#FFFFFF',k:'#3A4258'};
+ var PAL=[
+  mix(BASE,{h:'#5C3B2E',t:'#F7A1B6',T:'#E5859E',p:'#6FA0DD',P:'#5A8BCB',f:'#3E4256'}),
+  mix(BASE,{c:'#2F7BD6',C:'#1F5FA9',h:'#2E3140',t:'#FFD56E',T:'#EDBB45',p:'#3B4F86',f:'#2E3140'}),
+  mix(BASE,{h:'#A0673F',t:'#8FD9C4',T:'#67BFA7',f:'#3E4256'}),
+  mix(BASE,{h:'#4C3528',R:'#F26D6D',t:'#7DBBF0',T:'#5A9FE0',p:'#2F3344',f:'#F26D6D'})];
+ var BLINK=PAL.map(function(p){ return mix(p,{e:p.s}); });
+ var w1=["..hhhh..",".hhhhhh.","hhhhhhhh","hhsssshh","hsessesh","hbssssbh","hhsssshh","hTttttTh","hTttttTh",".stttts.",".pppppp.","pPppppPp","..s..s..","..s..s..",".ff..ff."];
+ var m1=[".cccccc.","cccccccc","CCCCCCCC","hssssssh","hsessesh",".bssssb.","..ssss..",".tttttt.",".TttttT.",".stttts.",".pppppp.",".pp..pp.",".pp..pp.",".pp..pp.",".ff..ff."];
+ var w2=["..hhhh..",".hhhhhh.","hhhhhhhh","hhsssshh","hsessesh","hbssssbh",".hssssh.",".tttttt.",".TttttT.",".stttts.",".tttttt.","tttttttt","..s..s..","..s..s..",".ff..ff."];
+ var m2=["..hhhh..",".hhhhhh.","hRRRRRRh","hssssssh","hsessesh",".bssssb.","..ssss..",".tttttt.",".TttttT.",".stttts.",".pppppp.",".pp..pp.","..s..s..","..s..s..",".ff..ff."];
+ var m2r=["..hhhh.....",".hhhhhh....","hRRRRRRh.kk","hssssssh.kk","hssesseh.kk",".bssssb.s..","..ssss.s...",".ttttttt...",".TttttT....",".stttt.....",".pppppp....",".pp..pp...."];
+ function up(a,r3){ return rep(rep(a,3,r3),4,"hssssssh"); }
+ var SP=[
+  {idle:w1,up:up(w1,"hhessehh"),ph:[9,5],
+   film:["..hhhh.....",".hhhhhh....","hhhhhhhh...","hhsssshh...","hssesseh...","hbssssbh.kk","hhsssshh.kk","hTttttttskk","hTttttTh...",".stttt.....",".pppppp....","pPppppPp...","..s..s.....","..s..s.....",".ff..ff...."]},
+  {idle:m1,up:up(m1,"hsessesh"),ph:[8,5],
+   film:[".cccccc...","cccccccc..","CCCCCCCC..","hssssssh..","hssesseh..",".bssssb.kk","..ssss..kk",".tttttt.kk",".Ttttttts.",".stttt....",".pppppp...",".pp..pp...",".pp..pp...",".pp..pp...",".ff..ff..."]},
+  {idle:w2,up:up(w2,"hhessehh"),ph:[8,8],
+   film:["..hhhh....",".hhhhhh...","hhhhhhhh..","hhsssshh..","hssesseh..","hbssssbh..",".hssssh...",".tttttt...",".TttttT.kk",".stttttskk",".tttttt.kk","tttttttt..","..s..s....","..s..s....",".ff..ff..."]},
+  {idle:m2,up:up(m2,"hsessesh"),ph:[9,2],
+   film:m2r.concat([".s....s....",".f....s....","......f...."]),
+   film2:m2r.concat([".s....s....",".s....f....",".f........."])}];
+ // 자리(가운데 70칸 기준): 카페(탁자 오른쪽) / 거울 앞 OOTD(거울 오른쪽) / 고양이(왼쪽) / 공원 러닝(나무 앞)
+ var PPL=[{x:1,flip:false},{x:19,flip:false},{x:45,flip:true},{x:55,flip:false}];
+ // 찍는 대상 둘레의 초점 모서리 [x0,y0,x1,y1] (y 는 바닥선 기준): 컵, 거울, 고양이, 셀카 얼굴
+ var FOCUS=[[11,-13,17,-7],[28,-17,36,-6],[36,-10,45,-1],[53,-17,62,-8]];
+ // 서로의 영상에 하트 [보내는 사람, 받는 영상 칸, 시각]: 넷 다 다른 사람 영상에 하나씩
+ var REACT=[[2,0,4.6],[0,3,5.15],[3,1,5.7],[1,2,6.25]];
+ function filmAt(i){ return 0.5+i*0.55; }
+
+ // ── 소품
+ var PROP={a:'#E6B583',A:'#BE8A5C',w:'#FFFFFF',q:'#8EC5F2',o:'#F5A65B',O:'#FFE6C9',R:'#E38B43',e:'#2A3142',n:'#F28B9B',g:'#A9DE9A',G:'#86C979',d:'#A0754F',m:'#C99D73',l:'#E4F2FF'};
+ var TABLE=["aaaaaa",".AAAA.","..AA..","..AA..","..AA..",".AAAA."];
+ var CUP=["www.","wqww","www."];
+ var CAT=["o....o","oo..oo","ooRRoo","oeooeo","ooOnOo",".oooo.","oooooo","oOooOo"];
+ var TREE=["..ggggg..",".ggggggg.","ggggGgggg","gggggggGg","gGggggggg","ggggggGgg",".ggGgggg.","..ggggg..","....d....","....d....","....d....","....d....","....d....","....d....","...ddd..."];
+ var MIR=[".mmmmm."]; for(var i=0;i<13;i++) MIR.push("mlllllm"); MIR.push(".mmmmm.",".m...m.");
+
+ // ── 3초 영상 칸: 사람마다 [이번 바퀴 영상 A, 다음 바퀴(다른 날) 영상 B], 영상마다 두 장면이 번갈아 나와 움직이는 영상처럼 보임
+ var TP={w:'#FFFFFF',y:'#F6EAD7',M:'#9A6A45',p:'#FCE4EC',R:'#F2667C',W:'#FFF4E0',g:'#DCEEFF',c:'#2F7BD6',t:'#FFD56E',a:'#3B4F86',v:'#E9E2FB',j:'#7FA8E8',o:'#F5A65B',e:'#2A3142',q:'#BFE3FF',u:'#FFD66B',G:'#A9DE9A',d:'#E8D6B0',O:'#FFB37A',K:'#F9A7B5',n:'#6E86C4'};
+ var TILE=[
+  [[["wwwwwww","wyywyyw","wyMMMyw","wyMMMMw","wyyyyyw","wwwwwww"],["wwwwwww","wywyyyw","wyMMMyw","wyMMMMw","wyyyyyw","wwwwwww"]],
+   [["wwwwwww","wpppppw","wpRRRpw","wpWWWpw","wpWWWpw","wwwwwww"],["wwwwwww","wppppuw","wpRRRpw","wpWWWpw","wpWWWpw","wwwwwww"]]],
+  [[["wwwwwww","wgggggw","wggcggw","wgtttgw","wggaggw","wwwwwww"],["wwwwwww","wgggggw","wggcgtw","wgtttgw","wggaggw","wwwwwww"]],
+   [["wwwwwww","wvvvvvw","wvvcvvw","wvjjjvw","wvvavvw","wwwwwww"],["wwwwwww","wvvvvvw","wvvcvvw","wvjjjvw","wvavavw","wwwwwww"]]],
+  [[["wwwwwww","wyoyoyw","wyeoeyw","wyoooyw","wyyyyyw","wwwwwww"],["wwwwwww","wyoyoyw","wyoooyw","wyoooyw","wyyyyyw","wwwwwww"]],
+   [["wwwwwww","wgggggw","wgooogw","wooooow","wgggggw","wwwwwww"],["wwwwwww","wgggggw","wgooogw","woooogw","wgggggw","wwwwwww"]]],
+  [[["wwwwwww","wqeqquw","wqqqqqw","wGGGGGw","wdddddw","wwwwwww"],["wwwwwww","wqqequw","wqqqqqw","wGGGGGw","wdddddw","wwwwwww"]],
+   [["wwwwwww","wOOOOOw","wKKuKKw","wnwnnnw","wGGGGGw","wwwwwww"],["wwwwwww","wOOOOOw","wKKuKKw","wnnnwnw","wGGGGGw","wwwwwww"]]]];
+
+ // ── 말풍선 상자, 하트
+ var IC={w:'#FFFFFF',p:'#F2668B',o:'#9CCBF2'};
+ var HS=[".p.p.","ppppp",".ppp.","..p.."];
+ function box(w,h,edge,fill){ var r=[],x,y; for(y=0;y<h;y++){ var s=''; for(x=0;x<w;x++){ var ex=x===0||x===w-1, ey=y===0||y===h-1; s+=(ex&&ey)?'.':(ex||ey)?edge:fill; } r.push(s); } return r; }
+
+ // ── 구름 (원 몇 개를 칸으로 찍고 테두리를 두름): 하루(앱 아이콘 구름)와 지나가는 작은 구름
+ function blob(w,h,circ,rect,fill,edge,shade){ var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d');
+  function ins(px,py){ if(px<0||py<0||px>=w||py>=h) return false; var X=px+.5,Y=py+.5; for(var i=0;i<circ.length;i++){ var d=circ[i]; if((X-d[0])*(X-d[0])+(Y-d[1])*(Y-d[1])<=d[2]*d[2]) return true; } return X>=rect[0]&&X<=rect[2]&&Y>=rect[1]&&Y<=rect[3]; }
+  for(var py=0;py<h;py++) for(var px=0;px<w;px++){ var col=null; if(ins(px,py)) col=(shade&&!ins(px,py+1))?shade:fill; else if(ins(px-1,py)||ins(px+1,py)||ins(px,py-1)||ins(px,py+1)) col=edge; if(col){ x.fillStyle=col; x.fillRect(px,py,1,1); } }
+  return c; }
+ var HARU=blob(26,15,[[7.5,9,5],[13,6.6,6],[19,9,4.6]],[3,8.5,23,13.5],'#FFFFFF','#8CC4F2','#E6F2FD');
+ var PUFF=blob(13,7,[[4,4.5,2.6],[7,3.3,3],[9.8,4.6,2.3]],[1.6,4,11.4,6],'#F7FBFF','#E2F0FC');
+ var PUFF2=blob(9,5,[[3,3,2],[5.6,2.4,2.2]],[1.2,2.6,7.8,4],'#F7FBFF','#E2F0FC');
+
+ function headX(i){ return OX+PPL[i].x+4; }
+ function slotX(i){ return OX+18+i*9; }
+ function corners(x0,y0,x1,y1,col){ lx.fillStyle=col; [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]].forEach(function(c){ lx.fillRect(c[0],c[1],1,1); lx.fillRect(c[0]+c[2],c[1],1,1); lx.fillRect(c[0],c[1]+c[3],1,1); }); }
+
+ function draw(T,still){
+  var L=Math.floor(T/LOOP), t=still?4.4:T-L*LOOP, v=still?0:L%2, G=H-4, Y0=G-15, sy=G-34, tf=Math.floor(T*2.5)%2, i, k;
+  var end=t>=7.7?steps(1-seg(t,7.7,8.4)):1;   // 바퀴 끝에 피드와 하트가 흐려지며 처음으로
+  lx.clearRect(0,0,W,H);
+  // 하늘의 작은 구름 (오른쪽에서 왼쪽으로 천천히)
+  var span=W+20; put(PUFF,(W-((T*1.3+W*.3)%span))-10,G-47); put(PUFF2,(W-((T*.8+W*.85)%span))-8,G-31);
+  put(spr('tree',TREE,PROP),OX+61,G-15);
+  // 바닥
+  lx.fillStyle='#A8D2F5'; lx.fillRect(0,G,W,1); lx.fillStyle='#F2F8FE'; lx.fillRect(0,G+1,W,H-G-1);
+  lx.fillStyle='#E1EDF9'; for(var fx=OX%8;fx<W;fx+=8){ lx.fillRect(fx,G+2,1,1); lx.fillRect(fx+4,G+3,1,1); }
+  // 카페: 탁자, 컵, 김 / 고양이 (꼬리 살랑)
+  put(spr('table',TABLE,PROP),OX+12,G-6); put(spr('cup',CUP,PROP),OX+13,G-9);
+  var sf=Math.floor(T*2.5)%3; dot(OX+14+(sf===1?1:0),G-11-sf%2,'#FFFFFF'); dot(OX+14+(sf===2?1:0),G-13+(sf===0?1:0),'#F4F9FF');
+  put(spr('cat',CAT,PROP),OX+37,G-8); var tl=Math.floor(T*2.2)%2; dot(OX+43,G-2,'#F5A65B'); dot(OX+44,G-3-tl,'#F5A65B'); dot(OX+44,G-4-tl,'#E38B43');
+  // 사람: 찍는 중이면 폰 든 자세, 다 올린 뒤엔 피드를 올려다봄
+  var poses=[];
+  for(i=0;i<4;i++){
+   var q=PPL[i], sp=SP[i], s=filmAt(i), on=still||(t>=s&&t<s+1.6), pose=on?'film':(t>=4.3&&t<7.7)?'up':'idle', rows=sp[pose], key=i+pose;
+   if(on&&sp.film2&&Math.floor(T*6)%2){ rows=sp.film2; key+='2'; }
+   var bl=!on&&((T+i*.83)%3.4)<.13;
+   var c=spr(key+(bl?'b':''),rows,bl?BLINK[i]:PAL[i],q.flip), dx=OX+(q.flip?q.x-(c.width-8):q.x);
+   put(c,dx,Y0-((!still&&t>=s+1.2&&t<s+1.36)?1:0));   // 영상을 올릴 때 깡총
+   poses[i]={c:c,dx:dx,on:on,pose:pose,rows:rows,key:key};
+  }
+  // 거울 (OOTD): 비친 모습은 거울 앞 사람을 뒤집어 흐리게
+  var mx=OX+29, my=G-16; put(spr('mir',MIR,PROP),mx,my);
+  lx.save(); lx.beginPath(); lx.rect(mx+1,my+1,5,13); lx.clip(); lx.globalAlpha=.5;
+  lx.drawImage(spr(poses[1].key,poses[1].rows,PAL[1],true),mx+(poses[1].pose==='film'?-2:0),my+2); lx.restore();
+  dot(mx+4,my+2,'#FFFFFF'); dot(mx+3,my+3,'#FFFFFF'); dot(mx+4,my+3,'#FFFFFF'); dot(mx+3,my+4,'#FFFFFF');
+  // 하루 (구름): 둥실, 눈 깜빡
+  var hx=OX+22, hy=G-50+(Math.floor(T/0.9)%2);
+  put(HARU,hx,hy); lx.fillStyle='#1F6FD6';
+  if((T%4.1)<.14){ lx.fillRect(hx+10,hy+8,1,1); lx.fillRect(hx+15,hy+8,1,1); } else { lx.fillRect(hx+10,hy+7,1,2); lx.fillRect(hx+15,hy+7,1,2); }
+  dot(hx+11,hy+10,'#1F6FD6'); dot(hx+12,hy+11,'#1F6FD6'); dot(hx+13,hy+11,'#1F6FD6'); dot(hx+14,hy+10,'#1F6FD6');
+  dot(hx+8,hy+10,'#F8B4BE'); dot(hx+17,hy+10,'#F8B4BE');
+  // 피드 (구름 아래 네 칸): 아직 안 올라온 칸은 흐린 자리만, 올라온 영상은 두 장면이 번갈아 재생
+  for(i=0;i<4;i++){ var sx=slotX(i), land=filmAt(i)+2, got=still||t>=land;
+   if(!got||end<1) put(spr('slot',box(7,6,'o','.'),IC),sx,sy,.55);
+   if(got){ put(spr('t'+i+v+tf,TILE[i][v][tf],TP),sx,sy,end);
+    if(!still&&t-land<.3){ dot(sx-1,sy-1,'#FFFFFF'); dot(sx+7,sy-1,'#FFFFFF'); dot(sx-1,sy+6,'#FFD66B'); dot(sx+7,sy+6,'#FFD66B'); } }
+  }
+  // 찍는 중: 찍는 대상에 초점 모서리, 머리 위 녹화 표시(빨간 점 + 3칸 = 3초). 다 찍으면 영상 칸이 피드로 날아감
+  for(i=0;i<4;i++){ var P0=poses[i], d=t-filmAt(i);
+   if(P0.on){ var fc=FOCUS[i], g1=(!still&&d<.22)?1:0; corners(OX+fc[0]-g1,G+fc[1]-g1,OX+fc[2]+g1,G+fc[3]+g1,'#FFC94D');
+    var rx=headX(i)-4, ry=Y0-5, n=still?3:d<.25?0:d<.6?1:d<.95?2:3;
+    put(spr('rec',box(9,3,'o','w'),IC),rx,ry); dot(rx+4,ry+3,'#9CCBF2');
+    dot(rx+1,ry+1,(still||Math.floor(T*4)%2)?'#F2545B':'#F7B5B8');
+    for(var pp=0;pp<3;pp++) dot(rx+3+pp*2,ry+1,pp<n?'#2F7BD6':'#D3DDEA'); }
+   if(!still&&d>=1.2&&d<2){ var p=ease(seg(d,1.2,2)), ph=SP[i].ph, tx=slotX(i);
+    var fx0=P0.dx+(PPL[i].flip?P0.c.width-2-ph[0]:ph[0])-2, fy0=Y0+ph[1];
+    put(spr('t'+i+v+tf,TILE[i][v][tf],TP),fx0+(tx-fx0)*p,fy0+(sy-fy0)*p-Math.sin(p*Math.PI)*5); }
+  }
+  // 서로의 영상에 하트: 보는 사람 머리 위에서 다른 사람 영상 칸 모서리로
+  if(!still) for(k=0;k<REACT.length;k++){ var r=REACT[k], dt=t-r[2], hx1=slotX(r[1])+4, hy1=sy-3;
+   if(dt>=0&&dt<.55){ var p4=ease(seg(dt,0,.55)), hx0=headX(r[0])-2, hy0=Y0-6; put(spr('hs',HS,IC),hx0+(hx1-hx0)*p4,hy0+(hy1-hy0)*p4-Math.sin(p4*Math.PI)*4); }
+   else if(dt>=.55) put(spr('hs',HS,IC),hx1,hy1-(dt<.7?1:0),end);
+  }
+  // 화면에 옮기기 (정수배, 흐림 없음)
+  ctx.clearRect(0,0,devW,devH); ctx.imageSmoothingEnabled=false; ctx.webkitImageSmoothingEnabled=false; ctx.drawImage(lc,0,0,W,H,offX,0,W*S,H*S);
+ }
+ function fit(){
+  var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)), cw=wrap.clientWidth||360;
+  devW=Math.round(cw*dpr); S=Math.max(2,Math.min(Math.round(5.2*dpr),Math.floor(devW/(CORE+2))));
+  W=Math.ceil(devW/S); H=ROWS; devH=H*S; OX=Math.floor((W-CORE)/2); offX=Math.floor((devW-W*S)/2);
+  lc.width=W; lc.height=H; cv.width=devW; cv.height=devH; cv.style.width=cw+'px'; cv.style.height=(devH/dpr)+'px'; wrap.style.height=(devH/dpr)+'px';
+ }
+ var acc=0, last=0, step=-1, seen=!window.IntersectionObserver;
+ fit(); draw(acc,calm);
+ addEventListener('resize',function(){ if(Math.round(wrap.clientWidth*(window.devicePixelRatio||1))!==devW){ fit(); draw(acc,calm); } });
+ if(calm||!window.requestAnimationFrame) return;
+ if(!seen) new IntersectionObserver(function(es){ seen=es[0].isIntersecting; }).observe(wrap);
+ requestAnimationFrame(function tick(ts){ var dt=last?Math.min(.1,(ts-last)/1000):0; last=ts;
+  if(seen&&!document.hidden&&wrap.offsetParent){ acc+=dt; var st=Math.floor(acc*15); if(st!==step){ step=st; draw(acc); } }
+  requestAnimationFrame(tick); });
+})();
+</script>
+<p class="ld-dl" data-dday-line>모집 마감 <b>__LD_DEADLINE__</b><em data-dday></em></p>
+<div class="ld-cta"><button type="button" class="ld-btn ld-btn-ar" data-cta="hero">지금 모집 중인 __COHORT__기 신청하기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
+<p class="ld-cta-note">지금까지 250명+ 참여 🎉</p>
+</header>
+
+<section class="ld-sec ld-pain" data-sec="pain">
+<h2>원래 인연은<br>일상에서 생기잖아요</h2>
+<ul class="ld-pain-list">
+<li class="ld-fx">같은 강의실에서 자꾸 마주치다가 어느 날 인사하게 되고.</li>
+<li class="ld-fx">팀플 하다 보니 어느새 편해져서 밥도 같이 먹고.</li>
+<li class="ld-fx">동아리에서 같이 뭔가 만들다가 친해지고.</li>
+</ul>
+<p class="ld-pain-end ld-fx">사진이랑 조건으로 고르는 게 아니라,<br>그렇게 자연스럽게요.</p>
+</section>
+
+<section class="ld-band ld-tint ld-solve" id="ld-solve" data-sec="solve">
+<h2>그 경험을<br>하루하루가 만들어 드려요</h2>
+<p class="ld-callout"><span class="ar" aria-hidden="true">→</span>3일 동안 일상을 같이 보내면서<span class="ar flip" aria-hidden="true">←</span></p>
+<ol class="ld-st">
+<li class="ld-fx"><i>1</i><div><b>가명으로 들어가요</b><p>이름도 사진도 아직 서로 몰라요.</p></div></li>
+<li class="ld-fx" data-engage><i>2</i><div><b>지금 찍은 3초 영상으로 하루를 보여 줘요</b><p>카페, 산책길, 점심이면 충분해요.</p>
+<figure class="ld-sv-life"><img id="ldAdGrid" width="900" height="842" data-img="L_adgrid" data-life="__LD_LIFE__" src="/img/L_adgrid_m.jpg" loading="lazy" decoding="async" alt="참가자들의 하루 6칸: 09:00 운동 하러, 12:00 시험공부, 14:00, 16:00 쉬러 왔어요, 18:00 노을, 22:00 저녁에 뛰면 좋아요"></figure>
+<script>(function(){ var im=document.getElementById('ldAdGrid'), g=(HH_G==='f'?'f':'m'); if(im.getAttribute('data-life')==='feed'){ im.src='/img/L_store_feed_'+g+'.webp'; im.setAttribute('data-img','L_feed'); } else im.src='/img/L_adgrid_'+g+'.jpg'; })();</script></div></li>
+<li class="ld-fx"><i>3</i><div><b>미션이 오고, 소개가 하나씩 열려요</b><p>MBTI, 나이, 학과. 진행은 하루가 맡아요.</p></div></li>
+<li class="ld-fx"><i>4</i><div><b>궁금한 건 익명으로 물어봐요</b><p>누가 보냈는지는 끝까지 몰라요.</p></div></li>
+<li class="ld-fx"><i>5</i><div><b>마지막 날, 서로 고르면 1:1 대화</b><p>선택은 비밀. 서로 고른 둘에게만 열려요.</p></div></li>
+</ol>
+</section>
+
+
+
+<section class="ld-sec" id="ld-record" data-sec="record">
+<h2 class="ld-vh">그동안의 성과</h2>
+<div class="ld-stats ld-stats-1 ld-fx">
+<div class="ld-stat"><b><span data-n="250">250</span><small>명+</small></b><span>지금까지 참여</span></div>
+</div>
+<ul class="ld-co ld-fx">
+<li><b>앱 1기</b><span>9월 15일 ~ 17일</span></li>
+<li><b>앱 2기</b><span>9월 20일 ~ 22일</span></li>
+<li><b>앱 3기</b><span>10월 6일 ~ 8일</span></li>
+<li><b>앱 4기</b><span>10월 11일 ~ 13일</span></li>
+</ul>
+</section>
+
+<section class="ld-sec ld-rvmq" id="ld-review" data-sec="review">
+<h2>그동안의 후기</h2>
+<div class="ld-mq" data-mq><div class="ld-mq-track">
+<p class="ld-rv">연락하는 사람 생겼어요 !! ☺️☺️<span>앱 2기 참가자</span></p>
+<p class="ld-rv">일상을 보게되니 꾸며지지 않은 그 사람의 스타일이나 취향을 알게 되어 좋았습니다<span>앱 1기 참가자</span></p>
+<p class="ld-rv">한 번 더 해보고 싶네요 ㅋㅋㅋㅋ<span>앱 2기 참가자</span></p>
+<p class="ld-rv">여러 상대를 동시에 알아볼 수 있는 좋은 방법 같다<span>앱 1기 참가자</span></p>
+<p class="ld-rv">새로운 종류의 소개팅을 해볼 수 있어서 재미있었어요! 그리고 익명 질문이 되게 재밌었습니당<span>앱 1기 참가자</span></p>
+<p class="ld-rv">상대의 일상을 볼 수 있어서 좋고 색다른 기분이었어요<span>앱 2기 참가자</span></p>
+<p class="ld-rv">혹시 다음에 또 참여해도 되나요..??ㅎㅎ<span>앱 출시 전 기수 참가자</span></p>
+</div></div>
+</section>
+
+
+<section class="ld-sec" id="ld-guide" data-sec="guide">
+<p class="ld-k">신청 안내</p>
+<h2>신청부터 방 입장까지</h2>
+<dl class="ld-if">__LD_ROWS_G__</dl>
+__LD_ALERT__<ol class="ld-zig">
+<li><b>신청서 작성</b><span>이 페이지에서 바로 쓰고 참가비를 송금해요</span></li>
+<li><b>초대 코드 받기</b><span>방이 열리면 문자로 보내드려요</span></li>
+<li><b>앱 받고 입장</b><span>코드만 넣으면 시작이에요</span></li>
+<li><b>3일 동안 하루 나누기</b><span>3초 영상, 채팅, 익명 질문</span></li>
+<li><b>마지막 날 서로 고르기</b><span>서로 고르면 1:1 대화가 열려요</span></li>
+</ol>
+<div class="ld-gn">__LD_NOTES__<p>궁금한 점은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
+</section>
+
+<section class="ld-band ld-final" data-sec="final">
+<p class="ld-dl" data-dday-line>모집 마감 <b>__LD_DEADLINE__</b><em data-dday></em></p>
+<h2>이번 __COHORT__기,<br>함께하실래요?</h2>
+<p class="ld-lead">신청이 많으면 먼저 신청한 순서대로 방을 구성해요.</p>
+<button type="button" class="ld-btn ld-btn-ar" data-cta="final">지금 모집 중인 __COHORT__기 신청하기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+<a class="ld-btn ld-btn-sec" href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">궁금한 점 물어보기</a>
+</section>
+
+</div>
+<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">__LD_BADGE__</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
+<div class="ld-sticky off" id="ldSticky"><button type="button" class="ld-btn ld-btn-ar" data-cta="sticky">지금 모집 중인 __COHORT__기 신청하기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
+<script>
+(function(){
+ document.documentElement.classList.add('ld-js');
+ function mp(name,props){ try{ if(window.mixpanel&&mixpanel.track) mixpanel.track(name,Object.assign({path:location.pathname,g:HH_G},props||{})); }catch(e){} }
+ var IO=window.IntersectionObserver;
+ // 성별 판 채우기 (진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화): 여성용(f)은 남성 참가자, 남성용(m)과 기본(x)은 여성 참가자. 질문/대화 상대는 pick 의 첫 사람
+ (function(){
+  // 이름은 앱이 방에서 실제로 붙여 주는 가명(haruharu-BE PseudonymPool, 성별별 입장 순서): 남 민준/정석/현우, 여 유진/지우/서연. 보는 사람(me)은 상대 성별의 첫 가명. 앞의 키는 사진 파일 이름일 뿐 화면에 안 나옴 (10/8 사용자)
+  var P={taeyun:'민준',junho:'정석',minjae:'현우',chaewon:'유진',sua:'지우',daeun:'서연'};
+  var MEN={pick:['taeyun','junho','minjae'],me:'유진'};
+  var WOMEN={pick:['chaewon','sua','daeun'],me:'민준'};
+  var V=HH_G==='f'?MEN:WOMEN;
+  var PDIR='/img/L_p_', CDIR='/img/L_pc_';   // 프로필 사진. 파일이 있는지는 build.sh 가 P 의 이름으로 확인
+  // 프로필 사진은 앱의 방 화면처럼 흐리게 보임(흐림은 파일에 구워 둔 것). 매칭된 1:1 대화에서는 앱처럼 흐림이 풀린 사진(L_pc_)을 씀
+  function face(k,px){ return '<img src="'+PDIR+k+'.webp" alt="" width="'+px+'" height="'+px+'" loading="lazy">'; }
+  function fill(id,html){ var el=document.getElementById(id); if(el) el.innerHTML=html; }
+  fill('ldPick',V.pick.map(function(k,i){ return '<li'+(i?'':' class="on"')+'><span class="ld-av">'+face(k,34)+'</span><span>'+P[k]+'</span></li>'; }).join(''));
+  fill('ldAskAv',face(V.pick[0],28));
+  [].forEach.call(document.querySelectorAll('.ld [data-face]'),function(el){ el.innerHTML='<img src="'+CDIR+V.pick[0]+'.webp" alt="" width="32" height="32" loading="lazy">'; });
+  [].forEach.call(document.querySelectorAll('.ld [data-who]'),function(el){ el.textContent=P[V.pick[0]]; });
+  [].forEach.call(document.querySelectorAll('.ld [data-me]'),function(el){ el.textContent=V.me; });
+ })();
+ // LandingEngaged: 진행 과정의 둘째 장면(DAY 2 익명 질문 단계)이 약 33% 보이면 1번. 메타 테스트/스케일 세트 최적화 이벤트
+ // 체류 시간이 아니라 스크롤로 판단 → iOS 인앱 visibility 버그와 무관. 옛 랜딩의 앱 화면 2줄째 30% 와 같은 뜻(첫 장면을 지나 내려온 사람)이고, 이벤트 양이 달라지지 않게 스크롤 깊이를 맞춤(390x844 기준 옛 약 590px)
+ (function(){
+  var el=document.querySelector('[data-engage]'), sent=false;
+  function fire(){ if(sent) return; sent=true;
+   try{ if(window.hhFb) hhFb('LandingEngaged',{content_name:location.pathname, content_category:TRACK}); }catch(e){}   // 브라우저 픽셀 + 서버 CAPI 같은 eventID
+   mp('landing_engaged'); }
+  if(!el) return;
+  if(IO){ var io=new IO(function(es){ es.forEach(function(e){ if(e.isIntersecting && scrollY>80){ fire(); io.disconnect(); } }); },{threshold:0.332}); io.observe(el); addEventListener('scroll',function(){ if(!sent && scrollY>80){ var r=el.getBoundingClientRect(); if(r.top+r.height*0.332<innerHeight && r.bottom>0){ fire(); io.disconnect(); } } },{passive:true}); }
+  else addEventListener('scroll',function(){ var r=el.getBoundingClientRect(); if(scrollY>80 && r.top+r.height*0.332<innerHeight) fire(); },{passive:true});
+ })();
+ // 구역 도달 (Mixpanel 만, D1/KV 쓰기 없음): 구역마다 1번
+ if(IO){ var so=new IO(function(es){ es.forEach(function(e){ if(e.isIntersecting){ mp('landing_section',{section:e.target.getAttribute('data-sec')}); so.unobserve(e.target); } }); },{threshold:0.15});
+  document.querySelectorAll('[data-sec]').forEach(function(s){ so.observe(s); }); }
+ // 스크롤 등장, 숫자 올라가기 (움직임 줄이기면 바로 보임)
+ var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ function count(el){ var raw=el.getAttribute('data-n'), to=Number(raw), dec=(raw.split('.')[1]||'').length, t0=0; if(calm||!to||!window.requestAnimationFrame) return;
+  el.textContent='0'; requestAnimationFrame(function step(t){ t0=t0||t; var p=Math.min(1,(t-t0)/900); el.textContent=(to*(1-Math.pow(1-p,3))).toFixed(dec); if(p<1) requestAnimationFrame(step); }); }
+ var fx=document.querySelectorAll('.ld-fx');
+ if(IO){ var fo=new IO(function(es){ es.forEach(function(e){ if(!e.isIntersecting) return; e.target.classList.add('in'); [].forEach.call(e.target.querySelectorAll('[data-n]'),count); fo.unobserve(e.target); }); },{threshold:0.12,rootMargin:'0px 0px -6% 0px'});
+  fx.forEach(function(x){ fo.observe(x); }); }
+ else fx.forEach(function(x){ x.classList.add('in'); });
+ // 마감까지 남은 날 (한국 날짜 기준). 사전 알림 폼은 표시 안 함
+ // 마감까지 남은 날 (한국 날짜 기준): 첫 화면과 마무리의 [data-dday] 전부. 마감이 지났으면 그 줄을 숨김. 사전 알림 폼은 표시 안 함
+ (function(){ var els=document.querySelectorAll('[data-dday]'), lines=document.querySelectorAll('[data-dday-line]'); if(!els.length||PLAN==='prealert'||!(DEADLINE<9e14)) return;
+  function day(ms){ return Math.floor((ms+9*3600e3)/864e5); }
+  var left=day(DEADLINE-1)-day(Date.now()); if(left<0){ [].forEach.call(lines,function(l){ l.hidden=true; }); return; }
+  if(left>60) return; var txt=left?'D-'+left:'오늘 마감'; [].forEach.call(els,function(b){ b.textContent=txt; b.classList.add('on'); }); })();
+ // 가로로 흐르는 띠 (후기, 미션): 카드 한 벌을 두 번 이어 붙여 끝없이 흐르고, 손대면 멈췄다가 2.5초 뒤 다시 흐름. 움직임 줄이기면 손으로만 넘김
+ [].forEach.call(document.querySelectorAll('[data-mq]'),function(mq){ var tr=mq.firstElementChild; if(!tr) return; tr.innerHTML+=tr.innerHTML; if(calm||!window.requestAnimationFrame) return;
+  var SPEED=34, pos=1, paused=false, timer=null, last=null; mq.scrollLeft=1;
+  function half(){ return tr.scrollWidth/2; }
+  function hold(){ paused=true; clearTimeout(timer); }
+  function go(){ clearTimeout(timer); timer=setTimeout(function(){ paused=false; },2500); }
+  ['touchstart','pointerdown','mouseenter'].forEach(function(e){ mq.addEventListener(e,hold,{passive:true}); });
+  ['touchend','pointerup','pointercancel','mouseleave'].forEach(function(e){ mq.addEventListener(e,go,{passive:true}); });
+  mq.addEventListener('scroll',function(){ if(!paused) return; pos=mq.scrollLeft; var h=half(); if(pos>=h+1){ pos-=h; mq.scrollLeft=pos; } else if(pos<1){ pos+=h; mq.scrollLeft=pos; } },{passive:true});
+  requestAnimationFrame(function step(ts){ if(last==null) last=ts; var dt=Math.min((ts-last)/1000,.1); last=ts; if(!paused&&!document.hidden&&mq.offsetParent){ pos+=SPEED*dt; var h=half(); if(h>0&&pos>=h+1) pos-=h; mq.scrollLeft=pos; } requestAnimationFrame(step); }); });
+ var st=document.getElementById('ldSticky');
+ function target(){ return document.querySelector('.q[data-name="gender"]'); }
+ document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
+  mp('landing_cta',{where:b.getAttribute('data-cta')});
+  // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
+  // 10/13 사용자: 폰 뒤로가기가 페이지를 나가 버림 → 방문 기록을 하나 남겨 뒤로가기면 랜딩으로
+  if(document.documentElement.getAttribute('data-mode')!=='form'&&!(history.state&&history.state.hhForm)){ try{ history.pushState({hhForm:1},''); }catch(e){} }
+  document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0});
+  var fc=document.querySelector('.ld-fcard .ld-fcard-rows'); if(fc){ fc.classList.remove('ld-flash'); setTimeout(function(){ fc.classList.add('ld-flash'); },calm?0:250); }
+ }); });
+ var viaLink=false;
+ function toLanding(via){ document.documentElement.removeAttribute('data-mode'); mp('landing_back',{via:via}); window.scrollTo({top:0}); }
+ var back=document.getElementById('ldBack'); if(back) back.addEventListener('click',function(){ if(history.state&&history.state.hhForm){ viaLink=true; history.back(); return; } toLanding('link'); });
+ // 새로고침하면 기록 칸(hhForm)은 남고 form 모드는 풀림 → 칸을 지워 버튼/링크/뒤로가기가 한 번씩 헛돌지 않게
+ try{ if(history.state&&history.state.hhForm&&document.documentElement.getAttribute('data-mode')!=='form') history.replaceState(null,''); }catch(e){}
+ addEventListener('popstate',function(e){
+  var mode=document.documentElement.getAttribute('data-mode')==='form', toForm=!!(e.state&&e.state.hhForm), fm=document.getElementById('f');
+  if(mode&&!toForm){
+   // 제출 뒤면 원래대로 나감. 2/3페이지면 한 페이지 앞으로 (랜딩은 1페이지 안에 있어서 모드만 풀면 화면이 그대로임)
+   if(fm&&fm.dataset.submitting==='true'){ viaLink=false; history.back(); return; }
+   var on=document.querySelector('.page.on'), pv=on&&on.getAttribute('data-page')!=='1'&&on.querySelector('[data-prev]');
+   if(pv){ try{ history.pushState({hhForm:1},''); }catch(x){} pv.click(); window.scrollTo({top:0}); viaLink=false; return; }
+   toLanding(viaLink?'link':'history');
+  } else if(!mode&&toForm){ document.documentElement.setAttribute('data-mode','form'); window.scrollTo({top:0}); }   // 앞으로가기 = 신청서
+  viaLink=false; });
+ // 신청 버튼은 아래 고정 하나뿐 (10/8 사용자). 처음부터 보이고, 신청서 구간에 들어간 뒤와 1페이지가 아닐 때는 숨김
+ function upd(){
+  var t=target(), p1=document.querySelector('.page[data-page="1"]');
+  var hb=document.querySelector('.ld-hero .ld-btn'), heroOn=hb&&hb.getBoundingClientRect().bottom>0;
+  var fb=document.querySelector('.ld-final .ld-btn'), fr=fb&&fb.getBoundingClientRect(), finalOn=!!(fr&&fr.top<innerHeight&&fr.bottom>0);
+  var off=!p1||!p1.classList.contains('on')||heroOn||finalOn||document.documentElement.getAttribute('data-mode')==='form'||(t&&t.getBoundingClientRect().top<innerHeight*0.9);
+  st.classList.toggle('off',!!off);
+ }
+ addEventListener('scroll',upd,{passive:true}); addEventListener('resize',upd); setInterval(upd,700); upd();
+})();
+</script>

@@ -250,7 +250,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
-      required.push('device');
+      if (!form.noDevice) required.push('device');   // noDevice (10/23 이야기판): 기기 문항 없음, 아래에서 접속 기기로 채움
     }
     if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
@@ -275,6 +275,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (capture.error === 'capture_missing') miss.push('capture');
     }
     if (miss.length) return json({ ok: false, error: 'missing', miss }, 400);
+    // 기기 문항 없는 폼(noDevice): 접속 기기(UA)로 채움. 못 알아보면 빈 값
+    if (form && form.noDevice && !f.device) { const ua0 = String(b.ua || ''); const dv0 = /iphone|ipad|ipod/i.test(ua0) ? 'iPhone' : /android/i.test(ua0) ? 'Android' : ''; if (dv0) f.device = dv0; }
     // 전화번호만 받는 재참여: 화면에 없는 문항 값은 버리고 지난 신청에서 채움. 기기는 지금 접속한 폰이 먼저
     let priorFrom = null;
     if (phoneOnly) {

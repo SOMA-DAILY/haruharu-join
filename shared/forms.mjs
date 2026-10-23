@@ -111,6 +111,9 @@ export const FORMS = {
   //   entryFirst (10/22 14시 사용자): 남자(g=m, 광고 src 의 m)는 7기 마감 전에도 지금부터 8기. 여자와 g 없는 바이오는 7기 마감(10/22 18:00)까지 7기, 뒤엔 모두 8기. 7기 줄의 entryFirst 는 뺌 (둘 다 있으면 마감 이른 7기가 이김)
   //   abTest: 7기 50/50(랜딩 v3b + 결제 v3)의 판정은 8기까지 팔당 LPV 2,000 원칙이라 8기만 이어감 (functions/8/seoul/). 9기는 없음
   '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true },
+  // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 만 붙이고 이 줄은 지움
+  //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 이 셋도 /8/seoul/ 로 옮길 때 같이 붙임
+  '/8/seoul/story/':        { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '8기 서울 학생 - 이야기판', feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true },
   '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
