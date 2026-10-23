@@ -40,8 +40,9 @@ test('재신청은 기존 프로필 성별 우선, 이전 성별이 없으면 �
     const extra={sv_join:'7기',phone:'01000000001',name:'합성검증'};
     const prior=await request(path,'m',extra,'submit',[{application_id:'prior',gender:'여성'}]);
     assert.equal(prior.response.status,200);assert.equal(prior.record.fields.gender,'여성');assert.equal(prior.record.hidden.g,'m');
-    const fallback=await request(path,'m',extra);
-    assert.equal(fallback.response.status,200);assert.equal(fallback.record.fields.gender,'남성');
+    // 남성 7기는 10/22 운영자 요청으로 마감. 열린 여성 7기로 링크 성별 fallback을 검증한다.
+    const fallback=await request(path,'f',extra);
+    assert.equal(fallback.response.status,200);assert.equal(fallback.record.fields.gender,'여성');
   }
 });
 

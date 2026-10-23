@@ -1,8 +1,9 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
-import { cohortStatus, formOf, formStatus, CURRENT_COHORT } from '../../shared/forms.mjs';
+import { cohortStatus, formOf, formStatus, pickTarget, CURRENT_COHORT } from '../../shared/forms.mjs';
 import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey } from '../../shared/rejoin-survey.mjs';
+import { genderCookie } from '../../shared/entry.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -179,7 +180,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
   const path = '/' + (params.path ? [].concat(params.path).join('/') : '');
   if (request.method === 'GET' && path === '/early-offer') return json(earlyOffer());
   if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
-  if (request.method === 'GET' && path === '/cohort') { const fp = url.searchParams.get('path'); return json(fp ? formStatus(fp, Date.now(), env) : cohortStatus(Date.now(), env)); }
+  if (request.method === 'GET' && path === '/cohort') {
+    const fp = url.searchParams.get('path'), g = url.searchParams.get('g');
+    return json(fp ? formStatus(fp, Date.now(), env, ['m','f'].includes(g) ? g : genderCookie(request)) : cohortStatus(Date.now(), env));
+  }
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
 
@@ -235,18 +239,31 @@ export async function onRequest({ request, env, params, waitUntil }) {
       reviewOnly = target.path === page.path;
       b.path = target.path;
     }
+    // 기수 고르기 (10/23, 등록부 pick): 신청서의 기수 카드로 다른 기수를 골랐으면(cohort_pick) 그 기수 줄로 접수. 방문 기록은 위 재참여 후기 폼처럼 페이지 경로
+    let picked = false;
+    if (page && (page.pick || page.pickFrom) && (b.fields || {}).cohort_pick) {
+      const target = pickTarget(page.path, b.fields.cohort_pick);
+      if (!target) return json({ ok: false, error: 'missing', miss: ['cohort_pick'] }, 400);
+      picked = target !== page.path;
+      b.path = target;
+    }
     // 등록부(shared/forms.mjs)로 요금제/기수/지역을 서버가 확정 (클라이언트 hidden 값은 안 믿음). 등록부에 없는 경로는 받지 않음
     const form = festival ? null : formOf(b.path);
     if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
     if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
     if (reviewOnly) h.plan = 'review';   // 후기만 (참가 신청 아님, 참가비 없음)
     // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
-    if (form) { const st = formStatus(b.path, now, env); if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409); }
+    const phoneOnly = !!(form && form.phoneOnly);
+    if (form) {
+      // 일반 신청의 직접 응답을 우선. 재참여 폼은 아래에서 이전 프로필을 읽은 뒤 성별 마감을 판단.
+      const g = phoneOnly ? '' : f.gender === '남성' ? 'm' : f.gender === '여성' ? 'f' : h.g;
+      const st = formStatus(b.path, now, env, g);
+      if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409);
+    }
     const preRegistration = form && form.plan === 'early';
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
-    const phoneOnly = !!(form && form.phoneOnly);
     const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
@@ -291,6 +308,12 @@ export async function onRequest({ request, env, params, waitUntil }) {
       if (dv) f.device = dv;
       priorFrom = reviewOnly ? null : prior.from || '';   // 후기만은 번호가 없어 지난 신청을 안 찾음
     }
+    if (form && !reviewOnly) {
+      // 링크 g를 바꿔도 이전 신청의 실제 성별이 남성이면 7기에 접수하지 않는다. 저장 전에 종료.
+      const g = f.gender === '남성' ? 'm' : f.gender === '여성' ? 'f' : h.g;
+      const st = formStatus(b.path, now, env, g);
+      if (!st.open) return json({ ok: false, error: 'cohort_closed', ...st }, 409);
+    }
     if (capture && capture.error) return json({ ok: false, error: capture.error }, capture.error === 'capture_too_large' ? 413 : 400);
     if (festival) f.avoid_same_major = AVOID_MAJOR_VALUES.includes(f.avoid_same_major) ? f.avoid_same_major : '';
     // 신청 ID = 세션 UUID (랜딩부터 앱까지 한 사람을 잇는 키). Mixpanel distinct_id, 초대 코드 옆에 저장, 앱 identify 에 씀
@@ -315,7 +338,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (ff != null) rec.friend_fee = ff;
     if (priorFrom != null) rec.prior_from = priorFrom;   // 가져온 지난 신청 ID ('' = 못 찾음)
     if (sv) rec.survey = sv.survey;
-    if (page && page.joins) rec.from_page = page.path;   // 재참여 후기 폼에서 고른 기수로 접수됨
+    if (page && (page.joins || picked)) rec.from_page = page.path;   // 재참여 후기 폼, 기수 고르기(10/23)에서 고른 기수로 접수됨
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
     // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러

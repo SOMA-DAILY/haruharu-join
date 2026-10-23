@@ -71,7 +71,7 @@ test('개선판은 새 주소 세 곳이고 이름은 기존 이름 뒤에 - 개
   // 5기부터는 개선판(B) 하나로 감 (10/10) → 지역 선택 버튼은 5기 개선판, 4기 개선판은 여전히 안 나옴
   const select = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.equal(select.includes('/4/seoul/v2/'), false, '지역 선택 화면');
-  assert.ok(select.includes('href="/7/seoul/"') && !select.includes('href="/6/') && !select.includes('href="/5/'), '7기 버튼 (10/17: 7기 서울만, 광주 없음)');
+  assert.ok(select.includes('href="/8/seoul/"') && !select.includes('href="/7/') && !select.includes('href="/6/') && !select.includes('href="/5/'), '8기 버튼 (10/22: 8기 서울만, 광주 없음)');
 });
 
 test('기존 4기 폼에는 개선판 요소가 하나도 없다 (2페이지 구성 그대로)', () => {
@@ -94,7 +94,8 @@ test('개선판 정가 폼: 3페이지(기본 문항 / 전화번호와 동의 / 
     assert.ok(html.includes(FORMS[p].friendPay), p);
     assert.equal((html.match(/class="fr-share"/g) || []).length, 1, p + ' 공유 버튼은 친구 문항에만');
     assert.ok(p3.split('data-name="name"')[0].includes('class="fr-share"'), p);
-    assert.ok(p3.includes('<p class="fee-was"><s>12,900원</s> → <strong>7,900원</strong></p>'), p + ' 정가 표시');
+    assert.equal(html.includes('12,900'), false, '비교용 정가 제거');
+    assert.ok(p3.includes('<p class="fee-was"><strong>7,900원</strong></p>'), p + ' 정가 표시');
   }
 });
 

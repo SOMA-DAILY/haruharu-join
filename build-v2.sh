@@ -25,6 +25,7 @@ LANDING_V3B=open('src/landing.v3b.html',encoding='utf-8').read()   # 랜딩 3판
 LANDING_V4=open('src/landing.v4.html',encoding='utf-8').read()   # 이야기판 (10/22, ucling.co.kr 구성 참고): 등록부 landingV4 폼만. landingV3 조립(phonePage, 안내 카드, 검사)은 그대로 타고 랜딩 파일만 이것으로
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
 FOOTER=re.sub(r'^<!--.*?-->\n', '', open('src/footer.html',encoding='utf-8').read(), count=1, flags=re.S)   # 바닥글: 약관 링크와 사업자 정보 (10/23 이야기판 폼만)
+PICK_TAIL=open('src/cohort-pick.html',encoding='utf-8').read()   # 기수 고르기 (10/23): 등록부 pick 폼의 신청 안내 아래 기수 카드 모양과 동작
 # 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
 COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
 V3_STYLE=re.search(r'<style>.*?</style>\n', LANDING_V3, flags=re.S).group(0)
@@ -71,6 +72,9 @@ def join_html(f):
         reg = next((q for q, x in FORMS.items() if x['cohort'] == g['cohort'] and x.get('track') == g.get('track') and x['plan'] == 'regular' and x.get('entry')), '')
         assert period and dko and g.get('fee') == f['fee'], f'{path} 일정/마감/금액이 없음'
         at = f'data-path="{path}" data-g="{f.get("joinFor", {}).get(v, "")}" data-reg="{reg}"'
+        excluded = ','.join(f.get('joinExclude', {}).get(v, []))
+        if excluded:
+            at += f' data-exclude-g="{E(excluded)}"'
         cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
         yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
     assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
@@ -291,8 +295,8 @@ def gen(path, f):
     else:
         # 1페이지에는 참가비를 드러내지 않음(10/8 사용자: 1페이지 이탈과 2페이지 이탈을 견줘 참가비가 적절한지 보려고). 금액, 송금, 환불 문구는 2페이지 참가비 안내에서 처음 나옴
         ld_rows = [('신청 마감', deadline_ko), ('참가 안내', '신청 마감일까지 참가 확정 문자를&nbsp;보내드려요')]
-        if f.get('feeFirst'):   # 10/11 사용자: 참가비는 첫 화면 말고 신청 안내에만 (12,900 → 7,900), 그 바로 아래 다음 기수 알림. 결제 페이지에서 금액을 처음 보고 나가는 이탈 때문에 10/8 숨김 결정을 바꿈
-            ld_rows.insert(1, ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
+        if f.get('feeFirst'):   # 10/11 사용자: 참가비는 첫 화면 말고 신청 안내에만 (실제 참가비), 그 바로 아래 다음 기수 알림. 결제 페이지에서 금액을 처음 보고 나가는 이탈 때문에 10/8 숨김 결정을 바꿈
+            ld_rows.insert(1, ('참가비', f"{f['fee']:,}원" + (f"<small>친구랑 같이 신청하면 둘 다 <b>{f['friendFee']:,}원</b></small>" if f.get('friendFee') else '')))   # 10/8 사용자: 마감일 밤이 아니라 마감일까지. 더 일찍 보낼 수도 있다는 말은 넣지 않기로 함
         ld_notes = []
     ld_cells = lambda rows: ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in rows)
     ld_flow = flow if (prealert or f.get('landingV3')) else flow.replace('참가비를 송금한 뒤 ', '')   # 랜딩의 단계 문구도 참가비 없이 (위와 같은 까닭). 랜딩 3판은 송금을 다시 넣음 (10/12)
@@ -302,7 +306,7 @@ def gen(path, f):
     # 랜딩 3판 안내 카드 다섯 줄 + 첫 화면 칩 (짧은 날짜)
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
-              ('참가비', (f"<s>{f['listFee']:,}원</s> → " if f.get('listFee') else '') + f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+              ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
     # B 팔 1페이지는 A 와 같게 (10/21 사용자): 변수는 송금 페이지(결제 구역)만. B 전용 랜딩/안내 카드는 안 씀
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
@@ -347,12 +351,12 @@ def gen(path, f):
                          ('<p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows">__LD_ROWS_A__</dl>', '<h1 class="sv-h1">지난 기수, 어땠어요?</h1><p class="sv-lead">남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.</p>'),   # 10/18: 후기가 먼저라 위에는 금액 카드 대신 제목
                          ('<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>', '<h2>신청이 마감됐어요</h2><p>'),   # 이 페이지는 마감이 없어 안 보이지만 기수 글자가 남지 않게
                          ('<title>하루하루 소개팅 __COHORT__기 신청폼 💕</title>', '<title>하루하루 지난 기수 후기 💌</title>'),
-                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
+                         ('<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 300명+ 참여 🎉">', f'<meta property="og:description" content="후기를 남겨 주세요. 다음 기수에 다시 참여하면 {f["wasFee"] - f["fee"]:,}원 할인돼요">'),
                          ('<button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button>', ''),
                          ('<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">', '<meta property="og:title" content="지난 기수 어땠어요? 후기를 들려주세요 💌">')):
                 assert t.count(a) == 1, f'{path} 설문 폼 자리를 못 찾음: {a[:30]}'
                 t = t.replace(a, b, 1)
-        # 성과 구역(250명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
+        # 성과 구역(300명+ / 기수별 진행 날짜) 빼기 (10/14 사용자, 6기~): noRecord 폼만
         if f.get('landingV3') and f.get('noRecord'):
             t, n = re.subn(r'<section class="ld-sec" id="ld-record" data-sec="record">.*?</section>\n\n?', '', t, count=1, flags=re.S)
             assert n == 1 or (cand and 'id="ld-record"' not in LANDING_V3B), f'{path} 성과 구역을 못 찾음'   # B 팔 랜딩은 성과 구역 자체가 없음
@@ -522,7 +526,7 @@ def gen(path, f):
             won = lambda n: f'{n:,}'
             share_only = bool(f.get('rejoin')) and not f.get('friendFee')   # 재참여 폼은 고정 금액 (설문 폼만 친구 할인으로 금액이 바뀜)
             off = won(f['fee'] - f.get('friendFee', f['fee']))
-            was = f.get('listFee') or (f.get('wasFee') if survey else None)   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
+            was = f.get('wasFee') if survey else None   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
             frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])), '__PAL_FEE__': won(pal_fee) if survey else '',
                    '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(was) + '원</s> → ') if was else '',
                    '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("(window.HH_SHARE_PATH||'" + f['friendForm'] + "')" if survey else "'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': 'rejoin-friend' if survey else f'h{cohort}-friend' + ('-rejoin' if f.get('rejoin') else ''),
@@ -580,15 +584,15 @@ def gen(path, f):
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
             if comeback: t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
-        if f.get('listFee'):
-            # 정가 표시 (10/8): 참가비 안내 제목 아래에 정가를 줄 긋고 실제 참가비를 크게. 친구 할인이 켜지면 이 줄은 숨고 친구 할인 안내가 정가부터 이어서 보여 줌
+        if f.get('showFee'):
+            # 참가비 안내 제목 아래 실제 금액만 크게 표시한다.
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
             assert t.count(ftitle) == 1, f'{path} 참가비 안내 제목을 못 찾음'
-            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><s>{f["listFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
+            t = t.replace(ftitle, ftitle + f' <p class="fee-was"><strong>{fee}원</strong></p>\n', 1)
         if survey:
             # 재참여 할인 표시 (10/17): 참가비 안내 제목 아래 '재참여 할인 7,900원 → 5,900원'. 친구 선택지를 고르면 이 줄은 숨고 친구 할인 안내가 이어서 보여 줌
             ftitle = '<p class="t">참가비 안내<span class="req">*</span></p>\n'
-            assert t.count(ftitle) == 1 and not f.get('listFee'), f'{path} 참가비 안내 제목을 못 찾음'
+            assert t.count(ftitle) == 1 and not f.get('showFee'), f'{path} 참가비 안내 제목을 못 찾음'
             t = t.replace(ftitle, ftitle + f' <p class="fee-was"><b>재참여 할인</b><s>{f["wasFee"]:,}원</s> → <strong>{fee}원</strong></p>\n', 1)
             foot = '<p class="foot">'; assert t.count(foot) == 1 and not re.search(r'__[A-Z0-9_]+__', SV_TAIL)
             t = t.replace(foot, SV_TAIL + foot, 1)
@@ -615,7 +619,7 @@ def gen(path, f):
             t = t[:d1] + '\n' + APP_GET.rstrip('\n') + t[d1:]
         if not prealert and not phone_only:   # 참가비는 3페이지에서 처음 나와야 함 (페이지별 이탈 비교용). 1, 2페이지를 같이 봄. 한 페이지짜리 재참여 폼은 해당 없음
             page1 = t.split('data-page="1"', 1)[1].split(f'data-page="{lastp}"', 1)[0]
-            for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원') + ((f'{f["listFee"]:,}원',) if f.get('listFee') else ())):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
+            for word in (() if f.get('feeFirst') else ('참가비', '송금', fee + '원')):   # feeFirst 폼은 첫 화면에 금액을 일부러 보여줌
                 assert word not in page1, f'{path} 1, 2페이지에 참가비 관련 말이 있음: {word}'
         for v in ('' if comeback else 'fm'):   # 앱 화면은 링크 성별에 맞춰 스크립트로 주소를 이어 붙임
             assert os.path.exists(f'public/img/L_store_feed_{v}.webp'), f'{path} 앱 화면 이미지 없음: L_store_feed_{v}.webp'
@@ -629,6 +633,28 @@ def gen(path, f):
         assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
         t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
         assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
+    if f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
+        # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
+        #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
+        g_open = '<div class="q" data-name="gender">'
+        assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
+        rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
+        assert len(rows) >= 2 and any(g['cohort'] == cohort for _, g in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
+        pk_short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
+        def pk_card(p, g):
+            c = g['cohort']; on = (p == path) or (bool(f.get('pickFrom')) and c == cohort); per, dko = INFO[c]['period'], DLKO[c]
+            return (f'<button type="button" class="pk-c{" on" if on else ""}" role="radio" aria-checked="{"true" if on else "false"}" data-cohort="{c}" data-deadline="{ms(DL[c])}"'
+                    f' data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
+                    f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
+                    f'<span class="pk-chips"><span class="pk-chip p">🗓️ {pk_short(per)}</span><span class="pk-chip d">⏰ {pk_short(dko)} 신청 마감</span></span></button>')
+        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
+                      + '\n'.join(pk_card(p, g) for p, g in rows) + '\n</div>\n\n' + g_open, 1)
+        # 아래 고정 신청 버튼은 카드 구역이 보이면 숨김 (기준이 성별 문항이던 것을 카드 구역으로)
+        tgt = "function target(){ return document.querySelector('.q[data-name=\"gender\"]'); }"
+        assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+        t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
+        foot = '<p class="foot">'; assert t.count(foot) == 1
+        t = t.replace(foot, PICK_TAIL + foot, 1)
     bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
@@ -694,6 +720,20 @@ def gen(path, f):
         fm = re.search(r'<p class="foot">.*?</p>\n', t); assert fm, f'{path} 바닥 안내 줄을 못 찾음'
         t = t.replace(fm.group(0), fm.group(0) + FOOTER, 1)
         assert not [c for c in BAD if c in t], f'{path} 이야기판 조각에 금지 문자'
+        arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
+        assert arm_line, f'{path} ARM 줄을 못 찾음'
+        t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if f.get('maleFee'):
+        # 화면 금액에만 표시를 달고 링크/실제 선택 성별로 갱신. 스크립트와 속성은 제외.
+        chunks = re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]*>)', t, flags=re.S|re.I)
+        for i in range(0, len(chunks), 2):
+            for key, amount, upper in [('full', f['fee'], f['maleFee']), ('friend', f['friendFee'], f['maleFriendFee'])]:
+                chunks[i] = re.sub(r'(?<![\d,])' + f'{amount:,}' + r'(?![\d,])', f'<bdi data-price="{key}">남성 {upper:,}원 / 여성 {amount:,}</bdi>', chunks[i])
+        t = ''.join(chunks).replace('둘 다 <b><bdi data-price=', '1인 <b><bdi data-price=').replace('둘 다 <bdi data-price=', '1인 <bdi data-price=')
+        assert 'data-price="full"' in t and 'data-price="friend"' in t
+        prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
+        tail = open('src/gender-fee.html',encoding='utf-8').read().replace('__GENDER_PRICES__',prices)
+        t = t.replace('<p class="foot">', tail + '<p class="foot">', 1)
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 

@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '7';   // 10/18 18:00 6기 마감 뒤 병합: 지역 선택, 마감된 6기 폼의 다음 기수 버튼과 302 를 7기로
+export const CURRENT_COHORT = '8';   // 10/22 18:00 7기 마감 뒤 병합: 지역 선택, 마감된 7기 폼의 다음 기수 버튼과 302 를 8기로. 8기 마감(10/29 18:00) 뒤엔 '9'
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -21,8 +21,8 @@ const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
 //   이 두 값이 있는 폼만 대상. 판정은 shared/friend-discount.mjs
 const FRIEND = { friendFee: 5900, friendPay: PAY + '/b/' };
-// 정가 표시 (10/8~, 개선판 정가 폼): 참가비 안내에서 이 금액에 줄을 긋고 실제 참가비 앞에 보여 줌. 3기 안내 그림(P4 ..._12900)과 축제 폼이 써 온 값. 표시만 하고 계산에는 안 씀
-const LIST = { listFee: 12900 };
+// 참가비 안내에서 실제 참가비를 크게 표시한다. 비교용 정가는 표시하지 않는다.
+const FEE_DISPLAY = { showFee: true };
 // 3기 공통값 (옛 경로, 값 바꾸지 않음)
 const S3 = { cohort: '3', city: 'seoul', track: 'seoul-student', trackKo: '서울 학생', cityKo: '서울', schoolEx: '서울대학교' };
 const G3 = { cohort: '3', city: 'gwangju', track: 'gwangju-student', trackKo: '광주 학생', cityKo: '광주', schoolEx: '전남대학교' };
@@ -31,14 +31,14 @@ const G4 = { ...G3, cohort: '4' };
 const S5 = { ...S3, cohort: '5' };
 const G5 = { ...G3, cohort: '5' };
 const S6 = { ...S3, cohort: '6' };
-const S7 = { ...S3, cohort: '7' };
+const S7 = { ...S3, cohort: '7', closedFor: ['m'] }; // 10/22 운영자: 남성 7기 접수 종료, 8기만 신청
 const S8 = { ...S3, cohort: '8' };
 const S9 = { ...S3, cohort: '9' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
 const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
 // 6기 참가자 전용 후기: 재신청 5,900원 고정, 친구 동반/방 배정 문항만 받음(추가 할인 없음). 후기 기수와 신청 기수는 별도.
 const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, phoneOnly: true, survey: true, noPage: true, buddyOnly: true, reviewCohort: '6' };
-const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...LIST, landing: true, variant: 'v2', rejoin: true };
+const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
 export const FORMS = {
@@ -62,19 +62,19 @@ export const FORMS = {
   '/4/seoul-work/':         { ...W4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', label: '4기 수도권 직장인', landing: true },
   // 개선판 (10/8~): 기존 폼은 그대로 두고 새 주소에 나란히 올림. 이름은 '기존 이름 - 개선'. 화면은 build-v2.sh 가 src/form.v2.template.html + src/landing.v2.html 로 만듦.
   //   지역 선택(/)에는 안 보임(listed 없음). 남녀 화면은 주소 끝 ?g=f / ?g=m. variant 가 있는 줄은 build.sh 의 기존 빌드와 '같은 트랙 정가 폼 찾기'에서 빠짐
-  '/4/seoul/v2/':           { ...S4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 서울 학생 - 개선', landing: true, variant: 'v2' },
-  '/4/gwangju/v2/':         { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '4기 광주 학생 - 개선', landing: true, variant: 'v2' },
+  '/4/seoul/v2/':           { ...S4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '4기 서울 학생 - 개선', landing: true, variant: 'v2' },
+  '/4/gwangju/v2/':         { ...G4, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '4기 광주 학생 - 개선', landing: true, variant: 'v2' },
   '/4/seoul-work/pre/v2/':  { ...W4, plan: 'prealert', fee: 0,    pay: '',          label: '4기 수도권 직장인 사전알림 (무료) - 개선', landing: true, variant: 'v2', period: '10월 중순', noDeadline: true },
   // 재참여 (개선판 학생 폼 기반): 본인과 초대한 친구 모두 4,900원 고정. 공유는 같은 폼, 추가 친구 할인 없음.
-  '/4/seoul/rejoin/':       { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 서울 학생 재참여', landing: true, variant: 'v2', rejoin: true },
-  '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...LIST, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
+  '/4/seoul/rejoin/':       { ...S4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...FEE_DISPLAY, label: '4기 서울 학생 재참여', landing: true, variant: 'v2', rejoin: true },
+  '/4/gwangju/rejoin/':     { ...G4, plan: 'discount', fee: 4900, pay: PAY + '/e/', ...FEE_DISPLAY, label: '4기 광주 학생 재참여', landing: true, variant: 'v2', rejoin: true },
 
   // ---- 5기 (10/10~): 서울 학생 / 광주 학생 정가 폼 하나씩. 화면은 4기 A/B 에서 이긴 개선판(B) 그대로 (variant 'v2' = build-v2.sh 로 만든다는 뜻)
   // 10/12 사용자: 5기 서울/광주 폼을 새 랜딩(landingV3, src/landing.v3.html)과 2페이지(twoPage)로 교체. 주소/광고 링크/서버는 그대로. 남녀는 ?g=f / ?g=m (광고 src 로 자동 판별)
   // 10/13 (#41): twoPage → phonePage. 2페이지 = 전화번호+동의, 3페이지 = 참가비+계좌 복사+친구 접기. 10/13 전 화면으로 되돌리려면 phonePage 를 twoPage 로
   // 10/14 사용자: marketing = 동의 문항을 [모두 동의] + (필수) 개인정보 + (선택) 할인, 모집 소식 문자 받기 로. 쓰다 나간 사람에게 문자를 보낼 근거
-  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
-  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, entry: '/gwangju/student/' },
+  '/5/seoul/':              { ...S5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '5기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  '/5/gwangju/':            { ...G5, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '5기 광주 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, marketing: true, entry: '/gwangju/student/' },
 
   // 5기 재참여 (10/11~, 메시지로만 보냄): 지난 참가자는 전화번호만 적음(phoneOnly). 성별/출생년도/학교는 서버가 같은 번호의 지난 신청에서 가져옴.
   //   친구에게 보내는 링크는 기본 문항이 있는 친구 초대 폼(friendForm)으로 열림. 둘 다 재참여 할인 5,900원 고정(송금 /b/), 추가 친구 할인 없음
@@ -96,12 +96,12 @@ export const FORMS = {
   '/5/gwangju/evening/':      { ...G5, plan: 'discount', fee: 4900, pay: PAY + '/e/', wasFee: 7900, label: '5기 광주 학생 저녁 6시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-14T18:00:00+09:00', deadlineKo: '10월 14일(수) 저녁 6시', untilKo: '오늘 저녁 6시', leftKo: '저녁 6시에 5기 신청이 마감돼요', noSource: true },
   // ---- 6기 (10/14~): 서울 학생 정가 폼 하나만 (광주 없음, 10/14 사용자). 화면/문항/금액은 5기 서울 폼 그대로.
   //   remind (10/14 사용자): [모두 동의] + (선택) 모집 소식 문자 대신 필수 동의 하나, 목적에 '신청 진행과 마감 안내(작성 중인 신청 포함)'. 이 근거로는 본인 신청 마감 안내만 (할인/홍보 넣으면 광고성 → 수신 동의 필요)
-  //   noRecord (10/14 사용자): 성과 구역(250명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 250명+ 참여' 줄은 그대로
+  //   noRecord (10/14 사용자): 성과 구역(300명+ 카드, 앱 1~4기 날짜) 통째로 뺌. 첫 화면 '지금까지 300명+ 참여' 줄은 그대로
   //   entry (10/14 사용자): 고정 링크 /seoul/student/ (광고 남녀, 바이오) 가 5기 마감 뒤 이 폼으로. 광주는 안 함 → /gwangju/student/ 는 5기 마감 안내 + 지역 선택 버튼
-  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  '/6/seoul/':              { ...S6, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '6기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
   // ---- 7기 (10/18~): 6기 서울 폼 그대로, 기수와 날짜만 다름 (일정/마감은 공통 COHORT_INFO/COHORT_DEADLINES)
   //   entryFirst (10/18 사용자): 남자 풀이 목적이라 고정 링크로 오는 남자(g=m, 광고 src 의 m)는 6기 마감 전에도 7기로. 여자와 g 없는 바이오는 6기 마감(10/18 18:00)까지 6기
-  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', abTest: true },   // abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
+  '/7/seoul/':              { ...S7, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, label: '7기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryEnd: '2026-10-22T17:00:00+09:00', alert: '/alert/seoul/', abTest: true },   // entryEnd (10/22 17시 사용자): 여자/바이오도 지금부터 8기, 고정 링크만 8기로 (7기 폼 직접 온 건 18:00 까지 그대로). abTest (10/20): 광고 유입 50/50, B 팔 = 랜딩 v3b + 결제 v3. functions/7/seoul/index.js. entryFirst 'm' 은 10/22 8기로 옮김
   // 6기 작성 중 이탈자용 낮 1시 할인 (10/18): 5기 lunch와 같은 한 페이지 폼, 5,900원 고정. 마감 뒤에는 6기 정가 폼으로 안내.
   '/6/seoul/lunch/':        { ...S6, plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, label: '6기 서울 학생 낮 1시 마감 할인', feeFirst: true, landing: true, variant: 'v2', onePage: true, comeback: true, deadline: '2026-10-18T13:00:00+09:00', deadlineKo: '10월 18일(일) 낮 1시', untilKo: '오늘 낮 1시', leftKo: '', noSource: true, remind: true },
   // 7기 정오 할인 (10/21 요청): 6기 lunch와 같은 구성, 10/22 12:00 KST에 이 할인만 마감.
@@ -110,11 +110,13 @@ export const FORMS = {
   //   entry 가 같으니 고정 링크는 앞 기수 마감 시각에 저절로 다음 기수로 (7기 10/22 18:00 → 8기 10/29 18:00 → 9기)
   //   entryFirst (10/22 14시 사용자): 남자(g=m, 광고 src 의 m)는 7기 마감 전에도 지금부터 8기. 여자와 g 없는 바이오는 7기 마감(10/22 18:00)까지 7기, 뒤엔 모두 8기. 7기 줄의 entryFirst 는 뺌 (둘 다 있으면 마감 이른 7기가 이김)
   //   abTest: 7기 50/50(랜딩 v3b + 결제 v3)의 판정은 8기까지 팔당 LPV 2,000 원칙이라 8기만 이어감 (functions/8/seoul/). 9기는 없음
-  '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true },
-  // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 만 붙이고 이 줄은 지움
-  //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 이 셋도 /8/seoul/ 로 옮길 때 같이 붙임
-  '/8/seoul/story/':        { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '8기 서울 학생 - 이야기판', feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true },
-  '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...LIST, label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/' },
+  //   pick (10/23 사용자): 신청서의 신청 안내 바로 아래(성별 앞)에 8기, 9기 일정 카드. 지금 폼 기수가 골라진 채로 나오고, 다른 기수를 누르면 그 자리에서 골라짐(페이지 이동, 스크롤 없음).
+  //   다른 기수를 고르면 숨은 칸 cohort_pick 에 그 기수가 담겨 서버가 그 기수 줄로 접수(pickTarget). build-v2.sh 가 pick 줄끼리 카드를 만듦(src/cohort-pick.html). 끄려면 두 줄에서 pick 만 빼고 build
+  '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true, pick: true },
+  // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 와 아래 셋을 붙이고 이 줄은 지움
+  //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 8기/9기 카드는 pickFrom 으로 고정 링크의 pick 폼 카드를 빌려 씀(이 줄엔 pick 없음)
+  '/8/seoul/story/':        { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생 - 이야기판', feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pickFrom: '/seoul/student/' },
+  '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', pick: true },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
   //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
@@ -126,7 +128,7 @@ export const FORMS = {
   '/6/seoul/rejoin/':       { ...S6, ...REJOIN_SV, rejoin: true, label: '6기 서울 학생 재참여 (후기 폼)' },
   '/7/seoul/rejoin/':       { ...S7, ...REJOIN_SV, rejoin: true, label: '7기 서울 학생 재참여 (후기 폼)' }, // 일정과 마감은 공통 COHORT_INFO/COHORT_DEADLINES에서 읽음
   '/rejoin/6/seoul/':       { ...S6, cohort: 'review', ...REVIEW6, noPage: false, label: '6기 참가자 후기 폼 (후기만)', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
-                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' } },
+                              joins: { '7기': '/7/seoul/rejoin/from-6/', '8기': '/8/seoul/rejoin/from-6/', '후기만': '/rejoin/6/seoul/' }, joinExclude: { '7기': ['m'] } },
   '/7/seoul/rejoin/from-6/': { ...S7, ...REVIEW6, rejoin: true, label: '6기 참가자 7기 재신청 (후기 폼)' },
   '/8/seoul/rejoin/from-6/': { ...S8, ...REVIEW6, rejoin: true, label: '6기 참가자 8기 재신청 (후기 폼)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
@@ -170,14 +172,17 @@ export function cohortDeadline(cohort, env) {
   return iso ? Date.parse(iso) : null;
 }
 // 폼 하나의 열림/마감 상태. 등록부에 없는 경로는 마감 취급. 마감된 기수면 현재 기수의 같은 트랙 폼 경로를 next 로 줌
-export function formStatus(path, now = Date.now(), env) {
+export function formStatus(path, now = Date.now(), env, g = '') {
   const f = formOf(path);
   if (!f) return { open: false, unknown: true, deadline: null, serverNow: now, next: '/' };
   let deadline = f.noDeadline ? null : cohortDeadline(f.cohort, env);
   const own = formDeadline(f, env);   // 폼 하나만 먼저 닫는 마감 (자정 마감 할인). 기수 마감과 견줘 이른 쪽
   if (own != null && !f.noDeadline) deadline = deadline == null ? own : Math.min(deadline, own);
-  const open = deadline == null ? true : now < deadline;
-  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan, next: open ? null : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
+  const genderClosed = !!g && !!f.closedFor?.includes(g);
+  const open = !genderClosed && (deadline == null ? true : now < deadline);
+  return { open, deadline, serverNow: now, cohort: f.cohort, plan: f.plan,
+    ...(genderClosed ? { genderClosed: true } : {}),
+    next: open ? null : genderClosed ? '/8/seoul/' : (nextFormPath(f) || (own != null ? regularFormPath(f) : null)) };
 }
 // 폼 자체 마감 (등록부 deadline). 로컬 시험용 환경값 FORM_DEADLINE 은 자체 마감이 있는 폼에만 먹음 (ISO 문자열 또는 ms)
 export function formDeadline(f, env) {
@@ -206,13 +211,21 @@ export function nextFormPath(f) {
 //   단 성별 g 가 폼의 entryFirst 와 같으면 그 폼이 먼저 (10/18: 남자는 7기 먼저). 열린 게 없으면 가장 최근 기수 폼(마감 안내가 뜸)
 export function entryTarget(entry, now = Date.now(), env, g = '') {
   const e = normalizePath(entry);
-  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e);
+  const cand = Object.keys(FORMS).filter((p) => FORMS[p].entry === e && !(FORMS[p].entryEnd && now >= Date.parse(FORMS[p].entryEnd)));   // entryEnd: 기수 마감 전에 고정 링크만 다음 기수로
   if (!cand.length) return null;
-  const st = cand.map((p) => ({ p, ...formStatus(p, now, env), n: Number(FORMS[p].cohort) || 0 }));
+  const st = cand.map((p) => ({ p, ...formStatus(p, now, env, g), n: Number(FORMS[p].cohort) || 0 }));
   const first = (x) => (g && FORMS[x.p].entryFirst === g ? 0 : 1);
   const open = st.filter((x) => x.open).sort((a, b) => first(a) - first(b) || (a.deadline ?? Infinity) - (b.deadline ?? Infinity) || a.n - b.n);
   if (open.length) return open[0].p;
   return st.sort((a, b) => b.n - a.n)[0].p;
+}
+// 기수 고르기 (10/23): pick 폼 신청서에서 고른 기수(cohort_pick)의 접수 경로. 같은 고정 링크(entry)의 pick 줄만, 아니면 null
+export function pickTarget(path, cohort) {
+  const f = formOf(path);
+  if (!f || !(f.pick || f.pickFrom)) return null;
+  const e = f.pickFrom || f.entry;   // pickFrom (10/23 이야기판): 고정 링크의 pick 줄을 빌려 씀. 자기 기수면 자기 줄
+  if (f.pickFrom && String(cohort) === String(f.cohort)) return path;
+  return Object.keys(FORMS).find((p) => FORMS[p].pick && FORMS[p].entry === e && FORMS[p].cohort === String(cohort)) || null;
 }
 export function cohortStatus(now = Date.now(), env, cohort = CURRENT_COHORT) {
   const deadline = cohortDeadline(cohort, env);

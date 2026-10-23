@@ -4,7 +4,7 @@
 <title>하루하루 소개팅 9기 신청폼 💕</title>
 <meta name="description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 서울 대학생 모집.">
 <meta property="og:title" content="하루하루 소개팅 9기 신청폼 💕">
-<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 250명+ 참여 🎉">
+<meta property="og:description" content="3일 동안 서로의 하루를 보고, 마지막 날 서로를 고르는 소개팅. 지금까지 300명+ 참여 🎉">
 <meta name="robots" content="noindex">
 <script>
 var LOCAL_PREVIEW=/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
@@ -108,14 +108,14 @@ input:focus{border-color:#1a1a1a}
 <div class="prog" id="prog"></div>
 <div class="wrap">
 
-<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 9기 신청은 11월 5일(목) 18:00에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p><p style="margin-top:14px"><a class="btn" href="/7/seoul/?src=h7-seoul-student-from9" style="display:inline-flex">7기 신청하러 가기 →</a></p></div>
+<div class="closed" id="closed" role="status" hidden><h2>신청이 마감됐어요</h2><p>하루하루 소개팅 9기 신청은 11월 5일(목) 18:00에 마감됐어요.<br>이미 송금했거나 궁금한 점이 있다면 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener">@haruharu.ting</a> 으로 알려 주세요.<br>다음 기수 소식도 거기서 먼저 알려드려요.</p><p style="margin-top:14px"><a class="btn" href="/8/seoul/?src=h8-seoul-student-from9" style="display:inline-flex">8기 신청하러 가기 →</a></p></div>
 
 <form id="f" novalidate>
 <section class="page on" data-page="1">
 <!-- 신청폼 랜딩 3판 (10/12). landing.v2.html 에서 갈라 나옴: 첫 화면에 훅/실적/일정/참가비 칩/실사진/버튼, 버튼은 신청서로 바로 전환(안내 카드가 신청서 맨 위), 후기 3개가 버튼 아래, 앱 목업 대신 집행된 광고 그리드(성별판), 걱정 문답 5개, 기수 매칭률 올림 정수(10/12 사용자). 등록부 landingV3 폼(5기 서울/광주)만 build-v2.sh 가 씀.
      원본 주석: 개선판 폼(등록부 variant: 'v2')에만 build-v2.sh 가 옛 P1~P4 자리 + 참여 흐름/정보 안내 글자 블록 자리에 끼움.
      순서: 첫 화면 → 진행 과정 → 걱정과 기능(하루 문답) → 성과 → 후기 → 신청 안내 → 바로 첫 문항. 트랙별 문구는 build-v2.sh 의 __LD_*__
-     실적 숫자(250명+, 약 40%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89 = 38.2% 를 10/12 운영자가 어림수 약 40% 로)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
+     실적 숫자(300명+, 약 40%. 10/11: 4기 확정 34명 반영, 매칭률 = 앱 1~3기 서로 고른 사람 34 / 실참가자 89 = 38.2% 를 10/12 운영자가 어림수 약 40% 로)는 이 파일의 성과 숫자 칸 2개(data-n 도 같이)와 form.template 의 og 설명, info-card 에 있음. 바꿀 땐 같이
      폼 문항/버튼 모양도 여기 style 에서 덮어씀 (랜딩 없는 3기/축제 폼은 그대로)
      성별 판: 링크에 g=f 면 여성용(남성 참가자가 보임), g=m 이면 남성용(여성 참가자가 보임), 없으면 섞인 기본판. 바뀌는 곳은 진행 과정의 익명 질문 상대, 최종 선택, 매칭 뒤 1:1 대화. 프로필 사진은 public/img/L_p_*.webp(흐림), L_pc_*.webp(1:1 대화용) -->
 <script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
@@ -341,7 +341,7 @@ input[type=text]:focus,input[type=tel]:focus,input[type=number]:focus{border-col
 .chk input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--hh-blue)}
 .note{font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
 .q[data-name="consent"] .note,.q[data-name="name"] .t+.note,.q[data-name="name"] .fee-was+.note{padding:13px 15px;border-radius:14px;background:#F6F8FB;font-size:14px}
-.fee-was{margin:-2px 0 10px;font-size:16px;line-height:1.4;color:var(--hh-ink)}   /* 정가에 줄 긋고 실제 금액을 크게 (등록부에 listFee 가 있는 폼). 이 파일은 1페이지에 들어가서 금액 관련 낱말을 쓰면 빌드 검사에 걸림 */
+.fee-was{margin:-2px 0 10px;font-size:16px;line-height:1.4;color:var(--hh-ink)}   /* 실제 금액을 크게 표시. 이 파일은 1페이지에 들어가서 금액 관련 낱말을 쓰면 빌드 검사에 걸림 */
 .fee-was[hidden]{display:none}
 .fee-was s{color:var(--hh-mute)}
 .fee-was strong{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -419,7 +419,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <h1 class="ld-h1">솔로인 수도권 대학생을 모집합니다</h1>
 <p class="ld-sub">3일 동안 서로의 하루를 보고,<br>마지막 날 서로를 고르는 소개팅이에요.</p>
 <p class="ld-calm-chip">00년생~07년생 수도권 대학생끼리 모여요 💕</p>
-<p class="ld-calm-stat">지금까지 250명+ 참여 🎉</p>
+<p class="ld-calm-stat">지금까지 300명+ 참여 🎉</p>
 <div class="ld-cta"><button type="button" class="ld-btn" data-cta="hero">소개팅 신청하기 💌</button></div>
 <div class="ld-grid" id="ldHero"><img width="600" height="485" data-img="L_grid" src="/img/L_haru_grid.jpg" fetchpriority="high" decoding="async" alt="지난 기수 참가자들이 올린 카페, 고양이, 학교, 러닝, 드럼, 점심 일상 영상 6장"></div>
 </header>
@@ -521,14 +521,14 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 <section class="ld-sec" id="ld-guide" data-sec="guide">
 <p class="ld-k">신청 안내</p>
 <h2>신청부터 방 입장까지</h2>
-<dl class="ld-if"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>11월 6일(금) ~ 11월 8일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>11월 5일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl>
+<dl class="ld-if"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>11월 6일(금) ~ 11월 8일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>11월 5일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi>원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl>
 <div class="ld-al"><button type="button" class="ld-al-open" id="ldAlOpen">지금은 말고, 다음 기수 알림만 받을래요</button><div class="ld-al-box" id="ldAlBox" hidden><p class="ld-al-t">다음 기수, 가장 먼저 알려드릴게요</p><p class="ld-al-s">모집이 열리면 문자 한 통만 보내요.</p><div class="ld-al-g"><button type="button" data-g="여성">여성</button><button type="button" data-g="남성">남성</button></div><input type="text" id="ldAlBirth" inputmode="numeric" placeholder="출생년도 (2003)" maxlength="4"><input type="tel" id="ldAlPhone" inputmode="numeric" placeholder="전화번호 (01012345678)" maxlength="13" autocomplete="tel" class="mp-sensitive"><label class="ld-al-c"><input type="checkbox" id="ldAlAgree">모집 알림 문자를 보내기 위해 성별, 출생년도, 전화번호를 받아요. 알림을 보낸 뒤 6개월이 지나면 지워요.</label><button type="button" class="ld-al-go" id="ldAlGo" disabled>알림 받기</button></div><p class="ld-al-done" id="ldAlDone" hidden>알림 신청이 끝났어요 🙌<span>모집이 열리면 문자로 먼저 알려드릴게요.</span></p></div>
-<ol class="ld-steps"><li>이 폼을 작성하고 참가비 <b>7,900원</b>을 송금한 뒤 제출해요.</li><li>방이 열리면 초대 코드를 문자로 보내드려요.</li><li>앱에 코드를 넣으면 시작이에요.</li></ol>
+<ol class="ld-steps"><li>이 폼을 작성하고 참가비 <b><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi>원</b>을 송금한 뒤 제출해요.</li><li>방이 열리면 초대 코드를 문자로 보내드려요.</li><li>앱에 코드를 넣으면 시작이에요.</li></ol>
 <div class="ld-gn"><p>궁금한 점은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/" target="_blank" rel="noopener" data-track="instagram">@haruharu.ting</a> 으로 편하게 물어봐 주세요.</p></div>
 </section>
 
 </div>
-<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">9기 모집 중</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>11월 6일(금) ~ 11월 8일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>11월 5일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><s>12,900원</s> → 7,900원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
+<div class="ld-fcard" id="ldFcard"><div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">9기 모집 중</span></div><p class="ld-k">신청 안내</p><dl class="ld-if ld-fcard-rows"><div><dt>참여 대상</dt><dd>서울 경기 인천 00~07년생 대학생</dd></div><div><dt>진행 기간</dt><dd>11월 6일(금) ~ 11월 8일(일), 3일</dd></div><div><dt>신청 마감</dt><dd>11월 5일(목) 18:00<small>참가 확정 문자는 마감일까지 보내드려요</small></dd></div><div><dt>참가비</dt><dd><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi>원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small></dd></div><div><dt>그룹 구성</dt><dd>남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small></dd></div></dl><button type="button" class="ld-back" id="ldBack">소개팅 소개 다시 보기</button></div>
 <div class="ld-sticky off" id="ldSticky"><button type="button" class="ld-btn" data-cta="sticky">소개팅 신청하기 💌</button></div>
 <script>
 (function(){
@@ -580,7 +580,7 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
   var left=day(DEADLINE-1)-day(Date.now()); if(left>30||left<0) return;
   b.textContent=left?'D-'+left:'오늘 마감'; })();
  var st=document.getElementById('ldSticky');
- function target(){ return document.querySelector('.q[data-name="gender"]'); }
+ function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name="gender"]'); }
  document.querySelectorAll('button[data-cta]').forEach(function(b){ b.addEventListener('click',function(){
   mp('landing_cta',{where:b.getAttribute('data-cta')});
   // 랜딩 3판: 랜딩을 접고 신청서를 바로 보여 줌 (10/12 사용자: 한 번 눌러 길게 내려가는 건 별로). 안내 카드(금액)는 신청서 맨 위
@@ -616,6 +616,12 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 </script>
 
 
+
+<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="9"><p class="pk-t">참여할 기수</p>
+<input type="hidden" name="cohort_pick" value="">
+<button type="button" class="pk-c" role="radio" aria-checked="false" data-cohort="8" data-deadline="1793264400000" data-period="10월 30일(금) ~ 11월 1일(일), 3일" data-dl="10월 29일(목) 18:00" data-ps="10/30(금) ~ 11/1(일)" data-ds="10/29(목) 18:00"><span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">8기</b><span class="pk-badge">모집 중</span></span><span class="pk-chips"><span class="pk-chip p">🗓️ 10/30(금) ~ 11/1(일)</span><span class="pk-chip d">⏰ 10/29(목) 18:00 신청 마감</span></span></button>
+<button type="button" class="pk-c on" role="radio" aria-checked="true" data-cohort="9" data-deadline="1793869200000" data-period="11월 6일(금) ~ 11월 8일(일), 3일" data-dl="11월 5일(목) 18:00" data-ps="11/6(금) ~ 11/8(일)" data-ds="11/5(목) 18:00"><span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">9기</b><span class="pk-badge">모집 중</span></span><span class="pk-chips"><span class="pk-chip p">🗓️ 11/6(금) ~ 11/8(일)</span><span class="pk-chip d">⏰ 11/5(목) 18:00 신청 마감</span></span></button>
+</div>
 
 <div class="q" data-name="gender"><p class="t">성별<span class="req">*</span></p>
  <div class="opts">
@@ -674,22 +680,22 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 
 <section class="page" data-page="3">
 <div class="q" data-name="name"><p class="t">참가비 안내<span class="req">*</span></p>
- <p class="fee-was"><s>12,900원</s> → <strong>7,900원</strong></p>
- <p class="fr-on" hidden><b>친구 할인 적용</b><s>12,900원</s> → <s>7,900원</s> → <strong>5,900원</strong><span>친구도 신청과 송금을 마치면 할인이 확정돼요. 확인이 안 되면 따로 연락드려요.</span></p>
- <p class="note">참가비는 <span class="fr-fee">7,900</span>원이에요. 송금까지 마쳐야 신청이 완료돼요.
+ <p class="fee-was"><strong><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi>원</strong></p>
+ <p class="fr-on" hidden><b>친구 할인 적용</b><s><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi>원</s> → <strong><bdi data-price="friend">남성 8,000원 / 여성 5,900</bdi>원</strong><span>친구도 신청과 송금을 마치면 할인이 확정돼요. 확인이 안 되면 따로 연락드려요.</span></p>
+ <p class="note">참가비는 <span class="fr-fee"><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi></span>원이에요. 송금까지 마쳐야 신청이 완료돼요.
 
 직접 입금
 - 입금 계좌 : 토스뱅크 1000-0141-0988
 - 예금주 : 최o현
-- 입금 금액 : <span class="fr-fee">7,900</span>원
+- 입금 금액 : <span class="fr-fee"><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi></span>원
 
 인원이 안 맞아 방이 열리지 않으면 참가비는 전액 돌려드려요.</p>
- <a class="pay" id="pay" href="https://haruharu-pay.pages.dev/j/" target="_blank" rel="noopener">▶ 토스로 <span class="fr-fee">7,900</span>원 송금하기</a>
+ <a class="pay" id="pay" href="https://haruharu-pay.pages.dev/j/" target="_blank" rel="noopener">▶ 토스로 <span class="fr-fee"><bdi data-price="full">남성 10,000원 / 여성 7,900</bdi></span>원 송금하기</a>
  <button type="button" class="acct-copy" id="acctCopy" data-acct="1000-0141-0988"><span>토스뱅크 1000-0141-0988 계좌번호 복사</span></button>
  <p class="note">송금 후 송금자 이름을 적어주세요.</p>
  <input type="text" name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"><p class="err">송금자 이름을 입력해 주세요</p></div>
 
-<div class="q" data-name="buddy_room"><div class="fr-mini"><p>친구랑 같이 신청하면<br><b>둘 다 5,900원</b></p><button type="button" class="fr-toggle" aria-expanded="false">친구랑 신청해요</button></div> <div class="fr-more" hidden>
+<div class="q" data-name="buddy_room"><div class="fr-mini"><p>친구랑 같이 신청하면<br><b>1인 <bdi data-price="friend">남성 8,000원 / 여성 5,900</bdi>원</b></p><button type="button" class="fr-toggle" aria-expanded="false">친구랑 신청해요</button></div> <div class="fr-more" hidden>
  <div class="opts">
   <label class="opt"><span class="k">A</span><input type="radio" name="buddy_room" value="혼자">혼자 신청해요</label>
   <label class="opt"><span class="k">B</span><input type="radio" name="buddy_room" value="같은 방" data-other="buddy">친구랑 같은 방에 배정해주세요</label>
@@ -835,6 +841,93 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
  function done(){ s.textContent='계좌번호를 복사했어요'; setTimeout(function(){ s.textContent=t0; },2000); try{ if(window.mixpanel&&mixpanel.track) mixpanel.track('account_copy',{path:location.pathname}); }catch(e){} try{ document.dispatchEvent(new Event('hh-pay')); }catch(e){} }
  function old(){ var ok=false; try{ var ta=document.createElement('textarea'); ta.value=n; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:0;top:0;opacity:0;font-size:16px'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,n.length); ok=document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} if(ok) done(); else s.textContent=n; }
  c.addEventListener('click',function(){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(n).then(done,old); else old(); });
+})();
+</script>
+<!-- 기수 고르기 (10/23 사용자: 8기, 9기 일정을 적어 두고 둘 중에 골라서 신청, 신청 안내 바로 아래에, 고를 때 스크롤 이동이나 화면 바뀜 없이). 등록부 pick 폼만 build-v2.sh 가 끼움.
+     카드(#pick)는 성별 문항 바로 앞, 지금 폼 기수가 골라진 채(.on). 다른 기수를 누르면 그 자리에서 골라지고 숨은 칸 cohort_pick 에 그 기수가 담김 → 서버가 그 기수 줄로 접수(shared/forms.mjs pickTarget).
+     지금 폼 기수면 칸을 비워 둠(빈 값은 제출, 임시 저장, 입력 시작 지표에 안 들어감). 고른 기수에 맞춰 화면의 진행 기간, 신청 마감, 'N기' 글자를 바꿔 씀(마감 안내 #closed 는 그대로).
+     성비, 지역, 나이 표기는 넣지 않음(사용자). 마감 지난 카드는 서버 시각으로 숨기고, 열린 카드가 하나뿐이면 구역째 숨김 -->
+<style>
+.pk{margin-top:26px}
+.pk[hidden]{display:none}
+.pk-t{margin:0 0 10px;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--hh-ink,#131A26)}
+.pk-c{display:block;width:100%;margin-top:10px;padding:16px 16px 15px 18px;background:#fff;border:1.5px solid var(--hh-line,#E3E8EF);border-radius:18px;font:inherit;text-align:left;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;transition:transform .12s,border-color .12s,background .12s}
+.pk-c[hidden]{display:none}
+.pk-c:active{transform:scale(.985)}
+.pk-c:focus-visible{outline:2px solid var(--hh-blue,#2F7BD6);outline-offset:2px}
+.pk-c.on{border-color:var(--hh-blue,#2F7BD6);background:#F2F8FF}
+.pk-top{display:flex;align-items:center;gap:10px}
+.pk-k{flex:none;box-sizing:border-box;width:22px;height:22px;border:1.5px solid #C3CCD8;border-radius:50%;background:#fff}
+.pk-c.on .pk-k{border:6.5px solid var(--hh-blue,#2F7BD6)}
+.pk-no{font-size:26px;font-weight:900;line-height:1;letter-spacing:-.04em;color:var(--hh-ink,#131A26)}
+.pk-badge{margin-left:auto;flex:none;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:-.01em;background:#E7F6EC;color:#1E7A45}
+.pk-badge.soon{background:#FFEFE0;color:#C2560F}
+.pk-chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0 32px}
+.pk-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.pk-chip.p{background:var(--hh-sky,#EEF5FD);color:#1F5FAE}
+.pk-chip.d{background:#F3F5F8;color:var(--hh-ink2,#465061)}
+.pk-c.on .pk-chip.p,.pk-c.on .pk-chip.d{background:#fff}
+@media(max-width:359px){.pk-chips{margin-left:0}.pk-chip{font-size:13px;padding:6px 10px}}
+</style>
+<script>
+(function(){
+ var box=document.getElementById('pick'); if(!box) return;
+ var own=box.getAttribute('data-own'), inp=box.querySelector('input[name="cohort_pick"]');
+ var cards=[].slice.call(box.querySelectorAll('.pk-c'));
+ function card(c){ for(var i=0;i<cards.length;i++) if(cards[i].getAttribute('data-cohort')===c) return cards[i]; return null; }
+ var me=card(own); if(!me||!inp) return;
+ // 지금 폼 기수 글자(진행 기간, 신청 마감, 'N기')가 든 글자 조각을 원래 모양으로 기억해 두고, 고른 기수 값으로 바꿔 씀
+ var keys=['data-period','data-dl','data-ps','data-ds'], texts=[];
+ var walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){ return n.parentNode.closest('#pick,#closed,script,style,noscript')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT; }});
+ for(var n=walk.nextNode(); n; n=walk.nextNode()){ var v=n.nodeValue; if(v.indexOf(own+'기')>=0||keys.some(function(k){ return v.indexOf(me.getAttribute(k))>=0; })) texts.push([n,v]); }
+ var cur=own;
+ function select(c,byUser){
+  var to=card(c); if(!to) return;
+  cards.forEach(function(a){ var on=a===to; a.classList.toggle('on',on); a.setAttribute('aria-checked',on?'true':'false'); });
+  inp.value=c===own?'':c;
+  texts.forEach(function(x){ var v=x[1]; keys.forEach(function(k){ v=v.split(me.getAttribute(k)).join(to.getAttribute(k)); }); x[0].nodeValue=v.split(own+'기').join(c+'기'); });
+  if(byUser&&c!==cur){ try{ if(window.mixpanel&&mixpanel.__loaded) mixpanel.track('cohort_pick',{from:cur,to:c,page_cohort:own}); }catch(e){} }
+  cur=c;
+ }
+ cards.forEach(function(a){ a.addEventListener('click',function(){ select(a.getAttribute('data-cohort'),true); }); });
+ // 임시 저장 복원(폼 스크립트가 숨은 칸 값을 되살림) 뒤 화면을 그 값에 맞춤
+ document.addEventListener('DOMContentLoaded',function(){ if(inp.value&&card(inp.value)) select(inp.value,false); });
+ // 마감까지 남은 날 (한국 날짜, 사흘 안이면 주황). 마감 지난 카드는 숨기고(골라 둔 카드면 지금 폼 기수로), 열린 카드가 하나뿐이면 구역째 숨김
+ var off=0;
+ function day(t){ return Math.floor((t+9*36e5)/864e5); }
+ function paint(){
+  var now=Date.now()+off, open=0;
+  cards.forEach(function(a){
+   var dl=Number(a.getAttribute('data-deadline')), b=a.querySelector('.pk-badge'), ok=now<dl;
+   a.hidden=!ok; if(!ok) return; open++;
+   var d=day(dl)-day(now); b.textContent=d<=0?'오늘 마감':'마감 D-'+d; b.classList.toggle('soon',d<=3);
+  });
+  if(card(cur).hidden||open<2) select(own,false);
+  box.hidden=open<2;
+ }
+ paint();
+ fetch('/api/cohort',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){ if(s&&isFinite(s.serverNow)){ off=Number(s.serverNow)-Date.now(); paint(); } }).catch(function(){});
+ setInterval(paint,30000);
+})();
+</script>
+<script>
+(function(){
+ var form=document.getElementById('f'), prices={"fee": 7900, "pay": "https://haruharu-pay.pages.dev/j/", "friendFee": 5900, "friendPay": "https://haruharu-pay.pages.dev/b/", "maleFee": 10000, "malePay": "https://haruharu-pay.pages.dev/m/", "maleFriendFee": 8000, "maleFriendPay": "https://haruharu-pay.pages.dev/mf/"}; if(!form) return;
+ function picked(name){ var e=form.querySelector('input[name="'+name+'"]:checked'); return e?e.value:''; }
+ function sync(){
+  var g=picked('gender')||(typeof HH_G==='string'?HH_G:''), male=g==='남성'||g==='m', known=male||g==='여성'||g==='f';
+  var won=function(n){ return n.toLocaleString('ko-KR'); };
+  var full=won(male?prices.maleFee:prices.fee), off=won(male?prices.maleFriendFee:prices.friendFee);
+  if(!known){ full='남성 '+won(prices.maleFee)+'원 / 여성 '+won(prices.fee); off='남성 '+won(prices.maleFriendFee)+'원 / 여성 '+won(prices.friendFee); }
+  var room=picked('buddy_room'), friend=!!room&&room!=='혼자';
+  [].forEach.call(document.querySelectorAll('[data-price="full"]'),function(e){ e.textContent=full; });
+  [].forEach.call(document.querySelectorAll('[data-price="friend"]'),function(e){ e.textContent=off; });
+  [].forEach.call(document.querySelectorAll('.fr-fee'),function(e){ e.textContent=friend?off:full; });
+  var pay=document.getElementById('pay'); if(pay) pay.setAttribute('href',friend?(male?prices.maleFriendPay:prices.friendPay):(male?prices.malePay:prices.pay));
+ }
+ // 기본 친구 할인 동작 뒤에 금액을 맞춘다. 입력 복원과 브라우저 뒤로가기도 반영.
+ form.addEventListener('change',sync); window.addEventListener('pageshow',sync);
+ sync(); setTimeout(sync,0); setTimeout(sync,700);
 })();
 </script>
 <p class="foot">하루하루 / 만 19세 이상 대학생</p>
