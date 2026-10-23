@@ -632,7 +632,7 @@ def gen(path, f):
         chunks = re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]*>)', t, flags=re.S|re.I)
         for i in range(0, len(chunks), 2):
             for key, amount, upper in [('full', f['fee'], f['maleFee']), ('friend', f['friendFee'], f['maleFriendFee'])]:
-                chunks[i] = re.sub(r'(?<![\d,])' + f'{amount:,}' + r'(?![\d,])', f'<bdi data-price="{key}">{amount:,}~{upper:,}</bdi>', chunks[i])
+                chunks[i] = re.sub(r'(?<![\d,])' + f'{amount:,}' + r'(?![\d,])', f'<bdi data-price="{key}">남성 {upper:,}원 / 여성 {amount:,}</bdi>', chunks[i])
         t = ''.join(chunks).replace('둘 다 <b><bdi data-price=', '1인 <b><bdi data-price=').replace('둘 다 <bdi data-price=', '1인 <bdi data-price=')
         assert 'data-price="full"' in t and 'data-price="friend"' in t
         prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
