@@ -35,13 +35,14 @@ fs.mkdirSync(out, { recursive: true });
     assert.equal(await gallery.locator('.sg-cohort[title="이전 송금확인 기록"]').count(), 1);
     assert.equal(await page.evaluate(() => window.QA_INJECTION), undefined);
     check('Actual local D1 responses group by past participation and show paid-record cohorts without an estimate label');
-    await gallery.getByRole('tab', { name: /^바라는 점/ }).click();
     assert.equal(await filter('5').getAttribute('aria-pressed'), 'true'); assert.equal(await gallery.locator('.sg-card').count(), 3);
-    assert.match(await gallery.locator('.sg-text').first().innerText(), /다음에는/);
+    assert.deepEqual(await gallery.locator('.sg-card').first().locator('.sg-answer h3').allTextContents(), ['후기', '바라는 점']);
+    assert.match(await gallery.locator('.sg-card').first().locator('.sg-answer[aria-label="바라는 점"] .sg-text').innerText(), /다음에는/);
+    assert.equal(await gallery.getByRole('tab').count(), 0);
     await filter('unknown').click(); assert.equal(await gallery.locator('.sg-card').count(), 1);
     assert.match(await gallery.locator('.sg-cohort').innerText(), /기수 미확인/);
-    check('Topic switching keeps cohort selection; anonymous historical responses remain unconfirmed');
-    await filter('all').click(); await gallery.getByRole('tab', { name: /^후기/ }).click();
+    check('Each response shows its review and wish together; anonymous historical responses remain unconfirmed');
+    await filter('all').click();
     await filter('4').click(); assert.equal(await gallery.locator('.sg-card').count(), 2);
     assert((await gallery.innerText()).includes('<script>window.QA_INJECTION=true</script>'));
     assert.equal(await page.evaluate(() => window.QA_INJECTION), undefined);
@@ -58,6 +59,9 @@ fs.mkdirSync(out, { recursive: true });
       const positions = await gallery.locator('.sg-card').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, bottom: r.bottom }; }));
       assert(positions.every((row) => Math.abs(row.left - positions[0].left) < 1));
       assert(positions.every((row, i) => !i || row.top >= positions[i - 1].bottom - 1));
+      const answers = await gallery.locator('.sg-card').first().locator('.sg-answer').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }));
+      if (size.width > 720) { assert(Math.abs(answers[0].top - answers[1].top) < 1); assert(answers[1].left > answers[0].right); }
+      else { assert(Math.abs(answers[0].left - answers[1].left) < 1); assert(answers[1].top > answers[0].bottom); }
       await page.screenshot({ path: out + '/rows-' + size.width + '.png' });
     }
     check('Each response occupies a full row at desktop and mobile widths; headers show cohort, gender and date without a footer');
