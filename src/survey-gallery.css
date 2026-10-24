@@ -7,10 +7,6 @@
 .sg-close{appearance:none;border:1px solid var(--sg-line);background:white;border-radius:8px;padding:8px 12px;min-height:40px;cursor:pointer;font-size:13px}
 .sg-head h2{margin:20px 0 10px;font-size:34px;line-height:1.3;letter-spacing:-.045em;font-weight:750}
 .sg-intro{margin:0;color:var(--sg-sub);font-size:14px;line-height:1.7}
-.sg-tabs{display:flex;gap:26px;border-bottom:1px solid var(--sg-line);margin-top:28px}
-.sg-tab{border:0;border-bottom:2px solid transparent;background:transparent;cursor:pointer;padding:13px 0;font-weight:650;color:var(--sg-sub);font-size:15px;min-height:46px}
-.sg-tab[aria-selected=true]{color:var(--sg-ink);border-bottom-color:var(--sg-ink)}
-.sg-tab span{font-size:12px;margin-left:6px;color:var(--sg-sub);font-weight:400}
 .sg-filter{display:flex;gap:7px;flex-wrap:wrap;padding:22px 0 18px}
 .sg-filter button{border:1px solid var(--sg-line);background:#fff;border-radius:7px;padding:8px 12px;min-height:40px;font-size:13px;cursor:pointer;white-space:nowrap}
 .sg-filter button[aria-pressed=true]{border-color:var(--sg-ink);background:var(--sg-ink);color:#fff}
@@ -23,7 +19,12 @@
 .sg-cohort{font-size:13px;font-weight:650;color:#3674bf}
 .sg-gender,.sg-date{color:var(--sg-sub);font-size:12px;white-space:nowrap;border-left:1px solid var(--sg-line);padding-left:12px}
 .sg-date{font-variant-numeric:tabular-nums}
+.sg-answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;margin-top:18px}
+.sg-answer{min-width:0}
+.sg-answer+.sg-answer{border-left:1px solid var(--sg-line);padding-left:32px}
+.sg-answer h3{margin:0;font-size:13px;line-height:1.6;color:var(--sg-sub);font-weight:650}
 .sg-text{margin:12px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:keep-all;text-wrap:pretty;font-size:17px;line-height:1.85;letter-spacing:-.025em;font-weight:450}
+.sg-unanswered{color:var(--sg-sub);font-size:14px}
 .sg-details{margin-top:14px;font-size:13px;line-height:1.7}
 .sg-details summary{width:fit-content;min-height:44px;display:list-item;align-content:center;cursor:pointer;color:#3674bf}
 .sg-contact{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 0;border-top:1px solid var(--sg-line)}
@@ -39,11 +40,12 @@
  .sg-shell{max-height:100%;height:100%;border-radius:0;scrollbar-gutter:auto;padding-bottom:env(safe-area-inset-bottom)}
  .sg-head{padding:20px 20px 0;padding-top:max(20px,env(safe-area-inset-top))}
  .sg-head h2{font-size:28px;margin-top:24px}
- .sg-tabs{margin-top:22px;gap:24px}
  .sg-filter{gap:6px;padding:18px 0 16px}
  .sg-filter button{padding:8px 10px}
  .sg-content{padding:0 20px 32px}
  .sg-card{padding:20px 0}
+ .sg-answers{grid-template-columns:1fr;gap:20px;margin-top:16px}
+ .sg-answer+.sg-answer{border-left:0;padding-left:0}
  .sg-text{font-size:16px;margin:10px 0 0}
  .sg-card-head{gap:10px}
  .sg-gender,.sg-date{padding-left:10px}
