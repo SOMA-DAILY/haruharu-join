@@ -102,6 +102,31 @@ table.list tbody tr.click:hover{background:#fafbfc}
 table.list tr.new{background:var(--new)}
 table.list tr.sub td{color:var(--faint)}
 table.list tr.excl td:not(.st){opacity:.45}
+/* 신청 목록은 긴 배지/유입경로가 다른 열을 밀어내지 않도록 화면 폭 안에서 나눔. */
+table.app-list{min-width:0;table-layout:fixed;font-size:13px}
+table.app-list th,table.app-list td{padding:10px 8px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.app-list .col-status{width:14%}
+.app-list .col-time{width:8%}
+.app-list .col-form{width:9%}
+.app-list .col-name{width:16%}
+.app-list .col-gender{width:5%}
+.app-list .col-birth{width:6%}
+.app-list .col-school,.app-list .col-phone,.app-list .col-source{width:12%}
+.app-list .col-actions{width:6%}
+.app-list .cell-content{min-width:0;line-height:1.5}
+.app-list .app-name{display:block;margin-bottom:4px;font-size:14px}
+.app-list .badge{max-width:100%;margin:0 0 4px;white-space:normal;overflow-wrap:anywhere}
+.app-list .stsel{width:100%;max-width:144px;min-width:0}
+.app-list .room{display:block;width:100%;max-width:144px;margin:6px 0 0}
+.app-list .delete-app{padding:5px 6px}
+.app-list[data-mode="alert"] .col-status{width:14%}
+.app-list[data-mode="alert"] .col-time{width:13%}
+.app-list[data-mode="alert"] .col-gender{width:7%}
+.app-list[data-mode="alert"] .col-birth{width:11%}
+.app-list[data-mode="alert"] .col-phone{width:16%}
+.app-list[data-mode="alert"] .col-source{width:19%}
+.app-list[data-mode="alert"] .col-prior{width:14%}
+#aBySrc td:first-child{white-space:normal;overflow-wrap:anywhere}
 .nw{white-space:nowrap}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f2f4;color:var(--sub)}
 .badge.seoul,.badge.blue{background:var(--blue-soft);color:var(--blue)}
@@ -162,6 +187,11 @@ dd{margin:0;word-break:break-all}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:20}
 
 @media (max-width:900px){
+  table.app-list,table.app-list tbody{display:block;width:100%}
+  .app-list thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  table.app-list tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 4px;border-bottom:1px solid var(--line)}
+  table.app-list td{display:block;border:0;padding:6px 10px}
+  .app-list td::before{content:attr(data-label);display:block;margin-bottom:4px;color:var(--sub);font-size:11px;font-weight:600}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .grid2,.grid3{grid-template-columns:1fr}
   .builder{grid-template-columns:1fr 1fr}
@@ -297,8 +327,8 @@ dd{margin:0;word-break:break-all}
         <button class="btn ghost sm" id="svBtn" hidden>후기, 바라는 점 모아 보기</button>
         <span class="muted" id="aCount" style="margin-left:auto;font-size:13px"></span>
       </div>
-      <div class="tbl-wrap"><table class="list">
-        <thead id="appHead"><tr><th>신청 시각</th><th>폼</th><th>이름</th><th>성별</th><th>출생</th><th>학교 / 하는 일</th><th>전화번호</th><th>유입경로</th><th>상태 / 방</th><th>관리</th></tr></thead>
+      <div class="tbl-wrap"><table class="list app-list" id="appTable">
+        <thead id="appHead"><tr><th class="col-status">상태 / 방</th><th class="col-time">신청 시각</th><th class="col-form">폼</th><th class="col-name">이름</th><th class="col-gender">성별</th><th class="col-birth">출생</th><th class="col-school">학교 / 하는 일</th><th class="col-phone">전화번호</th><th class="col-source">유입경로</th><th class="col-actions">관리</th></tr></thead>
         <tbody id="appRows"></tbody></table>
         <div class="empty hidden" id="appEmpty">아직 신청자가 없음</div></div>
     </div>
@@ -635,7 +665,8 @@ function setAppLabels(alert){
   $('aTotalK').textContent=alert?'총 알림':APP_DEF.t;$('aTodayK').textContent=alert?'오늘 알림':APP_DEF.d;$('aDoneK').textContent=alert?'문자 처리':APP_DEF.p;
   $('aBySrcH').innerHTML=alert?'광고별 알림 <span class="muted">어느 광고에서 알림을 남겼나</span>':APP_DEF.bh;
   $('aBySrcHead').innerHTML=alert?'<tr><th>유입경로</th><th class="r">알림</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">이전 참여</th></tr>':APP_DEF.bt;
-  $('appHead').innerHTML=alert?'<tr><th>알림 시각</th><th>성별</th><th>출생 (나이)</th><th>전화번호</th><th>유입경로</th><th>이전 참여</th><th>상태</th><th>관리</th></tr>':APP_DEF.ah;
+  $('appTable').dataset.mode=alert?'alert':'apps';
+  $('appHead').innerHTML=alert?'<tr><th class="col-status">상태</th><th class="col-time">알림 시각</th><th class="col-gender">성별</th><th class="col-birth">출생 (나이)</th><th class="col-phone">전화번호</th><th class="col-source">유입경로</th><th class="col-prior">이전 참여</th><th class="col-actions">관리</th></tr>':APP_DEF.ah;
   var cur=$('aStatus').value;$('aStatus').innerHTML=alert?'<option value="">상태 전체</option><option value="-">미연락</option><option>문자 보냄</option><option>제외</option>':APP_DEF.st;
   if([].some.call($('aStatus').options,function(o){return o.value===cur}))$('aStatus').value=cur;
   $('q').placeholder=alert?'전화번호 검색':APP_DEF.q;$('appEmpty').textContent=alert?'아직 알림 신청이 없음':APP_DEF.e;
@@ -679,14 +710,16 @@ function renderAppSummary(){
   $('aStrip').innerHTML='<span>오늘 '+cohortKo(S.cohort)+' '+(S.track?(TRACK_KO[S.track]||S.track)+' ':'')+'폼</span><span>방문 <b>'+v+'</b></span><span>→ 입력 시작 <b>'+st+'</b></span><span>→ 제출 <b>'+sb+'</b></span><span>전환율 <b>'+pct(sb,v)+'</b></span><span>쓰다 나감 <b>'+pa+'</b></span><button class="go" id="goStats">지표 자세히 →</button>';
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
-function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status==='제외'?' excl':'')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+esc(r.gender)+'</td><td class="num">'+esc(r.birth_year)+(a?' <span class="muted">('+a+')</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td><td>'+(joinedBefore(r)?'<span class="badge green">참여한 적 있음</span>':'<span class="muted">처음</span>')+'</td>'+
-  '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+ALERT_ST.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select></td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button></td></tr>'}
+function appCell(label,content,cls){return '<td data-label="'+label+'"'+(cls?' class="'+cls+'"':'')+'><div class="cell-content">'+content+'</div></td>'}
+function statusCell(r){return appCell(isAlertR(r)?'상태':'상태 / 방','<select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name||fmtPhone(r.phone_digits)||'신청자')+' 상태">'+stList(r).map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
+  (!isAlertR(r)&&r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40" aria-label="'+esc(r.name||'신청자')+' 방">':''),'st')}
+function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status==='제외'?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('알림 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('성별',esc(r.gender))+appCell('출생 (나이)',esc(r.birth_year)+(a?' <span class="muted">('+a+')</span>':''),'num')+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+appCell('이전 참여',joinedBefore(r)?'<span class="badge green">참여한 적 있음</span>':'<span class="muted">처음</span>')+
+  appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button>')+'</tr>'}
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
   if(S.cohort==='alert'){$('appRows').innerHTML=rs.map(alertRow).join('');return}
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'"><td class="num">'+esc((r.submitted_at||'').slice(5,16))+'</td><td>'+formBadge(r)+'</td>'+
-    '<td><b>'+esc(r.name||(cohortOf(r)==='alert'?'':cohortOf(r)==='review'?'(후기만)':'(사전알림)'))+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':'')+'</td><td>'+esc(r.gender)+'</td><td>'+esc(r.birth_year)+'</td><td>'+esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':'')+'</td><td class="num">'+esc(fmtPhone(r.phone_digits))+'</td><td>'+srcCell(r.src)+'</td>'+
-    '<td class="st"><select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'">'+stList(r).map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
-    (r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40">':'')+'</td><td><button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button></td></tr>'}).join('')}
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
+    appCell('이름','<b class="app-name">'+esc(r.name||(cohortOf(r)==='review'?'(후기만)':'(사전알림)'))+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':''))+appCell('성별',esc(r.gender))+appCell('출생',esc(r.birth_year))+appCell('학교 / 하는 일',esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':''))+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+
+    appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button>')+'</tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
 function buddyOf(r){var d=String(r.buddy||'').replace(/\D/g,'');if(!/^01\d{8,9}$/.test(d))return null;return S.apps.filter(function(x){return x.phone_digits===d&&x.application_id!==r.application_id&&cohortOf(x)===cohortOf(r)})[0]||null}
 function buddyText(r){if(!r.buddy)return '';var b=buddyOf(r);if(!b)return (/^01\d{8,9}$/.test(r.buddy)?fmtPhone(r.buddy):r.buddy)+' (미신청)';
