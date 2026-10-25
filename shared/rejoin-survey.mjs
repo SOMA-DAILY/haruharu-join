@@ -17,6 +17,12 @@ export const SURVEY = {
 };
 export const SURVEY_KEYS = SURVEY_SECTIONS.flatMap((s) => s.keys);
 
+// 재참여 모집용 선택 입력. 기존 후기 폼의 필수 규칙은 바꾸지 않는다.
+export function cleanOptionalWish(fields) {
+  const value = typeof fields?.sv_wish === 'string' ? fields.sv_wish.replace(/\r/g, '').trim().slice(0, 1000) : '';
+  return value ? { survey: { sv_wish: value }, miss: [] } : null;
+}
+
 // 제출된 값 → 저장할 설문 + 빠진(또는 너무 짧은) 문항
 export function cleanSurvey(fields, now = Date.now()) {
   const raw = fields && typeof fields === 'object' ? fields : {};

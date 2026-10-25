@@ -750,7 +750,8 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
  var jq=form.querySelector('.q[data-name="sv_join"]');
  if(jq){
   var G=window.HH_G||'x', yes=[].slice.call(jq.querySelectorAll('.opt[data-path]')), open={}, regOpen={};
-  var no=jq.querySelector('input[value="후기만"]'), phoneIn=form.querySelector('input[name="phone"]'), nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
+  var requiredJoin=jq.getAttribute('data-required-join')==='true';
+  var no=jq.querySelector(requiredJoin?'input[value=""]':'input[value="후기만"]'), phoneIn=form.querySelector('input[name="phone"]'), nameIn=form.querySelector('input[name="name"]'), btn=document.getElementById('submit');
   var payQ=[form.querySelector('.q[data-name="phone"]'), form.querySelector('.rj-privacy'), form.querySelector('.q[data-name="buddy_room"]'), form.querySelector('.q[data-name="name"]')];
   var dn=document.querySelector('.page[data-page="done"] .done'), dh=dn&&dn.querySelector('h2'), dp=dn&&dn.querySelector('p'), ap=dn&&dn.querySelector('.ap-get'), d0=dh&&[dh.textContent,dp.innerHTML];
   function co(o){ return jq.querySelector('.sv-co[data-path="'+o.getAttribute('data-path')+'"]'); }
@@ -762,29 +763,30 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    if(!join){ var br=form.querySelectorAll('input[name="buddy_room"]:checked'); if(br.length){ [].forEach.call(br,function(r){ r.checked=false; r.closest('.opt').classList.remove('on'); }); var r0=form.querySelector('input[name="buddy_room"]'); if(r0) r0.dispatchEvent(new Event('change',{bubbles:true})); } }
    window.HH_SV_REVIEW=!join;
    var reg=join&&o.closest('.opt').getAttribute('data-reg'); window.HH_SHARE_PATH=reg&&regOpen[reg]?reg:'';   // 친구는 고른 기수의 정가 폼으로 (닫혔거나 없으면 고정 링크)
-   if(btn&&form.dataset.submitting!=='true') btn.textContent=join?'신청하기':'후기 보내기';
-   if(dh){ dh.textContent=join?d0[0]:'후기 고마워요 💌'; dp.innerHTML=join?d0[1]:'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수 소식은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.'; if(ap) ap.hidden=!join; } }
+   if(btn&&form.dataset.submitting!=='true'){ btn.textContent=join?'신청하기':requiredJoin?'참여할 기수를 선택해 주세요':'후기 보내기'; if(requiredJoin) btn.disabled=!join; }
+   if(dh){ dh.textContent=join||requiredJoin?d0[0]:'후기 고마워요 💌'; dp.innerHTML=join||requiredJoin?d0[1]:'남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.<br>다음 기수 소식은 인스타그램 <a href="https://www.instagram.com/haruharu.ting/">@haruharu.ting</a> 에서 볼 수 있어요.'; if(ap) ap.hidden=!join; } }
   function vis(){ var live=yes.filter(function(o){ return open[o.getAttribute('data-path')]!==false && (o.getAttribute('data-exclude-g')||'').split(',').indexOf(G)<0; });
    var mine=live.filter(function(o){ return G==='x'||!o.getAttribute('data-g')||o.getAttribute('data-g')===G; }), show=mine.length?mine:live;
    yes.forEach(function(o){ var on=show.indexOf(o)>=0, c=co(o), r=o.querySelector('input'); o.hidden=!on; if(c) c.hidden=!on;
     var tag=o.querySelector('.sv-c'); if(tag) tag.hidden=show.length<2;   // 기수가 둘 다 보일 때만 [네, 6기 신청할래요]
     if(!on&&r.checked){ r.checked=false; o.classList.remove('on'); toNo(); } });
-   jq.hidden=!show.length;
+   jq.hidden=!show.length&&!requiredJoin;
+   var empty=jq.querySelector('.sv-join-empty'); if(empty) empty.hidden=!!show.length;
    if(!jq.querySelector('input:checked')) toNo();
    sync(); }
   // [네] 를 다시 누르면 꺼짐 (라디오라 그냥은 안 꺼져서, 누르기 전에 켜져 있었는지 보고 후기만으로 돌림)
   yes.forEach(function(o){ var was=false, r=o.querySelector('input');
    o.addEventListener('pointerdown',function(){ was=r.checked; });
    o.addEventListener('click',function(e){ if(was&&r.checked){ e.preventDefault(); was=false; r.checked=false; o.classList.remove('on'); toNo(); } else was=false; }); });
-  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); var ph=form.querySelector('.q[data-name="phone"]'); if(picked()!=='후기만'&&ph) setTimeout(function(){ ph.scrollIntoView({behavior:'smooth',block:'center'}); },60); } });
+  form.addEventListener('change',function(e){ if(e.target&&e.target.name==='sv_join'){ sync(); var ph=form.querySelector('.q[data-name="phone"]'); if(!requiredJoin&&picked()&&picked()!=='후기만'&&ph) setTimeout(function(){ ph.scrollIntoView({behavior:'smooth',block:'center'}); },60); } });
   yes.forEach(function(o){ var p=o.getAttribute('data-path'), reg=o.getAttribute('data-reg');
    fetch('/api/cohort?path='+encodeURIComponent(p)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ open[p]=!!(st&&st.open); vis(); }).catch(function(){});
    if(reg) fetch('/api/cohort?path='+encodeURIComponent(reg)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ regOpen[reg]=!!(st&&st.open); sync(); }).catch(function(){}); });
   setInterval(function(){ yes.forEach(function(o){ var p=o.getAttribute('data-path'); if(open[p]===false) return; fetch('/api/cohort?path='+encodeURIComponent(p)+'&g='+encodeURIComponent(G),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){ if(st&&st.open===false){ open[p]=false; vis(); } }).catch(function(){}); }); },60000);
   // 제출했는데 고른 기수가 그새 마감됨 (서버 409): 페이지는 그대로 두고 그 기수만 숨기고 다시 고르게 함
   window.hhSvClosed=function(){ var r=jq.querySelector('input:checked'); if(r&&r.closest('.opt').getAttribute('data-path')) open[r.closest('.opt').getAttribute('data-path')]=false; vis();
-   if(btn) btn.disabled=false;
-   alert('고른 기수 신청이 방금 마감됐어요. 다른 기수를 고르거나 후기만 보내 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.');
+   if(btn) btn.disabled=requiredJoin&&!picked();
+   alert(requiredJoin?'고른 기수 신청이 방금 마감됐어요. 다른 기수를 골라 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.':'고른 기수 신청이 방금 마감됐어요. 다른 기수를 고르거나 후기만 보내 주세요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.');
    jq.scrollIntoView({behavior:'smooth',block:'center'}); };
   vis(); setTimeout(vis,0); setTimeout(vis,800);   // 저장해 둔 입력을 되살린 뒤
  }
