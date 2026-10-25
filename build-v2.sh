@@ -162,6 +162,20 @@ STORY_TAIL = r"""<style>
 .pstep span{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--hh-mute)}
 .pstep+.q{margin-top:10px}
 .pstep+.pay-card{margin-top:12px}
+.opt[hidden]{display:none}
+.fr-toggle.off{background:#F1F4F8;color:var(--hh-ink2)}
+.fm-only{display:none}
+html[data-mode="form"] .fm-only{display:flex;margin-bottom:4px}
+html[data-mode="form"] .ld-fcard .ld-top{display:none}
+html[data-mode="form"] .pk{margin-top:18px}
+.dn-card{margin:22px 0 6px;padding:18px 18px 14px;border:1.5px solid var(--hh-line);border-radius:18px;background:#fff;text-align:left}
+.dn-card[hidden]{display:none}
+.dn-rows{margin:0;padding:0}
+.dn-rows div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;font-size:14.5px}
+.dn-rows dt{color:var(--hh-mute);font-weight:500;white-space:nowrap}
+.dn-rows dd{margin:0;font-weight:700;color:var(--hh-ink);text-align:right;word-break:keep-all}
+.dn-rows dd.hl{color:var(--hh-blue)}
+.dn-note{margin:12px 0 0;padding-top:12px;border-top:1.5px dashed var(--hh-line);font-size:13px;line-height:1.5;color:#1F5FA9;font-weight:700}
 </style>
 <script>
 (function(){ var form=document.getElementById('f'); if(!form) return;
@@ -175,6 +189,30 @@ STORY_TAIL = r"""<style>
  function watched(el){ return !!(el&&el.name&&(el.name==='birth_year'||el.name==='phone')); }
  form.addEventListener('focusout',function(e){ if(watched(e.target)) check(e.target); });
  form.addEventListener('input',function(e){ var el=e.target, q=el&&el.closest&&el.closest('.q'); if(watched(el)&&q&&q.classList.contains('bad')) check(el); });
+ // 친구 번호 칸은 항상 보임 (10/23 사용자). 번호를 적었는데 방을 안 골랐으면 숨긴 '상관없음' 을 고른 것으로, 지우면 다시 없는 것으로
+ var bq=form.querySelector('.q[data-name="buddy_room"]');
+ if(bq){ var bIn=bq.querySelector('input[name="buddy"]'), bAny=bq.querySelector('input[name="buddy_room"][value="상관없음"]');
+  bIn&&bIn.addEventListener('input',function(){ var ok=bIn.value.replace(/\D/g,'').length>=10, ch=bq.querySelector('input[name="buddy_room"]:checked');
+   if(ok&&!ch&&bAny){ bAny.checked=true; bAny.dispatchEvent(new Event('change',{bubbles:true})); }
+   else if(!ok&&ch===bAny&&bAny){ bAny.checked=false; bAny.dispatchEvent(new Event('change',{bubbles:true})); } }); }
+ // '친구랑 신청해요' 버튼이 펼친 뒤에도 남아 '취소' 로 바뀌고, 누르면 번호/선택을 지우고 접음 (10/23 사용자). 펼치기 자체는 템플릿 꼬리(FOLD_TAIL)가 하고, 여기서는 그 뒤에 글자와 닫기만
+ if(bq){ var tg=bq.querySelector('.fr-toggle'), mo=bq.querySelector('.fr-more'), wasOpen=false;
+  function label(){ if(!tg||!mo) return; tg.hidden=false; var open=!mo.hidden; tg.textContent=open?'취소':'친구랑 신청해요'; tg.classList.toggle('off',open); tg.setAttribute('aria-expanded',open?'true':'false'); }
+  if(tg&&mo){ tg.addEventListener('click',function(){ wasOpen=!mo.hidden; },true);
+   tg.addEventListener('click',function(){ if(wasOpen){ var ch=bq.querySelector('input[name="buddy_room"]:checked'); if(bIn) bIn.value=''; if(ch){ ch.checked=false; ch.dispatchEvent(new Event('change',{bubbles:true})); } bq.classList.remove('bad'); mo.hidden=true; } label(); });
+   if(window.MutationObserver) new MutationObserver(label).observe(mo,{attributes:true,attributeFilter:['hidden']});
+   new MutationObserver(function(){ if(tg.hidden) label(); }).observe(tg,{attributes:true,attributeFilter:['hidden']}); } }
+ // 완료 화면 요약 카드 (10/23 사용자: 신청을 다 하면 본인이 적은 내용이 나오게). 신청 번호는 날짜 + 신청 ID 끝 네 자리
+ var done=document.querySelector('.page[data-page="done"]'), card=document.getElementById('dnCard');   // 완료 화면은 form 밖에 있음
+ function val(n){ var e=form.querySelector('input[name="'+n+'"]:checked')||form.querySelector('input[name="'+n+'"]'); return e?e.value:''; }
+ function fill(){ if(!card) return; var id=String(window.HH_APP_ID||''), d=new Date(), p2=function(n){ return (n<10?'0':'')+n; };
+  var no='HH-'+String(d.getFullYear()).slice(2)+p2(d.getMonth()+1)+p2(d.getDate())+'-'+(id.replace(/-/g,'').slice(-4).toUpperCase()||'0000');
+  var fee=document.querySelector('.fr-fee'), ac=document.getElementById('acctCopy'), room=val('buddy_room');
+  var rows={dnNo:no,dnCo:(val('cohort_pick')||(typeof COHORT==='string'?COHORT:''))+'기',dnG:val('gender'),dnBy:val('birth_year')+'년생',dnSc:val('school'),dnPh:val('phone').replace(/\D/g,''),
+   dnAc:ac?'토스뱅크 '+ac.getAttribute('data-acct'):'',dnFee:(fee?fee.textContent:'')+'원'+(room&&room!=='혼자'?' (친구 할인)':''),dnNm:val('name')};
+  for(var k in rows){ var e=document.getElementById(k); if(e) e.textContent=rows[k]; }
+  card.hidden=false; }
+ if(done&&card&&window.MutationObserver) new MutationObserver(function(){ if(done.classList.contains('on')) fill(); }).observe(done,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 """
@@ -366,7 +404,7 @@ def gen(path, f):
         '__LD_BADGE__': '지난 참가자 전용' if survey else f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
         '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
-        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells(rows_a), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
+        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells([r for r in rows_a if not (f.get('landingV4') and r[0] in ('진행 기간', '신청 마감'))]), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,   # 이야기판 신청 안내는 기수마다 다른 진행 기간, 신청 마감을 빼고 기수 카드에만 (10/26 사용자)
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
@@ -688,34 +726,73 @@ def gen(path, f):
         # 이야기판 폼 (10/23 사용자: 붙여 준 폼 UX 분석 적용). 1) 전화번호 칸에 받는 까닭과 공개 범위, 2) 동의는 핵심 한 줄 + [자세히 보기] 로 접은 전문,
         #   3) 페이지마다 '2/3 연락처 확인' 식 단계 표시와 '다음: 참가비 확인' 버튼, 4) 전화번호/이름/출생년도 자동완성, 5) 출생년도/전화번호는 칸을 떠날 때 바로 오류 표시
         #   유입경로/기기/신청 마음 문항은 등록부 noSource, noDevice 로 위에서 빠지고, 결제 구역은 payV3 로 위에서 B 팔과 같게 바뀜
+        rf = '<li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li>'; assert t.count(rf) == 1, f'{path} 환불 안내를 못 찾음'
+        t = t.replace(rf, '<li>인원이 안 맞아 방이 열리지 않으면 다음 기수로 이월하거나 환불할 수 있어요</li>', 1)   # 10/23 사용자 문구
+        sub = ' <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'; assert t.count(sub) == 1, f'{path} 송금자 이름 안내를 못 찾음'; t = t.replace(sub, '', 1)   # 10/23 사용자: 이 안내문은 뺌
         ph0 = '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive">'
         assert t.count(ph0) == 1, f'{path} 전화번호 칸을 못 찾음'
-        t = t.replace(ph0, '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <p class="qh">초대 코드와 일정 안내를 문자로 보내 드리려고 받아요. 다른 참가자에게는 보이지 않아요.</p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive" autocomplete="tel">', 1)
+        t = t.replace(ph0, '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <p class="qh">초대 코드와 일정 안내를 문자로 보내 드리려고 받아요.</p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive" autocomplete="tel">', 1)
         mc = re.search(r'<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">\*</span></p>\n <p class="note">(.*?)</p>\n <label class="chk">', t, flags=re.S)
         assert mc, f'{path} 동의 칸을 못 찾음'
         t = t.replace(mc.group(0), '<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">*</span></p>\n'
                       ' <p class="qh">참가자 확인, 방 배정, 신청 진행과 마감 안내, 초대 코드와 일정 안내에만 써요. 기수가 끝나고 6개월 뒤 지워요. <button type="button" class="ag-more" aria-expanded="false">자세히 보기</button></p>\n'
                       ' <p class="note" hidden>' + mc.group(1) + '</p>\n'
-                      ' <div class="qh-scope"><p><b>방에서 보이는 것</b>가명, 올린 영상, 하나씩 열리는 소개(MBTI, 나이, 학과)</p><p><b>운영진만 보는 것</b>전화번호, 이름</p></div>\n <label class="chk">', 1)
+                      ' <label class="chk">', 1)
         g0 = '<div class="q" data-name="gender">'; p0 = '<div class="q" data-name="phone">'; s3 = '<section class="page" data-page="3">\n'
         assert t.count(g0) == 1 and t.count(p0) == 1 and t.count(s3) == 1, f'{path} 단계 표시 자리를 못 찾음'
-        t = t.replace(g0, '<p class="pstep"><b>1/3</b>기본 정보<span>다음: 연락처 확인</span></p>\n' + g0, 1)
-        t = t.replace(p0, '<p class="pstep"><b>2/3</b>연락처 확인<span>다음: 참가비 확인</span></p>\n' + p0, 1)
-        t = t.replace(s3, s3 + '<p class="pstep"><b>3/3</b>참가비<span>송금하고 이름 적으면 끝</span></p>\n', 1)
+        t = t.replace(g0, '<p class="pstep"><b>1/3</b>기본 정보</p>\n' + g0, 1)
+        t = t.replace(p0, '<p class="pstep"><b>2/3</b>연락처 확인</p>\n' + p0, 1)
+        t = t.replace(s3, s3 + '<p class="pstep"><b>3/3</b>참가비</p>\n', 1)
         n1 = '<button type="button" class="btn" data-next="2">다음 페이지 →</button>'; n2 = '<button type="button" class="btn" data-next="3">다음 페이지 →</button>'
         assert t.count(n1) == 1 and t.count(n2) == 1, f'{path} 다음 버튼을 못 찾음'
-        t = t.replace(n1, '<button type="button" class="btn" data-next="2">다음: 연락처 확인 →</button>', 1).replace(n2, '<button type="button" class="btn" data-next="3">다음: 참가비 확인 →</button>', 1)
+        t = t.replace(n1, '<button type="button" class="btn" data-next="2">다음 →</button>', 1).replace(n2, '<button type="button" class="btn" data-next="3">다음 →</button>', 1)
         nm = 'name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"'
         assert t.count(nm) == 1, f'{path} 송금자 이름 칸을 못 찾음'
         t = t.replace(nm, nm + ' autocomplete="name"', 1)
         t, nby = re.subn(r'(<input[^>]*name="birth_year"(?![^>]*autocomplete)[^>]*)>', r'\1 autocomplete="bday-year">', t, count=1)
         assert nby == 1, f'{path} 출생년도 칸을 못 찾음'
+        d0 = t.index('<section class="page" data-page="done">'); d1 = t.index('</p>', d0) + 4
+        t = t[:d1] + ('\n<div class="dn-card" id="dnCard" hidden><dl class="dn-rows">'
+                     '<div><dt>참여 기수</dt><dd id="dnCo"></dd></div><div><dt>성별</dt><dd id="dnG"></dd></div><div><dt>출생년도</dt><dd id="dnBy"></dd></div>'
+                     '<div><dt>학교</dt><dd id="dnSc"></dd></div><div><dt>전화번호</dt><dd id="dnPh"></dd></div><div><dt>입금 금액</dt><dd class="hl" id="dnFee"></dd></div>'
+                     '<div><dt>입금자명</dt><dd id="dnNm"></dd></div></dl>'
+                     '<p class="dn-note">문의할 때 필요하니 이 화면을 캡처해 두세요.</p></div>') + t[d1:]
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, STORY_TAIL + foot, 1)
-        for need in ('class="pstep"', 'autocomplete="tel"', 'class="qh-scope"', 'class="pay-card"'):
+        for need in ('class="pstep"', 'autocomplete="tel"', 'class="pay-card"'):
             assert t.count(need) >= 1, f'{path} 이야기판 폼 조각이 빠짐: {need}'
         for gone in ('data-name="source"', 'data-name="device"', 'data-name="intent"'):
             assert f'<div class="q" {gone}>' not in t, f'{path} 빠져야 할 문항이 남음: {gone}'
+        # 기수 고르기는 랜딩 맨 끝 (10/26 사용자: 스크롤하면 신청서가 이어지는 대신 신청 안내 → 기수 고르기 → 신청하기를 눌러야 1, 2, 3단계 신청서).
+        #   카드는 아무것도 안 골라진 채(기수를 직접 고르게), 그 아래 신청하기 버튼(data-cta="pick")과 다음 기수 알림 링크. 첫 화면, 아래 고정 버튼은 이 구역으로 내려옴(랜딩 스크립트)
+        #   신청서 모드에서는 이 구역과 신청 안내가 숨고, 로고 줄과 머리 카드(고른 기수의 진행 기간, 신청 마감으로 바뀐 안내) 다음에 1단계 문항
+        pk = re.search(r'<div class="pk" id="pick".*?</div>\n\n', t, flags=re.S)
+        ge = re.search(r'<section class="ld-sec ld-only" id="ld-guide".*?</section>\n', t, flags=re.S)
+        assert pk and ge and pk.start() > ge.end(), f'{path} 기수 카드/신청 안내 자리를 못 찾음'
+        a0 = ge.group(0).find('<div class="ld-al">'); a1 = ge.group(0).find('<div class="ld-gn">', a0)
+        assert 0 < a0 < a1, f'{path} 다음 기수 알림 자리를 못 찾음'
+        alert = ge.group(0)[a0:a1]
+        cards = pk.group(0).rstrip('\n').replace('class="pk-c on" role="radio" aria-checked="true"', 'class="pk-c" role="radio" aria-checked="false"')
+        go = ('<button type="button" class="ld-btn ld-btn-ar is-off" data-cta="pick" id="ldPickGo"><span>기수를 골라 주세요</span>'
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>\n')
+        pick_sec = ('<section class="ld-sec ld-only ld-pick" id="ldCohort" data-sec="pick">\n<p class="ld-k">기수 선택</p>\n<h2>참여할 기수를 골라 주세요</h2>\n'
+                    + cards + '\n' + go + '<p class="ld-pk-note">참가 확정 문자는 고른 기수의 신청 마감일까지 보내드려요</p>\n' + alert + '\n</section>\n')
+        # 신청서 모드에서는 로고 줄이 맨 위에 오게: 머리 카드 앞에 로고 줄(신청서 모드에서만 보임)을 두고 머리 카드의 로고 줄은 숨김
+        logo = '<div class="ld-top fm-only"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">__LD_BADGE__</span></div>\n'.replace('__LD_BADGE__', f"{cohort}기 모집 중")
+        t = t.replace(pk.group(0), '', 1).replace(ge.group(0), ge.group(0).replace(alert, '', 1) + pick_sec + logo, 1)
+        # 1단계 문항은 신청하기를 누른 뒤에만 보임 (소개 모드에서 스크롤로 신청서가 이어지지 않게)
+        q0 = '<p class="pstep"><b>1/3</b>기본 정보</p>\n'; nv = '<div class="nav"><button type="button" class="btn" data-next="2">다음 →</button></div>'
+        assert t.count(q0) == 1 and t.count(nv) == 1, f'{path} 1단계 문항 자리를 못 찾음'
+        t = t.replace(q0, '<div class="fm-q">\n' + q0, 1).replace(nv, nv + '\n</div>', 1)
+        # 모집 중 딱지는 열린 기수 전부 (10/23 사용자: 'N기 모집 중' → '8, 9기 모집 중')
+        cos = ', '.join(g['cohort'] for _, g in rows)
+        t = t.replace(f'{cohort}기 모집 중', f'{cos}기 모집 중')
+        # 친구 문항 (10/23 사용자): '혼자 신청해요' 와 '방은 상관없어요' 선택지는 빼고, 번호 칸은 고르지 않아도 보이게. 번호를 적고 방을 안 고르면 숨긴 '상관없음' 으로 접수
+        la = '  <label class="opt"><span class="k">A</span><input type="radio" name="buddy_room" value="혼자">혼자 신청해요</label>\n'
+        ld = '  <label class="opt"><span class="k">D</span><input type="radio" name="buddy_room" value="상관없음" data-other="buddy">친구랑 신청했고, 방은 상관없어요</label>'
+        ob = '<div class="other" id="other-buddy">'
+        assert t.count(la) == 1 and t.count(ld) == 1 and t.count(ob) == 1, f'{path} 친구 선택지를 못 찾음'
+        t = t.replace(la, '', 1).replace(ld, '  <label class="opt" hidden><input type="radio" name="buddy_room" value="상관없음" data-other="buddy"></label>', 1).replace(ob, '<div class="other show" id="other-buddy">', 1)
         # 바닥글 (10/23 사용자: 사업자 정보로 신뢰 확보, 문의 메일 sw.team.haruharu@gmail.com). 맨 아래 안내 줄 다음에
         fm = re.search(r'<p class="foot">.*?</p>\n', t); assert fm, f'{path} 바닥 안내 줄을 못 찾음'
         t = t.replace(fm.group(0), fm.group(0) + FOOTER, 1)
@@ -734,6 +811,10 @@ def gen(path, f):
         prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
         tail = open('src/gender-fee.html',encoding='utf-8').read().replace('__GENDER_PRICES__',prices)
         t = t.replace('<p class="foot">', tail + '<p class="foot">', 1)
+    if f.get('landingV4') and f.get('maleFee'):
+        # 이야기판 신청 안내의 참가비 칸은 성별과 상관없이 남녀 금액을 다 적음 (10/23 사용자: 기존 폼처럼 명시). 3페이지 참가비 안내와 송금은 고른 성별 금액 그대로
+        t, nfee = re.subn(r'<dt>참가비</dt><dd><bdi data-price="full">[^<]*</bdi>원', f'<dt>참가비</dt><dd>남성 {f["maleFee"]:,}원 / 여성 {f["fee"]:,}원', t)
+        assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 
