@@ -489,11 +489,11 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 @media(prefers-reduced-motion:reduce){.ld-callout .ar{animation:none}}
 /* 진행 방식 (10/23 사용자: golmoking.kr/dating 처럼 기능 설명 대신 번호 다섯 줄로 큰 흐름만) */
 .ld-st{margin-top:24px;display:flex;flex-direction:column;gap:22px}
-.ld-st li{display:flex;align-items:flex-start;gap:12px}
-.ld-st li>i{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-top:1px;border-radius:50%;background:var(--hh-blue);color:#fff;font-size:15px;font-style:normal;font-weight:800;box-shadow:0 5px 12px rgba(47,123,214,.28)}
-.ld-st li>div{flex:1;min-width:0}
-.ld-st b{display:block;font-size:17.5px;line-height:1.35;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
-.ld-st b+p{margin-top:5px;font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
+.ld-st>li{display:flex;align-items:flex-start;gap:12px}
+.ld-st>li>i{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-top:1px;border-radius:50%;background:var(--hh-blue);color:#fff;font-size:15px;font-style:normal;font-weight:800;box-shadow:0 5px 12px rgba(47,123,214,.28)}
+.ld-st>li>div{flex:1;min-width:0}
+.ld-st>li>div>b{display:block;font-size:17.5px;line-height:1.35;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink)}
+.ld-st>li>div>b+p{margin-top:5px;font-size:14.5px;line-height:1.6;color:var(--hh-ink2)}
 .ld-bb{margin-top:12px;padding:11px 14px 12px;border-radius:5px 18px 18px 18px;background:#fff;box-shadow:0 4px 14px rgba(26,52,92,.08)}
 .ld-bb-n{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12.5px;font-weight:800;color:var(--hh-blue)}
 .ld-bb-n img{display:block;border-radius:50%}
@@ -567,8 +567,41 @@ html[data-mode="form"] .fm-q{display:block}
 .ld-pp-tag{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px #BFD8F5;color:var(--hh-blue);font-size:12.5px;font-weight:800}
 .ld-pp-list span,.ld-pp-say{text-wrap:pretty}.ld-pp-list b,.ld-pp-sv b{text-wrap:balance}
 @media(max-width:359px){.ld-pp-list li{gap:12px;padding:13px 14px}.ld-pp-sv li{gap:12px;padding:18px 15px}.ld-pp-sv .emo{width:40px;height:40px}}
-/* 진행 방식 (10/26 사용자: 호기심이 느껴지게): 단계마다 DAY 딱지, 잠긴 소개(🔒 흔들림), 보낸 사람 ???, 흐린 사진 위로 선명한 사진이 천천히 겹쳐 나타남 */
-.ld-tl .ld-day{display:inline-block;margin-bottom:5px;padding:2px 9px;border-radius:999px;background:var(--hh-sky2);color:#1F63B5;font-size:11.5px;font-weight:800;letter-spacing:.03em}
+/* 진행 방식 (10/26 사용자: 호기심이 느껴지게 → 같은 날 "DAY 가 아니라 golmoking.kr/dating 처럼 큰 흐름으로"): 번호 다섯 개를 세로 선으로 잇고 단계마다 짧은 이름 + 한 줄 + 앱 조각 하나. DAY 딱지는 뺌.
+   3단계는 날마다 생기는 일(미션, 소개 공개, 익명 질문)을 한 장에 모음. 잠긴 소개(🔒 흔들림), 보낸 사람 ??? 는 그대로.
+   사진이 흐리다가 서로 고르면 사진과 닉네임이 열린다는 말과 움직임은 넣지 않음(10/26 사용자: "처음에는 사진 블러되고, 흐렸던 사진과 닉네임이 열리고 이런 거 넣지 마, 별로임"). 흐린 사진 그림은 1, 4단계에 그대로 */
+.ld-tl>li{position:relative}
+.ld-tl>li:not(:last-child):before{content:"";position:absolute;left:14px;top:37px;bottom:-17px;width:2px;border-radius:2px;background:#C9DEF5}
+.ld-ui-today{padding:2px 12px}
+.ld-ui-today>div{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;padding:10px 0}
+.ld-ui-today>div+div{border-top:1.5px dashed #E3EAF3}
+.ld-ui-today .ld-ui-haru{width:26px;height:26px;margin:0}
+.ld-ui-today .ic{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--hh-sky);font-size:13px;font-style:normal}
+.ld-ui-today .ic.an{border-radius:50%;background:var(--hh-ink);color:#fff;font-weight:800}
+.ld-ui-today .ms{display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center}
+.ld-ui-today .ms b{display:block;font-size:13.5px;line-height:1.4;font-weight:800;letter-spacing:0;color:var(--hh-ink)}
+.ld-ui-today .ms img{display:block;width:46px;height:46px;border-radius:10px;object-fit:cover}
+.ld-ui-today .ld-ui-lock{gap:6px 7px}
+/* 진행 방식 1 (10/26 사용자: "블러된 프로필 사진으로, 초대 코드 받아서 입장하기, 또래 대학생들끼리 모여요"): 앱의 초대 코드 입력(6칸, 영문 대문자와 숫자) → 방에 들어온 사람들(흐린 사진 + 가명, 남녀 번갈아).
+   코드 글자가 하나씩 찍힌 뒤 사람들이 차례로 나타남. 사람 칸은 성별 판 스크립트가 채움(#ldRoom) */
+.ld-ui-join{padding:12px}
+.ld-code{display:flex;gap:5px;margin-top:6px}
+.ld-code i{flex:1;display:grid;place-items:center;height:34px;border-radius:9px;background:#F3F7FC;box-shadow:inset 0 0 0 1.5px #DCE6F2;font-size:15px;font-style:normal;font-weight:800;color:var(--hh-ink)}
+.ld-ui-join .ld-ui-h{display:block;margin-top:12px;padding-top:11px;border-top:1.5px dashed #E3EAF3}
+.ld-room{display:flex;justify-content:space-between;gap:4px;margin-top:9px}
+.ld-room>span{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.ld-room img{display:block;width:34px;height:34px;border-radius:50%;object-fit:cover;background:#E3E8EF}
+.ld-room em{font-size:12px;font-style:normal;font-weight:700;color:var(--hh-ink2);white-space:nowrap}
+.ld-js .ld-fx .ld-code i{color:transparent;transition:color 0s}
+.ld-js .ld-fx.in .ld-code i{color:var(--hh-ink)}
+.ld-js .ld-fx.in .ld-code i:nth-child(1){transition-delay:.4s}.ld-js .ld-fx.in .ld-code i:nth-child(2){transition-delay:.52s}.ld-js .ld-fx.in .ld-code i:nth-child(3){transition-delay:.64s}
+.ld-js .ld-fx.in .ld-code i:nth-child(4){transition-delay:.76s}.ld-js .ld-fx.in .ld-code i:nth-child(5){transition-delay:.88s}.ld-js .ld-fx.in .ld-code i:nth-child(6){transition-delay:1s}
+.ld-js .ld-fx .ld-room>span{opacity:0;transform:translateY(5px);transition:opacity .35s ease,transform .35s ease}
+.ld-js .ld-fx.in .ld-room>span{opacity:1;transform:none}
+.ld-js .ld-fx.in .ld-room>span:nth-child(1){transition-delay:1.25s}.ld-js .ld-fx.in .ld-room>span:nth-child(2){transition-delay:1.35s}.ld-js .ld-fx.in .ld-room>span:nth-child(3){transition-delay:1.45s}
+.ld-js .ld-fx.in .ld-room>span:nth-child(4){transition-delay:1.55s}.ld-js .ld-fx.in .ld-room>span:nth-child(5){transition-delay:1.65s}.ld-js .ld-fx.in .ld-room>span:nth-child(6){transition-delay:1.75s}
+@media(max-width:359px){.ld-room img{width:30px;height:30px}.ld-room em{font-size:11.5px}.ld-code{gap:4px}}
+@media(prefers-reduced-motion:reduce){.ld-js .ld-fx .ld-code i{color:var(--hh-ink);transition:none}.ld-js .ld-fx .ld-room>span{opacity:1;transform:none;transition:none}}
 .ld-ui-lock{display:flex;flex-wrap:wrap;align-items:center;gap:7px 8px}
 .ld-ui-lock .ld-ui-tag{flex-basis:100%;margin:0}
 .ld-ui-lock .lk{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px dashed #D9E1EC;border-radius:999px;font-weight:700;color:var(--hh-mute)}
@@ -585,11 +618,9 @@ html[data-mode="form"] .fm-q{display:block}
 .ld-ui-rv{display:flex;align-items:center;gap:12px}
 .ld-rv-av{position:relative;flex:none;width:44px;height:44px;border-radius:50%;overflow:hidden;background:#E3E8EF}
 .ld-rv-av>span,.ld-rv-av img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
-.ld-rv-av .cl{opacity:0;transition:opacity 1.4s ease 1.1s}
-.ld-fx.in .ld-rv-av .cl{opacity:1}
 .ld-rv-n{display:flex;flex-direction:column;gap:3px;font-size:14px;font-weight:700}
 .ld-rv-n b{align-self:flex-start;padding:4px 10px;border-radius:999px;background:#FDE6EE;color:#D84C7E;font-size:12.5px;font-weight:800}
-@media(prefers-reduced-motion:reduce){.ld-fx.in .ld-ui-lock .k,.ld-ui-from i{animation:none}.ld-rv-av .cl{transition:none}}
+@media(prefers-reduced-motion:reduce){.ld-fx.in .ld-ui-lock .k,.ld-ui-from i{animation:none}}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
 <symbol id="hh-cloud" viewBox="10 5 197 142"><path d="M123.73 8.59C125.25 8.34 130.28 8.66 131.79 8.84C143.81 10.31 154.76 16.48 162.24 26.01C169.03 34.42 172.16 45.19 170.96 55.93C178.15 57.54 185.73 61.84 190.94 67C199.31 75.44 204.03 86.83 204.08 98.73C204.12 110.3 199.16 122.81 190.93 130.96C184.74 137.09 176.9 141.14 168.43 143.03C162.54 144.35 157.78 144.1 151.85 144.1L137.72 144.1L90.37 144.11L75.83 144.11C71.83 144.1 68 144.23 64.01 143.68C58.78 142.91 53.69 141.41 48.89 139.2C34.41 132.72 23.1 120.75 17.42 105.93C11.94 91.21 12.73 76.56 19.32 62.35C27.67 44.19 44.73 29.25 65.24 27.85C72.43 27.35 78.37 29.25 84.79 32.19C94.58 18.28 106.44 9.93 123.73 8.59Z" fill="white" stroke="#83BDF0" stroke-width="1.4"/><path d="M99.26 83C104.53 82.88 105.33 92.42 100.27 93.97C99.82 94 99.38 93.95 98.96 93.8C95 92.44 94.93 84.94 99.26 83Z" fill="#096EE3"/><path d="M124.46 83C129.73 82.88 130.53 92.42 125.46 93.97C125.02 94 124.58 93.95 124.16 93.8C120.2 92.44 120.12 84.94 124.46 83Z" fill="#096EE3"/><path d="M116.4 100.56C119.66 101.25 114.14 107.07 108.15 102.92C107.58 102.38 107.36 101.98 107.6 101.13C107.62 101.06 107.77 100.83 107.85 100.81C109.06 100.42 110.22 102.18 111.42 102.41C114.06 103.11 114.39 101.84 116.31 100.6C116.34 100.59 116.37 100.57 116.4 100.56Z" fill="#448BD1"/></symbol>
@@ -735,28 +766,30 @@ html[data-mode="form"] .fm-q{display:block}
 <li class="ld-fx"><img class="emo" src="/img/L_e_house.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>둘이 아니라, 여럿이 한 방에서</b><p>성비를 맞춘 방에서 각자 하루를 올려요. 관심이 생기기 전부터 한 사람과 대화를 이어갈 필요가 없어요.</p><div class="ld-crowd" aria-hidden="true"><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="o"><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f o"><img src="/img/L_cloud_avatar.svg" alt=""></span></div></div></li>
 <li class="ld-fx"><img class="emo" src="/img/L_e_camera.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>"뭐해?" 말고, 물어볼 게 있는 대화</b><p>상대가 올린 3초 영상이 첫마디의 단서예요. "여기 어디예요?" 한마디면 대화가 시작돼요.</p></div></li>
 <li class="ld-fx"><img class="emo" src="/img/L_e_eyes.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>나한테 하는 말뿐 아니라,<br>다른 사람에게 하는 말까지</b><p>3일 동안 그 사람의 하루와 방에서 나누는 대화를 보면서, 괜찮은 사람인지 천천히 알아봐요.</p></div></li>
-<li class="ld-fx"><img class="emo" src="/img/L_e_letter.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>고르는 건 몰래, 공개는 서로 골랐을 때만</b><p>방에서는 가명과 흐린 사진으로 지내요. 마지막 날 서로 고른 두 사람에게만 닉네임과 사진이 열려요.</p></div></li>
+<li class="ld-fx"><img class="emo" src="/img/L_e_letter.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>고르는 건 몰래, 공개는 서로 골랐을 때만</b><p>한쪽만 골랐다면 상대는 끝까지 몰라요. 서로 골랐을 때만 두 사람에게 알려 드려요.</p></div></li>
 <li class="ld-fx"><img class="emo" src="/img/L_e_friends.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>혼자가 어색하면, 친구랑 같이</b><p>친구랑 같이 신청하면 같은 방도, 다른 방도 고를 수 있어요.</p><span class="ld-pp-tag">둘 다 2,000원 할인</span></div></li>
 </ul>
 </section>
 
 <section class="ld-band ld-tint ld-solve" id="ld-solve" data-sec="solve">
-<!-- 진행 방식 (10/26 사용자: 호기심이 느껴지게): 날마다 무슨 일이 생기는지 질문처럼, 잠긴 소개, 보낸 사람 ???, 흐린 사진이 선명해지는 순간 -->
+<!-- 진행 방식 (10/26 사용자: "DAY 가 아니라 golmoking.kr/dating 처럼 큰 흐름으로"): 가명 입장 → 3초 일상 → 매일 알아가기(미션, 소개 공개, 익명 질문) → 선택 → 서로 골랐다면. 조각 속 가명, MBTI, 질문은 지은 예시이고 미션은 앱 3기 방에 실제로 나간 OOTD 미션(3판 미션 카드와 같은 문구) -->
 <p class="ld-k">진행 방식</p>
 <h2>3일 동안,<br>무슨 일이 생길까요?</h2>
 <ol class="ld-st ld-tl">
-<li class="ld-fx"><i>1</i><div><span class="ld-day">DAY 1</span><b>가명으로 들어가요</b><p>이름도 사진도 아직 몰라요. 오늘 처음 보는 사람들, 이 중에 누가 궁금해질까요?</p>
-<div class="ld-ui ld-ui-room" aria-hidden="true"><span class="ld-ui-h">3번 방<em>8명</em></span><span class="ld-ui-p"><i class="av a1"></i>서연</span><span class="ld-ui-p"><i class="av a2"></i>지호</span><span class="ld-ui-p"><i class="av a3"></i>하은</span><span class="ld-ui-p"><i class="av a4"></i>민재</span><span class="ld-ui-more">+4</span></div></div></li>
-<li class="ld-fx" data-engage><i>2</i><div><span class="ld-day">DAY 1 ~ 3</span><b>그 사람의 하루가 3초씩 쌓여요</b><p>카페, 학교, 러닝. 뭘 올릴지 고민되면 하루가 보낸 미션대로 찍으면 돼요.</p>
+<li class="ld-fx"><i>1</i><div><b>초대 코드로 입장</b><p>또래 대학생들끼리 모여요.</p>
+<div class="ld-ui ld-ui-join" aria-hidden="true"><span class="ld-ui-tag">문자로 받은 초대 코드</span><span class="ld-code"><i>K</i><i>7</i><i>Q</i><i>2</i><i>H</i><i>M</i></span><span class="ld-ui-h">방에 들어왔어요</span><span class="ld-room" id="ldRoom"></span></div></div></li>
+<li class="ld-fx" data-engage><i>2</i><div><b>3초 일상 공유</b><p>카페, 학교, 러닝. 꾸미지 않은 하루를 3초 영상으로 올려요.</p>
 <figure class="ld-sv-life"><img id="ldAdGrid" width="600" height="485" data-img="L_haru_grid" src="/img/L_haru_grid.jpg" loading="lazy" decoding="async" alt="참가자들의 하루 6칸: 13:00 카페, 13:00 냥, 12:00 학교왔어용, 23:00 러닝하러 가는 중, 17:00 드럼 쳐옴, 12:00 다들 점심 맛있게 드세요"></figure></div></li>
-<li class="ld-fx"><i>3</i><div><span class="ld-day">DAY 2</span><b>소개가 하나씩 열려요</b><p>오늘 열린 건 MBTI. 내일은 뭐가 열릴까요?</p>
-<div class="ld-ui ld-ui-lock" aria-hidden="true"><span class="ld-ui-tag">오늘 열린 소개</span><span class="lk on"><i class="av a1"></i>서연<b>ENFP</b></span><span class="lk"><em>나이</em><b class="k">🔒</b></span><span class="lk"><em>닉네임</em><b class="k">🔒</b><small>서로 고르면</small></span></div></div></li>
-<li class="ld-fx"><i>4</i><div><span class="ld-day">DAY 2</span><b>누가 보냈는지 모르는 질문이 와요</b><p>익명 질문은 끝까지 익명이에요. 그래서 더 두근거려요.</p>
-<div class="ld-ui ld-ui-q" aria-hidden="true"><i class="av aq">?</i><div class="ld-ui-bb"><span class="ld-ui-tag">익명 질문</span>혹시... 지금 제일 호감 가는 사람이 누구예요?<span class="ld-ui-from">보낸 사람 <i>?</i><i>?</i><i>?</i></span></div></div></div></li>
-<li class="ld-fx"><i>5</i><div><span class="ld-day">DAY 3</span><b>마지막 날, 몰래 한 명을 골라요</b><p>몰래 고른 그 사람도 나를 골랐을까요?</p>
+<li class="ld-fx"><i>3</i><div><b>매일 조금씩 알아가기</b><p>미션, 하나씩 열리는 소개, 익명 질문까지. 날마다 이야깃거리가 생겨요.</p>
+<div class="ld-ui ld-ui-today" aria-hidden="true">
+<div><img class="ld-ui-haru" src="/img/L_app_icon.png" width="26" height="26" alt=""><div class="ms"><span><span class="ld-ui-tag">오늘의 미션</span><b>🧢 OOTD</b>오늘은 어떤 옷을 입었나요?</span><img src="/img/L_m_ootd.webp" width="46" height="46" loading="lazy" decoding="async" alt=""></div></div>
+<div><i class="ic">🔓</i><div class="ld-ui-lock"><span class="ld-ui-tag">오늘 열린 소개</span><span class="lk on"><b>ENFP</b></span><span class="lk"><em>나이</em><b class="k">🔒</b></span><span class="lk"><em>학과</em><b class="k">🔒</b></span></div></div>
+<div><i class="ic an">?</i><div><span class="ld-ui-tag">익명 질문</span>혹시... 지금 제일 호감 가는 사람이 누구예요?<span class="ld-ui-from">보낸 사람 <i>?</i><i>?</i><i>?</i></span></div></div>
+</div></div></li>
+<li class="ld-fx"><i>4</i><div><b>마음 가는 사람 선택</b><p>마지막 날, 한 명을 몰래 골라요.</p>
 <div class="ld-ui ld-pick" aria-hidden="true"><p class="ld-pick-t">마음이 가는 사람을 골라주세요</p><ul id="ldPick"></ul><p class="ld-ui-note">결과는 그날 밤 공개돼요</p></div></div></li>
-<li class="ld-fx"><i>6</i><div><span class="ld-day">DAY 3 밤</span><b>서로 골랐다면, 흐렸던 사진이 선명해져요</b><p>그때부터 둘만의 대화가 시작돼요.</p>
-<div class="ld-ui ld-ui-rv" aria-hidden="true"><span class="ld-rv-av"><span class="bl" data-face-bl></span><span class="cl" data-face></span></span><span class="ld-rv-n"><span><span data-who>유진</span>님과</span><b>서로 골랐어요 💌</b></span></div></div></li>
+<li class="ld-fx"><i>5</i><div><b>서로 골랐다면 💌</b><p>둘만의 대화가 시작돼요.</p>
+<div class="ld-ui ld-ui-rv" aria-hidden="true"><span class="ld-rv-av"><span class="cl" data-face></span></span><span class="ld-rv-n"><span><span data-who>유진</span>님과</span><b>서로 골랐어요 💌</b></span></div></div></li>
 </ol>
 </section>
 
@@ -838,8 +871,9 @@ html[data-mode="form"] .fm-q{display:block}
   function fill(id,html){ var el=document.getElementById(id); if(el) el.innerHTML=html; }
   fill('ldPick',V.pick.map(function(k,i){ return '<li'+(i?'':' class="on"')+'><span class="ld-av">'+face(k,34)+'</span><span>'+P[k]+'</span></li>'; }).join(''));
   fill('ldAskAv',face(V.pick[0],28));
+  // 진행 방식 1: 방에 들어온 사람들. 남녀 번갈아 흐린 사진 + 가명 (성별 판과 상관없이 같은 여섯 명, 선택 목록의 사람들과 같은 얼굴)
+  fill('ldRoom',['chaewon','taeyun','sua','junho','daeun','minjae'].map(function(k){ return '<span>'+face(k,34)+'<em>'+P[k]+'</em></span>'; }).join(''));
   [].forEach.call(document.querySelectorAll('.ld [data-face]'),function(el){ el.innerHTML='<img src="'+CDIR+V.pick[0]+'.webp" alt="" width="32" height="32" loading="lazy">'; });
-  [].forEach.call(document.querySelectorAll('.ld [data-face-bl]'),function(el){ el.innerHTML=face(V.pick[0],44); });   // 진행 방식 6: 흐린 사진 위로 선명한 사진이 겹쳐 나타남
   [].forEach.call(document.querySelectorAll('.ld [data-who]'),function(el){ el.textContent=P[V.pick[0]]; });
   [].forEach.call(document.querySelectorAll('.ld [data-me]'),function(el){ el.textContent=V.me; });
  })();
