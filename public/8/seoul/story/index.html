@@ -408,8 +408,15 @@ html[data-mode="form"] .ld-fcard{display:block;animation:ld-pgin .38s ease}
 .ld-hero-s{padding-bottom:24px}
 .ld-hero-s .ld-grid{margin-top:16px}
 /* 첫 화면 도트 장면 (10/22, 10/26 밤 4판: 서로의 하루를 3초씩 보내다 가까워지는 두 사람): 사진 6칸 자리. 장면 스크립트가 canvas 에 그리고 높이도 화면 밀도에 맞춰 다시 잡음(280px 은 그 전 자리 맡기) */
-.ld-px{position:relative;height:280px;margin:14px calc(var(--hh-g)*-1) 0;overflow:hidden}
-.ld-px canvas{display:block}
+/* 첫 화면 5판 (10/26): 가운데 앱 피드 폰 + 앞 도트 층. 그림 자리 비율은 폰(폭 56%, 600x822 위쪽만 자른 그림)에 맞춤 */
+.ld-px{position:relative;height:300px;margin:12px calc(var(--hh-g)*-1) 0;overflow:hidden}
+@supports(aspect-ratio:1){.ld-px{height:auto;aspect-ratio:130/100}}
+.ld-px-ph{position:absolute;left:50%;top:1.2%;width:56%;transform:translateX(-50%);filter:drop-shadow(0 10px 16px rgba(31,89,148,.2));-webkit-mask-image:linear-gradient(#000 74%,transparent 98%);mask-image:linear-gradient(#000 74%,transparent 98%)}
+.ld-px-feed{display:block;width:100%;height:auto}
+.ld-px-tile{position:absolute;top:24.818%;width:42.667%;height:auto;opacity:0;transform:scale(.86);transition:opacity .22s ease,transform .4s cubic-bezier(.34,1.56,.64,1)}
+.ld-px-tile.t0{left:7.333%}.ld-px-tile.t1{left:50%}.ld-px-tile.on{opacity:1;transform:none}
+.ld-px canvas{position:absolute;left:0;top:0;display:block}
+@media(prefers-reduced-motion:reduce){.ld-px-tile{transition:none}}
 .ld-dl{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:14px;font-weight:600;color:var(--hh-ink2)}
 .ld-dl b{font-weight:800;color:var(--hh-ink)}
 .ld-dl em{display:none;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:var(--hh-ink);color:#fff;font-size:12.5px;font-style:normal;font-weight:800;letter-spacing:.02em}
@@ -567,6 +574,27 @@ html[data-mode="form"] .fm-q{display:block}
 .ld-pp-tag{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px #BFD8F5;color:var(--hh-blue);font-size:12.5px;font-weight:800}
 .ld-pp-list span,.ld-pp-say{text-wrap:pretty}.ld-pp-list b,.ld-pp-sv b{text-wrap:balance}
 @media(max-width:359px){.ld-pp-list li{gap:12px;padding:13px 14px}.ld-pp-sv li{gap:12px;padding:18px 15px}.ld-pp-sv .emo{width:40px;height:40px}}
+/* 방 채팅 인사이트로 설득 (10/26): 눈썹 + 걸이(취미가 뭐예요?를 거의 안 물어봄) + 이끔 문장 → 번호 문단 넷(하늘 카드, 번호 + 작은 입체 이모지) → 하루 구름 + 핵심 문장 → 친구 줄. 사진 없이 글로 */
+.ld-pp .ld-k{margin-bottom:8px}
+.ld-pp-hook{font-size:clamp(24px,7vw,30px);line-height:1.32}
+.ld-pp-lead{margin-top:10px;font-size:15.5px;line-height:1.55;font-weight:600;color:var(--hh-ink2)}
+.ld-js .ld-pp-turn img{opacity:0;transform:scale(.6) translateY(8px);transition:opacity .3s ease .15s,transform .55s cubic-bezier(.34,1.56,.64,1) .15s}
+.ld-js .ld-pp-turn.in img{opacity:1;transform:none}
+.ld-pp-pt{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.ld-pp-pt li{padding:16px 18px 19px;border-radius:22px;background:linear-gradient(180deg,#EEF7FE 0%,#F8FCFF 100%);box-shadow:inset 0 0 0 1px #E3EFF9}
+.ld-pp-pt i{display:flex;align-items:center;justify-content:space-between;font-style:normal;font-size:14px;font-weight:800;letter-spacing:.06em;color:#6E9FD8}
+.ld-pp-pt i img{width:34px;height:34px;filter:drop-shadow(0 6px 9px rgba(31,89,148,.2))}
+.ld-pp-pt b{display:block;margin-top:4px;font-size:17px;line-height:1.4;font-weight:800;letter-spacing:-.03em;color:var(--hh-ink);text-wrap:balance}
+.ld-pp-pt p{margin-top:7px;font-size:14.5px;line-height:1.68;color:var(--hh-ink2);text-wrap:pretty}
+.ld-pp-pt li:nth-child(2){transition-delay:.06s}.ld-pp-pt li:nth-child(3){transition-delay:.12s}.ld-pp-pt li:nth-child(4){transition-delay:.18s}
+.ld-pp-pt+.ld-pp-turn{margin-top:40px}
+.ld-pp-fr{display:flex;align-items:flex-start;gap:12px;margin-top:22px;padding:14px 16px;border-radius:18px;background:#fff;box-shadow:inset 0 0 0 1.5px #E3EFF9}
+.ld-pp-fr .emo{flex:none;width:40px;height:40px;filter:drop-shadow(0 6px 10px rgba(31,89,148,.2))}
+.ld-pp-fr>div{flex:1;min-width:0}
+.ld-pp-fr b{display:block;font-size:15px;line-height:1.4;font-weight:800;letter-spacing:-.02em;color:var(--hh-ink)}
+.ld-pp-fr p{margin-top:2px;font-size:13.5px;line-height:1.5;color:var(--hh-ink2)}
+.ld-pp-fr .ld-pp-tag{margin-top:8px}
+@media(prefers-reduced-motion:reduce){.ld-js .ld-pp-turn img{opacity:1;transform:none;transition:none}}
 /* 진행 방식 (10/26 사용자: 호기심이 느껴지게 → 같은 날 "DAY 가 아니라 golmoking.kr/dating 처럼 큰 흐름으로"): 번호 다섯 개를 세로 선으로 잇고 단계마다 짧은 이름 + 한 줄 + 앱 조각 하나. DAY 딱지는 뺌.
    3단계는 날마다 생기는 일(미션, 소개 공개, 익명 질문)을 한 장에 모음. 잠긴 소개(🔒 흔들림), 보낸 사람 ??? 는 그대로.
    사진이 흐리다가 서로 고르면 사진과 닉네임이 열린다는 말과 움직임은 넣지 않음(10/26 사용자: "처음에는 사진 블러되고, 흐렸던 사진과 닉네임이 열리고 이런 거 넣지 마, 별로임"). 흐린 사진 그림은 1, 4단계에 그대로 */
@@ -633,115 +661,98 @@ html[data-mode="form"] .fm-q{display:block}
 <div class="ld-top"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live"><i></i>8, 9기 모집 중</span></div>
 <h1 class="ld-h1">3일 동안 일상을 공유하고<br>마음 가는 사람을 선택하세요</h1>
 <p class="ld-who"><b>대상</b>00~07년생 수도권 대학생</p>
-<div class="ld-px" id="ldPxWrap"><canvas id="ldPx" role="img" aria-label="카페에서 딸기 케이크를 찍는 그녀와 강아지를 찍는 그가 3초 영상을 하루 구름을 거쳐 서로에게 보내고, 하트를 받을 때마다 두 사람의 원이 조금씩 가까워지다 셋째 날 맞닿아 큰 하트가 뜨는 도트 그림"></canvas></div>
+<div class="ld-px" id="ldPxWrap"><div class="ld-px-ph"><img class="ld-px-feed" id="ldFeed" data-img="L_feed" width="600" height="822" fetchpriority="high" decoding="async" alt="하루하루 앱 피드 화면. 방 사람들이 올린 3초 일상 영상이 칸마다 모여 있음"><img class="ld-px-tile t0" id="ldTile0" width="256" height="248" decoding="async" alt=""><img class="ld-px-tile t1" id="ldTile1" width="256" height="248" decoding="async" alt=""></div><canvas id="ldPx" role="img" aria-label="구름 위에 선 그녀와 그가 폰으로 각자의 하루를 3초씩 찍어 앱 피드로 보내고, 서로의 영상에 하트를 보내는 도트 그림"></canvas></div>
 <script>
-// 첫 화면 도트 장면 4판 (10/26 밤 사용자: "따라한 느낌 말고 우리만의 특색", "물건이 많아 메시지가 안 들어감"). 메시지 하나: 서로의 하루를 3초씩 보내다 보면 가까워진다.
-// 각자의 원(왼쪽 그녀의 카페, 오른쪽 그의 강아지 산책) → 찍을 때 초점 모서리와 녹화 점 → 찍은 칸이 하루(구름) 속을 지나 상대 폰으로 → 받은 사람 머리 위 하트 → 원이 한 칸씩 가까워짐 → 셋째 날 서로 하트, 맞닿은 자리 위에 큰 하트.
-// 색은 하늘색 바탕 그대로, 하트만 로즈. 그림은 저장소 밖 생성기(haru/output/join-story-hero-20261026/gen_px4.py)의 글자 그림. 화면 밀도에 맞춘 정수배라 흐리지 않음, 움직임 줄이기면 끝 장면 한 장.
+// 첫 화면 5판 (10/26 사용자: "앱 피드 화면을 맨 위에", "도트를 귀엽고 예쁘게"): 가운데 실제 앱 피드 폰(#ldFeed, 성별 판에 맞춰 나=유진/민준) 앞에 도트 층.
+// 구름 언덕 위 그녀(왼쪽)와 그(오른쪽), 왼쪽 위 하루 구름. 그녀가 찍으면 3초 칸이 피드 속 자기 칸으로 날아가고 그가 하트, 그다음 그가 찍어 보내고 그녀가 하트, 끝에 하루가 웃음.
+// 그림은 저장소 밖 생성기(haru/output/join-story-hero-20261026/v5/gen_px5.py)의 글자 그림. 화면 밀도에 맞춘 정수배라 흐리지 않음, 움직임 줄이기면 한 장면.
 (function(){
- var wrap=document.getElementById('ldPxWrap'), cv=document.getElementById('ldPx');
+ var wrap=document.getElementById('ldPxWrap'), cv=document.getElementById('ldPx'), img=document.getElementById('ldFeed');
+ var FEM=window.HH_G==='f', V=FEM?'f':'m', TILE=[document.getElementById('ldTile0'),document.getElementById('ldTile1')], tileOn=[null,null];
+ if(img&&!img.getAttribute('src')) img.src='/img/L_feed_'+V+'.webp';
+ TILE.forEach(function(el,i){ if(el&&!el.getAttribute('src')) el.src='/img/L_feed_'+V+'_t'+i+'.webp'; });
+ // 피드 맨 윗줄 두 칸은 처음엔 비어 있다가(나 칸 '눌러서 촬영', 상대 칸 빈 칸) 찍어 보낸 3초 칸이 닿는 순간 채워짐. 바퀴 끝 직전에 다시 비움
+ function setTile(i,on){ var el=TILE[i]; if(!el||tileOn[i]===on) return; tileOn[i]=on; if(el.classList) el.classList.toggle('on',on); }
  if(!wrap||!cv||!cv.getContext) return;
  var ctx=cv.getContext('2d'), lc=document.createElement('canvas'), lx=lc.getContext('2d');
  if(!ctx||!lx) return;
  var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
- var D={"SP":{"W":{"idle":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.","hhhhhhhhhh","hhsssssshh","hhsesseshh","hhsEssEshh","hhbsmmsbhh","hhhsssshhh","h.cccccc.h",".CccccccC.",".CccccccC.",".sccccccs.","..pppppp..",".pppppppp.","...s..s...","..oo..oo.."],"look":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.","hhhhhhhhhh","hhsssssshh","hhssessehh","hhssEssEhh","hhbsmmsbhh","hhhsssshhh","h.cccccc.h",".CccccccC.",".CccccccC.",".sccccccs.","..pppppp..",".pppppppp.","...s..s...","..oo..oo.."],"watch":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.","hhhhhhhhhh","hhsssssshh","hhsssssshh","hhsesseshh","hhbsmmsbhh","hhhsssshhh","h.cccccc.h",".CcckkccC.",".CcskkscC.","..cckkcc..","..pppppp..",".pppppppp.","...s..s...","..oo..oo.."],"film":["...hhhh.....","..hLLhhh....",".hhhhhhhh...",".hhhhhhhh...","hhhhhhhhhh..","hhsssssshh..","hhsesseshh..","hhsEssEshh..","hhbsmmsbhh..","hhhsssshhhkk","h.cccccc.hkk",".CccccccCCkk",".CccccccC.s.",".scccccc....","..pppppp....",".pppppppp...","...s..s.....","..oo..oo...."]},"M":{"idle":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.",".hhhhhhhh.",".hssssssh.",".hsessesh.",".hsEssEsh.","..bsmmsb..","...ssss...","..tttttt..",".tTwwwwTt.",".tTwwwwTt.",".stTTTTts.","..pppppp..","..pp..pp..","..pp..pp..","..oo..oo.."],"look":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.",".hhhhhhhh.",".hssssssh.",".hssesseh.",".hssEssEh.","..bsmmsb..","...ssss...","..tttttt..",".tTwwwwTt.",".tTwwwwTt.",".stTTTTts.","..pppppp..","..pp..pp..","..pp..pp..","..oo..oo.."],"watch":["...hhhh...","..hLLhhh..",".hhhhhhhh.",".hhhhhhhh.",".hhhhhhhh.",".hssssssh.",".hssssssh.",".hsessesh.","..bsmmsb..","...ssss...","..tttttt..",".tTwkkwTt.",".tTskksTt.","..tTkkTt..","..pppppp..","..pp..pp..","..pp..pp..","..oo..oo.."],"film":["...hhhh.....","..hLLhhh....",".hhhhhhhh...",".hhhhhhhh...",".hhhhhhhh...",".hssssssh...",".hsessesh...",".hsEssEsh...","..bsmmsb....","...ssss.....","..tttttt..kk",".tTwwwwTt.kk",".tTwwwwTttkk",".stTTTTt..s.","..pppppp....","..pp..pp....","..pp..pp....","..oo..oo...."]}},"PAL":{"W":{"h":"#4E3428","L":"#77513F","s":"#FCDCC6","e":"#2A3142","E":"#7F93C9","b":"#F8B4B8","m":"#E0786F","c":"#FFFFFF","C":"#E9DDD3","p":"#8EC1F0","o":"#7A5A4E","k":"#3A4258"},"M":{"h":"#2F2A2A","L":"#57504E","s":"#FCDCC6","e":"#2A3142","E":"#7F93C9","b":"#F8B4B8","m":"#E0786F","t":"#A9D3F7","T":"#86BBEA","w":"#FFFFFF","p":"#4A5C8E","o":"#2F3344","k":"#3A4258"}},"TABLE":["..R.R..",".kWWWk.",".kPPPk.",".kYYYk.","aaaaaaa","...A...","..AAA.."],"PUP":[".....DD..","....Dddd.","D...ddedn","dd..dddd.",".ddddddd.",".ddddddd.",".D.D..D.D"],"PUP2":[".....DD..","....Dddd.","....ddedn","dD..dddd.",".ddddddd.",".ddddddd.",".D.D..D.D"],"PROP":{"R":"#F2667C","k":"#E9B8A4","W":"#FFFFFF","P":"#F7B2C4","Y":"#F6D9A8","a":"#D9A574","A":"#B98552","d":"#F3E3CC","D":"#D4AE84","e":"#2A3142","n":"#3A3F4F"},"CARD":{"cake":["wwwwwwwww","wbbRbRbbw","wbkWWWkbw","wbkPPPkbw","wbkWWWkbw","wbkYYYkbw","wbbbbbbbw","wwwwwwwww"],"pup":["wwwwwwwww","wqqdddqqw","wDdddddDw","wDdededDw","wqddnddqw","wqqdtdqqw","wGGGGGGGw","wwwwwwwww"]},"CARDM":{"cake":["wwwww","wRbRw","wPPPw","wwwww"],"pup":["wwwww","wdddw","wGGGw","wwwww"]},"CARDX":["www","www"],"CP":{"w":"#FFFFFF","b":"#FFE4EC","R":"#F2667C","k":"#E9B8A4","W":"#FFFFFF","P":"#F7B2C4","Y":"#F6D9A8","q":"#D6ECFF","d":"#F3E3CC","D":"#C99E72","e":"#2A3142","n":"#2A3142","t":"#F59AAE","G":"#B6E2A6"},"IC":{"p":"#E56B8F","w":"#FFFFFF"},"HS":[".p.p.","ppppp",".ppp.","..p.."],"HB":[".pp...pp.","pwpp.pppp","ppppppppp","ppppppppp",".ppppppp.","..ppppp..","...ppp...","....p...."]};
- var CORE=58, ROWS=44, LOOP=13.8, END=12.6, W=64, H=ROWS, S=4, OX=0, offX=0, devW=0, devH=0;
- var cache={};
- function bake(rows,pal,flip){ var h=rows.length,w=0,i,j; for(i=0;i<h;i++) w=Math.max(w,rows[i].length);
-  var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d');
-  for(i=0;i<h;i++) for(j=0;j<rows[i].length;j++){ var col=pal[rows[i].charAt(j)]; if(!col) continue; x.fillStyle=col; x.fillRect(flip?w-1-j:j,i,1,1); }
-  return c; }
- function spr(key,rows,pal,flip){ key+=flip?'<':''; return cache[key]||(cache[key]=bake(rows,pal,flip)); }
+ var D={"SP":{"W":{"idle_open":[".......OOOOOOOO.......","......OhhhhhhhhO......","....OOhhhHHHHhhhOO....","...OhhhHHhhhhHhhhhO...","...OhhHhhhhhhhhhhhO...","..OhhhHhhhhhhhhhhhhO..","..OhhhhhhhhhhhhhhhhO..",".OhhhhhshshhshshhhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.","..OhhsseesssseesshhO..","..OhHsswesssswesshhO..","..OdhhsEEssssEEshhdO..","..OdhbbssssssssbbhdO..",".OddhhhsssmmssshhhddO.",".OddddhhhsssshhhddddO.","..OddddddhSShddddddO..","..OdddddccCcccdddddO..","...OdCdcccCBcccdCdO...","..OddCcccgggccccCddO..","...OdCccskikscccCdO...","....OCccckkkccccCO....",".....occcKKKcccco.....",".....oCccccccccCo.....","......ouuuuuuuuo......",".....oUUUUUUUUUUo.....","......ooSSooSSoo......",".......oWWooWWo.......","......offfoofffo......",".......ooo..ooo......."],"idle_shut":[".......OOOOOOOO.......","......OhhhhhhhhO......","....OOhhhHHHHhhhOO....","...OhhhHHhhhhHhhhhO...","...OhhHhhhhhhhhhhhO...","..OhhhHhhhhhhhhhhhhO..","..OhhhhhhhhhhhhhhhhO..",".OhhhhhshshhshshhhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.","..OhhsssssssssssshhO..","..OhHsssssssssssshhO..","..OdhhseesssseeshhdO..","..OdhbbssssssssbbhdO..",".OddhhhsssmmssshhhddO.",".OddddhhhsssshhhddddO.","..OddddddhSShddddddO..","..OdddddccCcccdddddO..","...OdCdcccCBcccdCdO...","..OddCcccgggccccCddO..","...OdCccskikscccCdO...","....OCccckkkccccCO....",".....occcKKKcccco.....",".....oCccccccccCo.....","......ouuuuuuuuo......",".....oUUUUUUUUUUo.....","......ooSSooSSoo......",".......oWWooWWo.......","......offfoofffo......",".......ooo..ooo......."],"idle_happy":[".......OOOOOOOO.......","......OhhhhhhhhO......","....OOhhhHHHHhhhOO....","...OhhhHHhhhhHhhhhO...","...OhhHhhhhhhhhhhhO...","..OhhhHhhhhhhhhhhhhO..","..OhhhhhhhhhhhhhhhhO..",".OhhhhhshshhshshhhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.","..OhhsssssssssssshhO..","..OhHsseesssseesshhO..","..OdhhessessessehhdO..","..OdhbbssssssssbbhdO..",".OddhhhsssmmssshhhddO.",".OddddhhhsssshhhddddO.","..OddddddhSShddddddO..","..OdddddccCcccdddddO..","...OdCdcccCBcccdCdO...","..OddCcccgggccccCddO..","...OdCccskikscccCdO...","....OCccckkkccccCO....",".....occcKKKcccco.....",".....oCccccccccCo.....","......ouuuuuuuuo......",".....oUUUUUUUUUUo.....","......ooSSooSSoo......",".......oWWooWWo.......","......offfoofffo......",".......ooo..ooo......."],"film_open":[".......OOOOOOOO.......","......OhhhhhhhhO......","....OOhhhHHHHhhhOO....","...OhhhHHhhhhHhhhhO...","...OhhHhhhhhhhhhhhO...","..OhhhHhhhhhhhhhhhhO..","..OhhhhhhhhhhhhhhhhO..",".OhhhhhshshhshshhhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.","..OhhsseesssseesshhOo.","..OhHsswesssswesshppPo","..OdhhsEEssssEEshhpppo","..Odhbbssssssssbbspppo",".Oddhhhsssmmssshhspppo",".OddddhhhsssshhhccddO.","..OddddddhSShdddccdO..","..OdddddccCcccddccdO..","...OdCdcccCBcccdccO...","..OddCcgggCcccccdddO..","...OdCskiksBccccOdO...","....OCckkkccccccdO....",".....ocKKKccccccO.....",".....oCccccccccCo.....","......ouuuuuuuuo......",".....oUUUUUUUUUUo.....","......ooSSooSSoo......",".......oWWooWWo.......","......offfoofffo......",".......ooo..ooo......."],"film_shut":[".......OOOOOOOO.......","......OhhhhhhhhO......","....OOhhhHHHHhhhOO....","...OhhhHHhhhhHhhhhO...","...OhhHhhhhhhhhhhhO...","..OhhhHhhhhhhhhhhhhO..","..OhhhhhhhhhhhhhhhhO..",".OhhhhhshshhshshhhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.",".OhhhhsssssssssshhhhO.","..OhhsssssssssssshhOo.","..OhHsssssssssssshppPo","..Odhhseesssseeshhpppo","..Odhbbssssssssbbspppo",".Oddhhhsssmmssshhspppo",".OddddhhhsssshhhccddO.","..OddddddhSShdddccdO..","..OdddddccCcccddccdO..","...OdCdcccCBcccdccO...","..OddCcgggCcccccdddO..","...OdCskiksBccccOdO...","....OCckkkccccccdO....",".....ocKKKccccccO.....",".....oCccccccccCo.....","......ouuuuuuuuo......",".....oUUUUUUUUUUo.....","......ooSSooSSoo......",".......oWWooWWo.......","......offfoofffo......",".......ooo..ooo......."]},"M":{"idle_open":["........oooooo........","......oohhhhhhoo......",".....ohHHhdhHHhho.....","....ohHHhhhdhhHhho....","...ohhhhhhhhhhhhhho...","..ohhhhhhHhhhHhhhhho..","..ohhhhhhhhhhhhhhhho..","..ohhhhhhshhsshhhhho..","..ohhhhsssshsssshhho..","..ohhhsssssssssshhho..","..ohhsssssssssssshho..","..ohhsseesssseesshho..","...ossswesssswessso...","...oSssEEssssEEssSo...","....ohbssssssssbho....",".....oosssmmsssoo.....",".......oossssoo.......",".......oVVTTVVo.......","......ovxvzvvxvo......",".....ovxvvzvvvxvo.....","....oVxvvvzvvvvxVo....","....oVvvvqqqQvvvVo....","....oVvvsqqqqsvvVo....","....oVvvvqqqqvvvVo....","....oVvvvvzvvvvvVo....",".....ovvvvzvvvvvo.....","......onnnnnnnno......","......onnnNNnnno......","......onnnoonnno......",".....ogWWWooWWWgo.....","......oooo..oooo......"],"idle_shut":["........oooooo........","......oohhhhhhoo......",".....ohHHhdhHHhho.....","....ohHHhhhdhhHhho....","...ohhhhhhhhhhhhhho...","..ohhhhhhHhhhHhhhhho..","..ohhhhhhhhhhhhhhhho..","..ohhhhhhshhsshhhhho..","..ohhhhsssshsssshhho..","..ohhhsssssssssshhho..","..ohhsssssssssssshho..","..ohhsssssssssssshho..","...osssssssssssssso...","...oSsseesssseessSo...","....ohbssssssssbho....",".....oosssmmsssoo.....",".......oossssoo.......",".......oVVTTVVo.......","......ovxvzvvxvo......",".....ovxvvzvvvxvo.....","....oVxvvvzvvvvxVo....","....oVvvvqqqQvvvVo....","....oVvvsqqqqsvvVo....","....oVvvvqqqqvvvVo....","....oVvvvvzvvvvvVo....",".....ovvvvzvvvvvo.....","......onnnnnnnno......","......onnnNNnnno......","......onnnoonnno......",".....ogWWWooWWWgo.....","......oooo..oooo......"],"idle_happy":["........oooooo........","......oohhhhhhoo......",".....ohHHhdhHHhho.....","....ohHHhhhdhhHhho....","...ohhhhhhhhhhhhhho...","..ohhhhhhHhhhHhhhhho..","..ohhhhhhhhhhhhhhhho..","..ohhhhhhshhsshhhhho..","..ohhhhsssshsssshhho..","..ohhhsssssssssshhho..","..ohhsssssssssssshho..","..ohhsssssssssssshho..","...ossseesssseessso...","...oSsessessessesSo...","....ohbssssssssbho....",".....oosssmmsssoo.....",".......oossssoo.......",".......oVVTTVVo.......","......ovxvzvvxvo......",".....ovxvvzvvvxvo.....","....oVxvvvzvvvvxVo....","....oVvvvqqqQvvvVo....","....oVvvsqqqqsvvVo....","....oVvvvqqqqvvvVo....","....oVvvvvzvvvvvVo....",".....ovvvvzvvvvvo.....","......onnnnnnnno......","......onnnNNnnno......","......onnnoonnno......",".....ogWWWooWWWgo.....","......oooo..oooo......"],"film_open":["........oooooo........","......oohhhhhhoo......",".....ohHHhdhHHhho.....","....ohHHhhhdhhHhho....","...ohhhhhhhhhhhhhho...","..ohhhhhhHhhhHhhhhho..","..ohhhhhhhhhhhhhhhho..","..ohhhhhhshhsshhhhho..","..ohhhhsssshsssshhho..","..ohhhsssssssssshhho..","..ohhsssssssssssshho..",".oohhsseesssseesshho..","oQqqssswesssswessso...","oqqqSssEEssssEEssSo...","oqqqshbssssssssbho....","oqqqsoosssmmsssoo.....",".ooovvooossssoo.......","...oxvooVVTTVVo.......","...oxvovxvzvvxvo......","...ovvvxvvzvvvxvo.....","....ooxvvvzvvvvxVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvso....","......onnnnnnnnoo.....","......onnnNNnnno......","......onnnoonnno......",".....ogWWWooWWWgo.....","......oooo..oooo......"],"film_shut":["........oooooo........","......oohhhhhhoo......",".....ohHHhdhHHhho.....","....ohHHhhhdhhHhho....","...ohhhhhhhhhhhhhho...","..ohhhhhhHhhhHhhhhho..","..ohhhhhhhhhhhhhhhho..","..ohhhhhhshhsshhhhho..","..ohhhhsssshsssshhho..","..ohhhsssssssssshhho..","..ohhsssssssssssshho..",".oohhsssssssssssshho..","oQqqsssssssssssssso...","oqqqSsseesssseessSo...","oqqqshbssssssssbho....","oqqqsoosssmmsssoo.....",".ooovvooossssoo.......","...oxvooVVTTVVo.......","...oxvovxvzvvxvo......","...ovvvxvvzvvvxvo.....","....ooxvvvzvvvvxVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvVo....",".....ovvvvzvvvvvso....","......onnnnnnnnoo.....","......onnnNNnnno......","......onnnoonnno......",".....ogWWWooWWWgo.....","......oooo..oooo......"]},"HARU":{"open":[".........ooccccoo.........","........occcccccco........",".......occcccccccco.......","......oocccccccccco.......","....oocccccccccccccooo....","...occcccccccccccccccco...","..occcccccccccccccccccco..","..occccccccccccccccccccco.",".occccccceeccccceecccccco.",".occccccceeccccceecccccco.",".occccbbccccececccbbcccco.","..occccccccccecccccccccco.","..occcccccccccccccccccco..","..ocCCCCCCCCCCCCCCCCCCco..","...ooocccoooooooooooooo...","......ooo................."],"shut":[".........ooccccoo.........","........occcccccco........",".......occcccccccco.......","......oocccccccccco.......","....oocccccccccccccooo....","...occcccccccccccccccco...","..occcccccccccccccccccco..","..occccccccccccccccccccco.",".occcccccccccccccccccccco.",".occcccccecccccceccccccco.",".occccbbccccececccbbcccco.","..occccccccccecccccccccco.","..occcccccccccccccccccco..","..ocCCCCCCCCCCCCCCCCCCco..","...ooocccoooooooooooooo...","......ooo................."],"happy":[".........ooccccoo.........","........occcccccco........",".......occcccccccco.......","......oocccccccccco.......","....oocccccccccccccooo....","...occcccccccccccccccco...","..occcccccccccccccccccco..","..occccccccccccccccccccco.",".occcccccecccccceccccccco.",".occccccececcccececccccco.",".occccbbcccceeecccbbcccco.","..occccccccccecccccccccco.","..occcccccccccccccccccco..","..ocCCCCCCCCCCCCCCCCCCco..","...ooocccoooooooooooooo...","......ooo................."]}},"PAL":{"W":{"o":"#5C3B33","O":"#A97C52","h":"#E6C28E","H":"#F7E3BB","d":"#C99D66","s":"#FFE6D4","S":"#F4C9B4","e":"#3B2B3C","E":"#7C6B9C","w":"#FFFFFF","b":"#FFAFC0","m":"#E0727F","c":"#FFF8EC","C":"#E8DAC3","B":"#CDBB9E","W":"#FFFFFF","u":"#AFC9EA","U":"#8DAAD6","f":"#8A5A49","p":"#FF9DBA","P":"#5A4A5E","g":"#E3F3FF","k":"#9A6243","K":"#74452D","i":"#FFFFFF"},"M":{"o":"#1F2128","h":"#3A302E","H":"#62554F","d":"#2A2322","s":"#FFE6D4","S":"#F4C9B4","e":"#2E2B3E","E":"#5E6E9C","w":"#FFFFFF","b":"#FFC1C9","m":"#D9707C","v":"#3D424D","V":"#2B2F37","x":"#F3F5F8","z":"#1C1F25","T":"#FFFFFF","n":"#A2B9DC","N":"#8099C2","W":"#FFFFFF","g":"#C9D2DE","q":"#BFE3FF","Q":"#3E4A5E"},"HARU":{"o":"#8CC4F2","c":"#FFFFFF","C":"#E3F0FC","e":"#2C6CD0","w":"#FFFFFF","b":"#FFC4CF"},"CARD":{"o":"#C9DCEF","w":"#FFFFFF","q":"#EAF6FF","y":"#FFF1CF","i":"#F4FBFF","c":"#9A6A4F","C":"#7E5440","s":"#FF8FB1","a":"#FFE0CC","N":"#4C5567","V":"#2B2F37","T":"#FFFFFF","x":"#F3F5F8","k":"#3D424D","z":"#1C1F25"},"IC":{"p":"#FF6F96","P":"#E2557F","w":"#FFFFFF","y":"#FFE8A3","Y":"#FFFFFF"}},"CARD":{"W":["ooooooooo","owwwwwwwo","owyyysywo","owyiiiywo","owycicywo","owycccywo","owyCCCywo","owwwwwwwo","owwwwwwwo","ooooooooo"],"M":["ooooooooo","owwwwwwwo","owNNaNNwo","owNVTVNwo","owxkzkxwo","owkkzkkwo","owkkzkkwo","owwwwwwwo","owwwwwwwo","ooooooooo"]},"CARDM":{"W":["ooooo","owiwo","owcwo","owwwo","ooooo"],"M":["ooooo","owawo","owkwo","owwwo","ooooo"]},"CARDS":["www","wqw","www"],"HS":[".p.p.","ppppp","ppppp",".ppp.","..p.."],"HM":[".pp.pp.","pwpppPp","ppppppp","ppppppp",".ppppp.","..ppp..","...p..."],"SPARK":[".y.","yYy",".y."]};
+ var LOOP=8.8, S=3, W=0, H=0, devW=0, devH=0, P=null, BANK=null, cache={};
+ function bake(rows,pal){ var h=rows.length,w=rows[0].length,c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d');
+  for(var i=0;i<h;i++) for(var j=0;j<w;j++){ var col=pal[rows[i].charAt(j)]; if(col){ x.fillStyle=col; x.fillRect(j,i,1,1); } } return c; }
+ function spr(key,rows,pal){ return cache[key]||(cache[key]=bake(rows,pal)); }
  function put(c,x,y){ lx.drawImage(c,Math.round(x),Math.round(y)); }
  function dot(x,y,col){ lx.fillStyle=col; lx.fillRect(Math.round(x),Math.round(y),1,1); }
  function seg(t,a,b){ return t<=a?0:t>=b?1:(t-a)/(b-a); }
  function ease(p){ return p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; }
- function steps(a){ return Math.round(a*3)/3; }
- function inside(t,rs){ for(var i=0;i<rs.length;i++) if(t>=rs[i][0]&&t<rs[i][1]) return rs[i]; return null; }
- function blob(w,h,circ,rect,fill,edge,shade){ var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d');
-  function ins(px,py){ if(px<0||py<0||px>=w||py>=h) return false; var X=px+.5,Y=py+.5; for(var i=0;i<circ.length;i++){ var d=circ[i]; if((X-d[0])*(X-d[0])+(Y-d[1])*(Y-d[1])<=d[2]*d[2]) return true; } return !!rect&&X>=rect[0]&&X<=rect[2]&&Y>=rect[1]&&Y<=rect[3]; }
-  for(var py=0;py<h;py++) for(var px=0;px<w;px++){ var col=null; if(ins(px,py)) col=(shade&&!ins(px,py+1))?shade:fill; else if(ins(px-1,py)||ins(px+1,py)||ins(px,py-1)||ins(px,py+1)) col=edge; if(col){ x.fillStyle=col; x.fillRect(px,py,1,1); } }
+ function inn(t,a,b){ return t>=a&&t<b; }
+ // 발밑 뭉게구름(사람마다 하나): 흰 몸통 + 하늘색 테두리 + 아래 옅은 그늘. 앞줄(아래 3줄)은 사람 뒤에 다시 그려 발을 살짝 덮음
+ function puff(){ var w=30, h=11, c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d'), pf=[[7,6.5,4.6],[14,4.6,5.4],[21.5,6,4.8],[15,8,6.6]];
+  function ins(X,Y){ X+=.5; Y+=.5; for(var k=0;k<pf.length;k++){ var q=pf[k]; if((X-q[0])*(X-q[0])/(q[2]*q[2]*1.9)+(Y-q[1])*(Y-q[1])/(q[2]*q[2]*.62)<=1) return true; } return false; }
+  for(var y=0;y<h;y++) for(var X=0;X<w;X++){ var col=null;
+   if(ins(X,y)) col=ins(X,y+1)?(y>=h-4?'#EAF4FD':'#FFFFFF'):'#D6EAFB'; else if(ins(X,y+1)||ins(X-1,y)||ins(X+1,y)||ins(X,y-1)) col='#9FCBF2';
+   if(col){ x.fillStyle=col; x.fillRect(X,y,1,1); } }
   return c; }
- // 하루 (앱 아이콘 구름)
- var HARU=blob(22,13,[[6.5,8,4.3],[11,5.6,5.2],[16.2,8,4]],[2.6,7.5,19.6,11.6],'#FFFFFF','#8CC4F2','#E6F2FD');
- // 각자의 원: 가운데 픽셀 기준 반지름 R, 가운데보다 FL 줄 아래부터 바닥(그녀는 카페 마루, 그는 풀밭). 테두리와 바탕을 따로 구워, 맞닿으면 바깥선만 남게 그림
- var R=13, RR=R*(R+1), FL=7;
- function disc(sky,ground){ var n=2*R+1, c=document.createElement('canvas'); c.width=n; c.height=n; var x=c.getContext('2d');
-  for(var dy=-R;dy<=R;dy++) for(var dx=-R;dx<=R;dx++) if(dx*dx+dy*dy<=RR){ x.fillStyle=dy>=FL?ground:sky; x.fillRect(dx+R,dy+R,1,1); }
-  return c; }
- function rim(col){ var n=2*R+3, c=document.createElement('canvas'); c.width=n; c.height=n; var x=c.getContext('2d'); x.fillStyle=col;
-  function ins(dx,dy){ return dx*dx+dy*dy<=RR; }
-  for(var dy=-R-1;dy<=R+1;dy++) for(var dx=-R-1;dx<=R+1;dx++) if(!ins(dx,dy)&&(ins(dx-1,dy)||ins(dx+1,dy)||ins(dx,dy-1)||ins(dx,dy+1))) x.fillRect(dx+R+1,dy+R+1,1,1);
-  return c; }
- var DISC={W:disc('#FFEBDD','#F3D2B8'),M:disc('#F0F9FF','#CDEBBE')}, RIM={W:rim('#F2C6A6'),M:rim('#B9DAF3')};
- var BLINK={}; ['W','M'].forEach(function(k){ var p=D.PAL[k], b={}; for(var q in p) b[q]=p[q]; b.e=p.s; b.E=p.s; BLINK[k]=b; });
- // 시간표(초): 첫날 그녀가 보냄, 둘째 날 그가 보냄, 셋째 날 동시에. 받은 쪽 하트 뒤마다 원이 한 칸씩 다가감(NEAR)
- var FILM={W:[[.3,1.6],[7.5,8.8]],M:[[3.9,5.2],[7.5,8.8]]}, WATCH={W:[[5.8,7.4],[9.4,10.9]],M:[[2.2,3.8],[9.4,10.9]]};
- var FLY=[['cake','W',1.3,'M'],['pup','M',4.9,'W'],['cake','W',8.5,'M'],['pup','M',8.5,'W']];   // [칸, 찍은 사람, 떠나는 시각, 받는 사람]
- var GOT=[['M',3.1],['W',6.7],['M',10.3],['W',10.3]];   // 받은 사람 머리 위 하트
- var NEAR=[3.7,7.3,11,11.6];
-
- function draw(T,still){
-  var t=still?END:(T%LOOP), G=H-6, CY=G-9, i;   // G: 사람 발 밑 줄, CY: 원 가운데 줄
-  lx.clearRect(0,0,W,H);
-  var s=0; for(i=0;i<NEAR.length;i++) if(still||t>=NEAR[i]) s=i+1;
-  var hop=!still&&NEAR.some(function(g){ return t>=g&&t<g+.2; });
-  var LX=OX+13+s, RX=OX+44-s;   // 두 원의 가운데 x: 틈 4칸 → 2칸 → 맞닿음 → 조금 겹침
-  // 원: 테두리 → 바탕 → 겹친 자리(연한 로즈)
-  put(RIM.W,LX-R-1,CY-R-1); put(RIM.M,RX-R-1,CY-R-1); put(DISC.W,LX-R,CY-R); put(DISC.M,RX-R,CY-R);
-  if(RX-LX<=2*R) for(var yy=CY-R;yy<=CY+R;yy++) for(var xx=RX-R;xx<=LX+R;xx++){ var a=xx-LX, b=yy-CY, c2=xx-RX; if(a*a+b*b<=RR&&c2*c2+b*b<=RR) dot(xx,yy,b>=FL?'#EFD9CC':'#FCEEF0'); }
-  // 소품: 그녀 쪽 케이크 탁자, 그 쪽 강아지(꼬리 흔듦)
-  var pf=Math.floor(T*2.5)%2;
-  put(spr('table',D.TABLE,D.PROP),LX+2,G-7); put(spr('pup'+pf,pf?D.PUP2:D.PUP,D.PROP),RX-11,G-7);
-  var subj={W:[LX+1,G-9,LX+9,G-2],M:[RX-12,G-8,RX-2,G-1]};   // 찍히는 것의 초점 모서리 상자
-  // 사람: 그녀는 원 왼쪽, 그는 원 오른쪽(뒤집어 가운데를 봄)
-  function pose(who){ if(still||t>=10.9) return 'look'; if(inside(t,FILM[who])) return 'film'; if(inside(t,WATCH[who])) return 'watch'; return 'idle'; }
-  var people={W:{x:LX-11,flip:false},M:{x:RX+1,flip:true}}, at={};
-  ['W','M'].forEach(function(who,ix){ var p=people[who], ps=pose(who), bl=ps!=='film'&&((T+ix*1.7)%3.6)<.13;
-   var c=spr(who+ps+(bl?'b':''),D.SP[who][ps],bl?BLINK[who]:D.PAL[who],p.flip), dx=p.flip?p.x-(c.width-10):p.x;
-   put(c,dx,G-18-(hop?1:0)); at[who]={dx:dx,pose:ps}; });
-  // 찍는 중: 초점 모서리(처음 0.2초는 한 칸 넓었다 조여듦) + 폰의 녹화 점
-  ['W','M'].forEach(function(who){ var r=at[who].pose==='film'&&inside(t,FILM[who]); if(!r) return; var b=subj[who], e=t-r[0]<.2?1:0;
-   lx.fillStyle='#2F7BD6'; [[b[0]-e,b[1]-e,1,1],[b[2]+e,b[1]-e,-1,1],[b[0]-e,b[3]+e,1,-1],[b[2]+e,b[3]+e,-1,-1]].forEach(function(k){ lx.fillRect(k[0],k[1],1,1); lx.fillRect(k[0]+k[2],k[1],1,1); lx.fillRect(k[0],k[1]+k[3],1,1); });
-   if(Math.floor(T*4)%2) dot(people[who].flip?at[who].dx:at[who].dx+11,G-18+(who==='M'?10:9),'#F2545B'); });
-  // 찍힌 순간 하얗게 번쩍
-  FLY.forEach(function(f){ var d=t-f[2]; if(still||d<0||d>=.13) return; var b=subj[f[1]]; lx.globalAlpha=.6; lx.fillStyle='#FFFFFF'; lx.fillRect(b[0]+1,b[1]+1,b[2]-b[0]-1,b[3]-b[1]-1); lx.globalAlpha=1; });
-  // 찍은 칸: 찍은 자리 → 하루 구름 속(구름 뒤로 들어가 잠깐 안 보임) → 상대 폰 (닿을 때 줄어듦). 구름보다 먼저 그려 구름 뒤로 지나감. 내려올 때는 가운데 쪽으로 휘어 내려와 가슴 높이에서 폰으로 들어감(얼굴을 덮지 않게)
-  var hx=OX+18, hy=1+(Math.floor(T/0.9)%2), hub={x:hx+11,y:hy+6}, gulp=false;
-  function phone(who){ return {x:at[who].dx+5,y:G-6}; }
-  if(!still) FLY.forEach(function(f){ var d=t-f[2]; if(d<0||d>=1.8) return; var b=subj[f[1]], a={x:(b[0]+b[2])/2,y:(b[1]+b[3])/2}, e=phone(f[3]), p, X, Y, c=spr('card'+f[0],D.CARD[f[0]],D.CP);
-   if(d<.75){ p=ease(d/.75); X=a.x+(hub.x-a.x)*p; Y=a.y+(hub.y-a.y)*p-Math.sin(p*Math.PI)*2; }
-   else if(d<.9){ gulp=true; return; }
-   else { p=ease((d-.9)/.9); var u=1-p, kx=e.x+(f[3]==='W'?10:-10), ky=e.y-2; X=u*u*hub.x+2*u*p*kx+p*p*e.x; Y=u*u*hub.y+2*u*p*ky+p*p*e.y; if(p>.9) c=spr('cardx',D.CARDX,D.CP); else if(p>.74) c=spr('cardm'+f[0],D.CARDM[f[0]],D.CP); }
-   put(c,X-c.width/2,Y-c.height/2); });
-  // 하루: 둥실, 눈 깜빡, 칸을 삼키면 꿀꺽, 끝에 웃는 눈
-  put(HARU,hx,hy+(gulp?1:0)); var cy2=hy+(gulp?1:0), happy=still||t>=11.8; lx.fillStyle='#1F6FD6';
-  if(happy){ [[8,6],[13,6]].forEach(function(e){ lx.fillRect(hx+e[0]-1,cy2+e[1]+1,1,1); lx.fillRect(hx+e[0],cy2+e[1],1,1); lx.fillRect(hx+e[0]+1,cy2+e[1]+1,1,1); }); }
-  else if((T%4.1)<.14){ lx.fillRect(hx+8,cy2+7,1,1); lx.fillRect(hx+13,cy2+7,1,1); } else { lx.fillRect(hx+8,cy2+6,1,2); lx.fillRect(hx+13,cy2+6,1,2); }
-  dot(hx+9,cy2+9,'#1F6FD6'); dot(hx+10,cy2+10,'#1F6FD6'); dot(hx+11,cy2+10,'#1F6FD6'); dot(hx+12,cy2+9,'#1F6FD6'); dot(hx+6,cy2+9,'#F8B4BE'); dot(hx+15,cy2+9,'#F8B4BE');
-  // 받은 영상: 폰 위 작은 빛 + 머리 위 작은 하트
-  GOT.forEach(function(g){ var d=t-g[1]; if(still||d<0||d>=.6) return; var ph=phone(g[0]);
-   dot(ph.x-1,ph.y-2,'#FFF3C4'); dot(ph.x,ph.y-2,'#FFF3C4'); put(spr('hs',D.HS,D.IC),at[g[0]].dx+3,G-23-(d<.25?0:1)); });
-  // 셋째 날: 둘 다 머리 위 하트 → 가운데로 날아가 맞닿은 자리 위에서 큰 하트
-  var mid={x:(LX+RX)/2,y:CY-9};
-  if(!still&&t>=10.9&&t<11.8){ var q=ease(seg(t,11.2,11.8));
-   ['W','M'].forEach(function(who){ var sx=at[who].dx+3, sy=G-24; put(spr('hs',D.HS,D.IC),sx+(mid.x-2.5-sx)*q,sy+(mid.y-2-sy)*q-Math.sin(q*Math.PI)*3); }); }
-  if(still||t>=11.8){ var bp=still?0:(t<11.92?-1:(Math.floor(T/.6)%2));
-   put(spr('hb',D.HB,D.IC),mid.x-4.5,mid.y-4+bp);
-   if(!still&&t<12.4){ var r=5+Math.round(seg(t,11.8,12.4)*3); dot(mid.x-r,mid.y-2,'#FFD66B'); dot(mid.x+r,mid.y-2,'#FFD66B'); dot(mid.x-r+1,mid.y+3,'#FFFFFF'); dot(mid.x+r-1,mid.y+3,'#FFFFFF'); } }
-  // 화면에 옮기기 (정수배, 흐림 없음). 한 바퀴 끝에 세 단계로 흐려졌다 다시 처음부터 (첫 바퀴는 바로 보임)
-  var fade=still?1:t>=13.5?steps(1-seg(t,13.5,13.8)):(T>=LOOP&&t<.3)?steps(seg(t,0,.3)):1;
-  ctx.clearRect(0,0,devW,devH); ctx.imageSmoothingEnabled=false; ctx.webkitImageSmoothingEnabled=false; ctx.globalAlpha=fade; ctx.drawImage(lc,0,0,W,H,offX,0,W*S,H*S); ctx.globalAlpha=1;
- }
  function fit(){
-  var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)), cw=wrap.clientWidth||360;
-  devW=Math.round(cw*dpr); S=Math.max(2,Math.min(Math.round(6.4*dpr),Math.floor(devW/(CORE+2))));
-  W=Math.ceil(devW/S); H=ROWS; devH=H*S; OX=Math.floor((W-CORE)/2); offX=Math.floor((devW-W*S)/2);
-  lc.width=W; lc.height=H; cv.width=devW; cv.height=devH; cv.style.width=cw+'px'; cv.style.height=(devH/dpr)+'px'; wrap.style.height=(devH/dpr)+'px';
+  var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)), cw=wrap.clientWidth||360, ch=wrap.clientHeight||280;
+  S=Math.max(2,Math.round(Math.max(2.4,Math.min(3.4,cw/118))*dpr));
+  devW=Math.round(cw*dpr); devH=Math.round(ch*dpr); W=Math.ceil(devW/S); H=Math.ceil(devH/S);
+  lc.width=W; lc.height=H; cv.width=devW; cv.height=devH; cv.style.width=cw+'px'; cv.style.height=ch+'px';
+  BANK=puff(); cache={};
+  var wr=wrap.getBoundingClientRect(), ir=img?img.getBoundingClientRect():{left:wr.left+cw*.22,top:wr.top,width:cw*.56,height:cw*.766};
+  function at(fx,fy){ return {x:(ir.left-wr.left+fx*ir.width)*dpr/S, y:(ir.top-wr.top+fy*ir.height)*dpr/S}; }
+  var L=at(0,0).x, R=at(1,0).x, by=H-11;
+  P={ by:by, fy:by+5-31, gx:Math.max(0,Math.round(L)-19), bx:Math.min(W-22,Math.round(R)-3), me:at(.287,.40), other:at(.713,.40) };
+  P.hx=Math.max(0,P.gx-3); P.hy=Math.round(H*.12);
+  P.tw=[[Math.round(R)+2,Math.round(H*.16),0],[Math.round(R)+9,Math.round(H*.34),1.1],[Math.round(L)-8,Math.round(H*.5),2.2]];
+ }
+ var FLY=[{w:'W',t0:1.75,t1:2.65},{w:'M',t0:5.15,t1:6.05}];
+ function tgt(w){ return ((w==='W')===FEM)?P.me:P.other; }
+ function person(k,t,still){
+  var isW=k==='W', x=isW?P.gx:P.bx, bob=still?0:((Math.floor(t/.6)+(isW?0:1))%2);
+  var film=!still&&(isW?inn(t,.6,2.1):inn(t,4,5.5));
+  var happy=still?isW:(isW?inn(t,6.2,7.3):inn(t,2.8,3.9));
+  var blink=!still&&(isW?(inn(t,3.3,3.42)||inn(t,8.1,8.22)):(inn(t,1.2,1.32)||inn(t,7.7,7.82)));
+  var key=(film?'film':'idle')+'_'+(happy?'happy':blink?'shut':'open');
+  if(!D.SP[k][key]) key=(film?'film':'idle')+'_open';
+  var y=P.fy-(film?0:bob);
+  put(spr(k+key,D.SP[k][key],D.PAL[k]),x,y);
+  if(happy) put(spr('hs',D.HS,D.PAL.IC),x+8,y-7-(still?0:(Math.floor(t/.3)%2)));
+  if(film){ var lx0=isW?x+19:x+2, ly0=y+12, a=isW?[.8,1.75]:[4.2,5.15], fl=isW?1.62:5.02;
+   if(inn(t,a[0],a[1])&&Math.floor(t*4)%2===0){ dot(lx0,ly0-3,'#FF4D6D'); dot(lx0+1,ly0-3,'#FF4D6D'); }
+   if(inn(t,fl,fl+.12)) put(spr('sp',D.SPARK,D.PAL.IC),lx0-1,ly0-1); }
+ }
+ function draw(T,still){
+  var t=still?0:(T%LOOP), i;
+  FLY.forEach(function(f){ setTile(((f.w==='W')===FEM)?0:1, still||(t>=f.t1&&t<8.45)); });
+  lx.clearRect(0,0,W,H);
+  // 반짝이(폰 옆 하늘)
+  if(!still) P.tw.forEach(function(w){ var ph=(t+w[2])%3.3; if(ph<.45) put(spr('sp',D.SPARK,D.PAL.IC),w[0],w[1]); else if(ph<.75) dot(w[0]+1,w[1]+1,'#FFFFFF'); });
+  // 하루: 둥실, 가끔 깜빡, 끝에 웃음 + 하트
+  var hy=P.hy+(still?0:(Math.floor(T/.9)%2)), hf=(still||inn(t,7.3,8.8))?'happy':(inn(t,2.1,2.22)||inn(t,5.9,6.02))?'shut':'open';
+  put(spr('H'+hf,D.SP.HARU[hf],D.PAL.HARU),P.hx,hy);
+  if(still||inn(t,7.3,8.8)) put(spr('hm',D.HM,D.PAL.IC),P.hx+22,hy-2-(still?0:Math.round(seg(t,7.3,7.8)*2)));
+  // 발밑 뭉게구름(뒤) → 사람 → 구름 앞줄(발을 살짝 덮음)
+  var px0=P.gx-4, px1=P.bx-4;
+  put(BANK,px0,P.by); put(BANK,px1,P.by);
+  person('W',t,still); person('M',t,still);
+  lx.drawImage(BANK,0,7,30,4,px0,P.by+7,30,4); lx.drawImage(BANK,0,7,30,4,px1,P.by+7,30,4);
+  // 날아가는 3초 칸 → 피드 칸에 닿으면 반짝 → 그 칸에서 하트가 올라감
+  if(!still) FLY.forEach(function(f){ var e=tgt(f.w), x0=f.w==='W'?P.gx+19:P.bx+2, y0=P.fy+12;
+   if(inn(t,f.t0,f.t1)){ var p=seg(t,f.t0,f.t1), q=ease(p), u=1-q, cx=(x0+e.x)/2, cy=Math.min(y0,e.y)-18;
+    var X=u*u*x0+2*u*q*cx+q*q*e.x, Y=u*u*y0+2*u*q*cy+q*q*e.y;
+    var c=p<.6?spr('card'+f.w,D.CARD[f.w],D.PAL.CARD):p<.86?spr('cardm'+f.w,D.CARDM[f.w],D.PAL.CARD):spr('cards',D.CARDS,D.PAL.CARD);
+    put(c,X-c.width/2,Y-c.height/2); }
+   var d=t-f.t1;
+   if(d>=0&&d<.42){ var r=1+Math.round(d*9); dot(e.x-r,e.y,'#FFFFFF'); dot(e.x+r,e.y,'#FFFFFF'); dot(e.x,e.y-r,'#FFFFFF'); dot(e.x,e.y+r,'#FFFFFF'); put(spr('sp',D.SPARK,D.PAL.IC),e.x-1,e.y-1); }
+   if(d>=.15&&d<1.15&&!(d>.85&&Math.floor(t*10)%2)) put(spr('hs',D.HS,D.PAL.IC),e.x-2,e.y-5-Math.round((d-.15)*10)); });
+  ctx.clearRect(0,0,devW,devH); ctx.imageSmoothingEnabled=false; ctx.webkitImageSmoothingEnabled=false; ctx.drawImage(lc,0,0,W,H,0,0,W*S,H*S);
  }
  var acc=0, last=0, step=-1, seen=!window.IntersectionObserver;
  fit(); draw(acc,calm);
  addEventListener('resize',function(){ if(Math.round(wrap.clientWidth*(window.devicePixelRatio||1))!==devW){ fit(); draw(acc,calm); } });
+ if(img&&!img.complete) img.addEventListener('load',function(){ fit(); draw(acc,calm); });
  if(calm||!window.requestAnimationFrame) return;
  if(!seen) new IntersectionObserver(function(es){ seen=es[0].isIntersecting; }).observe(wrap);
  requestAnimationFrame(function tick(ts){ var dt=last?Math.min(.1,(ts-last)/1000):0; last=ts;
@@ -753,22 +764,20 @@ html[data-mode="form"] .fm-q{display:block}
 </header>
 
 <section class="ld-sec ld-pp" data-sec="pain">
-<!-- 고민 → 해결 (10/26 사용자: 페인포인트, 해결 제시. 문구는 지금 도는 광고 소재와 Notion 소구점 페이지에서: 고민 셋은 영화72시간 광고 2장, Notion 문제 1, 2, 여자 문제(상대가 이상한 사람은 아닌지 불안), 한숨은 무도짤 광고 4장, 해결은 Notion 우리의 소구점 1~3 + 가명, 흐린 사진, 서로 고르면 공개 + 친구랑 신청. 10/26 밤 사용자 "너무 따라한 느낌, 우리만의 특색" → 모양만 www, 스토어 스크린샷과 같은 우리 것으로. 전환 문장은 www 표어) -->
-<h2>설레려고 나간 소개팅,<br>근데 왜 피곤하기만 할까…</h2>
-<ul class="ld-pp-list">
-<li class="ld-fx"><img src="/img/L_e_hourglass.webp" width="40" height="40" loading="lazy" decoding="async" alt=""><div><b>사진이랑 키, 나이만 보고 나가서</b><span>처음 보는 사람이랑 2시간, 무슨 얘기 하지</span></div></li>
-<li class="ld-fx"><img src="/img/L_e_sigh.webp" width="40" height="40" loading="lazy" decoding="async" alt=""><div><b>아직 잘 모르는데 벌써 둘만의 대화</b><span>관심도 안 생겼는데 답장은 계속해야 하고</span></div></li>
-<li class="ld-fx"><img src="/img/L_e_think.webp" width="40" height="40" loading="lazy" decoding="async" alt=""><div><b>이 사람, 괜찮은 사람 맞을까?</b><span>프로필 몇 줄로는 알 수가 없고</span></div></li>
-</ul>
-<p class="ld-pp-say ld-fx">소개팅은 부담스럽고, 자만추는 안 되고…<br>그냥 자연스럽게 알아가고 싶은 건데!</p>
-<div class="ld-pp-turn ld-fx"><img src="/img/L_cloud_happy.svg" width="130" height="88" loading="lazy" decoding="async" alt=""><h2>그래서 하루하루는<br>프로필보다 <span class="ld-hl">일상<svg viewBox="0 0 200 30" preserveAspectRatio="none" aria-hidden="true"><path d="M3 20 C 38 9, 74 25, 110 16 S 168 6, 197 13"/></svg></span>을 먼저 봐요</h2></div>
-<ul class="ld-pp-sv">
-<li class="ld-fx"><img class="emo" src="/img/L_e_house.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>둘이 아니라, 여럿이 한 방에서</b><p>성비를 맞춘 방에서 각자 하루를 올려요. 관심이 생기기 전부터 한 사람과 대화를 이어갈 필요가 없어요.</p><div class="ld-crowd" aria-hidden="true"><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f"><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="o"><img src="/img/L_cloud_avatar.svg" alt=""></span><span class="f o"><img src="/img/L_cloud_avatar.svg" alt=""></span></div></div></li>
-<li class="ld-fx"><img class="emo" src="/img/L_e_camera.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>"뭐해?" 말고, 물어볼 게 있는 대화</b><p>상대가 올린 3초 영상이 첫마디의 단서예요. "여기 어디예요?" 한마디면 대화가 시작돼요.</p></div></li>
-<li class="ld-fx"><img class="emo" src="/img/L_e_eyes.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>나한테 하는 말뿐 아니라,<br>다른 사람에게 하는 말까지</b><p>3일 동안 그 사람의 하루와 방에서 나누는 대화를 보면서, 괜찮은 사람인지 천천히 알아봐요.</p></div></li>
-<li class="ld-fx"><img class="emo" src="/img/L_e_letter.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>고르는 건 몰래, 공개는 서로 골랐을 때만</b><p>한쪽만 골랐다면 상대는 끝까지 몰라요. 서로 골랐을 때만 두 사람에게 알려 드려요.</p></div></li>
-<li class="ld-fx"><img class="emo" src="/img/L_e_friends.webp" width="46" height="46" loading="lazy" decoding="async" alt=""><div><b>혼자가 어색하면, 친구랑 같이</b><p>친구랑 같이 신청하면 같은 방도, 다른 방도 고를 수 있어요.</p><span class="ld-pp-tag">둘 다 2,000원 할인</span></div></li>
-</ul>
+<!-- 방 채팅에서 얻은 인사이트로 설득 (10/26 사용자: "안 와닿는다, 방 운영 채팅 보고 인사이트 얻어서 작성해봐". 강조 메시지: 일상으로 알아가면 부담 없이 그 사람의 다양한 모습을 알 수 있다).
+     근거(1~6기 실참가 21개 방 그룹 채팅, 참가자 메시지 11,851건, 운영 계정 제외): 취미를 대놓고 묻는 말은 2번뿐, 3초 영상 답장 841건 중 29% 가 질문(영상 속 물건, 장소, 활동을 물음), '저도/나도'는 21개 방 모두,
+     밥, 날씨, 잘 자 같은 안부가 여러 방, 3일이 짧다는 말 10개 방 이상, 사흘째 한 사람의 영상만으로 취미 목록을 정리한 사례. 실제 메시지는 옮기지 않고 같은 결로 새로 씀. 페이지에 '채팅을 읽었다'는 말은 쓰지 않음 -->
+<p class="ld-k">하루하루 방에서는</p>
+<h2 class="ld-pp-hook">"취미가 뭐예요?"를<br>거의 안 물어봐요</h2>
+<p class="ld-pp-lead">3일 동안 올라오는 3초 영상에 다 나오거든요.</p>
+<ol class="ld-pp-pt">
+<li class="ld-fx"><i>01<img src="/img/L_e_eyes.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>본 걸 물어보면 돼요</b><p>영상에 달린 답장 열 개 중 세 개는 질문이에요. 책 제목, 향수 향, 처음 보는 악기처럼 본 걸 물어보면 되니까 대화거리를 짜낼 필요가 없어요.</p></li>
+<li class="ld-fx"><i>02<img src="/img/L_e_chat.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>공통점은 영상이 먼저 알려 줘요</b><p>같은 역, 같은 1교시, 같은 고양이 사랑. 영상에서 공통점이 보이면 "저도요!"로 대화가 시작돼요.</p></li>
+<li class="ld-fx"><i>03<img src="/img/L_e_memo.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>사흘째엔 그 사람 취미를 줄줄 말해요</b><p>영화, 클라이밍, 노래방, 베이킹. 따로 묻지 않아도 쌓인 영상만으로 그 사람을 이만큼 알게 돼요.</p></li>
+<li class="ld-fx"><i>04<img src="/img/L_e_rain.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>어느새 서로의 하루를 챙겨요</b><p>"점심은 먹었어요?" "비 안 맞았어요?" 하루를 보다 보면 안부가 먼저 나와요. 그래서 끝날 땐 3일이 짧다는 말이 나와요.</p></li>
+</ol>
+<div class="ld-pp-turn ld-fx"><img src="/img/L_cloud_happy.svg" width="130" height="88" loading="lazy" decoding="async" alt=""><h2><span class="ld-hl">일상<svg viewBox="0 0 200 30" preserveAspectRatio="none" aria-hidden="true"><path d="M3 20 C 38 9, 74 25, 110 16 S 168 6, 197 13"/></svg></span>으로 알아가면,<br>부담 없이 더 많이 보여요</h2></div>
+<div class="ld-pp-fr ld-fx"><img class="emo" src="/img/L_e_friends.webp" width="40" height="40" loading="lazy" decoding="async" alt=""><div><b>혼자가 어색하면, 친구랑 같이</b><p>같은 방도, 다른 방도 고를 수 있어요.</p><span class="ld-pp-tag">둘 다 2,000원 할인</span></div></div>
 </section>
 
 <section class="ld-band ld-tint ld-solve" id="ld-solve" data-sec="solve">
