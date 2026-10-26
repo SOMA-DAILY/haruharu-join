@@ -51,9 +51,11 @@ def survey_html(f):
         optional = bool(f.get('wishOnly')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
         minimum = 1 if optional else q.get('min', 1)
         required = '' if optional else ' required'
+        placeholder = '' if optional else f' placeholder="{E(q["placeholder"])}"'
+        hint = '방 구성이나 진행 방식에 바라는 점이 있다면 적어주세요.' if optional else q.get('hint', '')
         out += (f'<div class="q sv-q" data-name="{k}"><p class="t">{E(q["title"])}{mark}</p>\n'
-                + (f' <p class="sv-hint">{E(q["hint"])}</p>\n' if q.get('hint') else '')
-                + f' <textarea name="{k}" rows="4" maxlength="{q.get("max", 1000)}" data-min="{minimum}" placeholder="{E(q["placeholder"])}"></textarea>\n'
+                + (f' <p class="sv-hint">{E(hint)}</p>\n' if hint else '')
+                + f' <textarea name="{k}" rows="4" maxlength="{q.get("max", 1000)}" data-min="{minimum}"{placeholder}></textarea>\n'
                 + f' <input type="text" name="{k}_ok" value="" hidden{required}>\n <p class="err">{minimum}자 이상 적어 주세요</p></div>\n\n')
     return out + '</div>\n\n'
 def join_html(f):
@@ -83,7 +85,7 @@ def join_html(f):
         no = '  <label class="opt" hidden><input type="radio" name="sv_join" value="" checked></label>\n'
     assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 기본 칸이 없음'
     off = f"{f['wasFee'] - f['fee']:,}"
-    title = '참여할 기수를 선택해 주세요' if f.get('joinRequired') else '다음 기수도 신청할래요?'
+    title = '참여할 일정을 선택해 주세요.' if f.get('joinRequired') else '다음 기수도 신청할래요?'
     required_attr = ' data-required-join="true"' if f.get('joinRequired') else ''
     empty = '<p class="sv-hint sv-join-empty" hidden>지금 신청할 수 있는 기수가 없어요. 다음 모집 때 만나요!</p>' if f.get('joinRequired') else ''
     return (f'<div class="q sv-q" data-name="sv_join"{required_attr}><p class="t">{title}</p>\n'
@@ -346,7 +348,7 @@ def gen(path, f):
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '설문 시작하기 💌' if survey else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '재참여 신청하기' if f.get('wishOnly') else '설문 시작하기 💌' if survey else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
@@ -584,10 +586,17 @@ def gen(path, f):
                 t = t.replace('지난 기수, 어땠어요?', title).replace('지난 참가자 전용', f'{f["reviewCohort"]}기 참가자 전용')
                 t = t.replace('하루하루 지난 기수 후기', f'하루하루 {f["reviewCohort"]}기 후기').replace('지난 기수 어땠어요? 후기를 들려주세요', title + ' 후기를 들려주세요')
             if f.get('wishOnly'):
-                t = t.replace('지난 기수, 어땠어요?', '다시 함께할 3일, 골라볼까요?')
-                t = t.replace('남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.', '편한 일정을 골라 재참여 할인가로 신청해 주세요.')
-                t = t.replace('하루하루 지난 기수 후기', '하루하루 재참여 신청').replace('지난 기수 어땠어요? 후기를 들려주세요', '8기 또는 9기를 골라 재참여 할인가로 신청해 주세요')
-                t = t.replace('후기를 남겨 주세요. 다음 기수에 다시 참여하면', '다시 함께할 기수를 선택해 주세요. 재참여하면')
+                t = t.replace('지난 기수, 어땠어요?', '서울 8·9기 재참여 신청')
+                t = t.replace('남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
+                t = t.replace('지난 참가자 전용', '기존 참가자 전용')
+                t = t.replace('하루하루 지난 기수 후기 💌', '서울 8·9기 재참여 신청 | 하루하루')
+                t = t.replace('지난 기수 어땠어요? 후기를 들려주세요 💌', '서울 8·9기 재참여 신청')
+                t = t.replace('후기를 남겨 주세요. 다음 기수에 다시 참여하면 2,000원 할인돼요', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
+                t = t.replace('id="submit">제출하기</button>', 'id="submit">재참여 신청하기</button>')
+                t = t.replace("btn.textContent='제출하기'", "btn.textContent='재참여 신청하기'")
+                button_copy = "btn.textContent=join?'신청하기':requiredJoin?'참여할 기수를 선택해 주세요':'후기 보내기'"
+                assert t.count(button_copy) == 1, f'{path} 기수 선택 버튼 문구를 못 찾음'
+                t = t.replace(button_copy, "btn.textContent=join?'재참여 신청하기':'참여할 일정을 선택해 주세요.'")
             if f.get('joins'):
                 # 기수를 고르는 한 장 (10/18): 고른 기수가 그새 마감되면(서버 409) 페이지를 닫지 않고 그 칸만 숨김(hhSvClosed), 후기만이면 메타 Lead 를 안 보냄
                 for a, b in (("if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); }",
@@ -639,7 +648,11 @@ def gen(path, f):
         t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PICK_TAIL + foot, 1)
-    bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
+    checked_text = t.replace('받은 질문 · 1', '')
+    if f.get('wishOnly'):
+        # 사용자 확정 제목의 가운데점만 허용하고 다른 금지 문자 검사는 유지.
+        checked_text = checked_text.replace('서울 8·9기 재참여 신청', '')
+    bad = [c for c in BAD if c in checked_text]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
         assert os.path.exists('public/img/' + img), f'{path} 이미지 없음: {img}'

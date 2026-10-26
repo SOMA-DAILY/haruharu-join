@@ -91,3 +91,26 @@ test('화면에는 후기 없음, 기수 선택 → 바라는 점(선택) → �
   assert.match(html, /5,900원/); assert.match(html, /10\/30\(금\) ~ 11\/1\(일\)/);
   assert.match(html, /11\/6\(금\) ~ 11\/8\(일\)/);
 });
+
+test('재참여 모집 폼의 선택 입력에는 예시가 없고 기존 후기 폼은 보존', () => {
+  for (const path of [PAGE]) {
+    const html = readFileSync(new URL('../public' + path + 'index.html', import.meta.url), 'utf8');
+    const wish = html.match(/<textarea\b[^>]*name="sv_wish"[^>]*>/)?.[0];
+    assert.ok(wish, path);
+    assert.doesNotMatch(wish, /placeholder="[^"]+"/, path);
+    assert.match(html, /다음 기수에 바라는 점.*?선택/);
+    assert.match(html, /방 구성이나 진행 방식에 바라는 점이 있다면 적어주세요\./);
+  }
+  const existing = readFileSync(new URL('../public/rejoin/7/seoul/index.html', import.meta.url), 'utf8');
+  assert.match(existing, /<textarea\b[^>]*name="sv_wish"[^>]*placeholder="예\)/);
+});
+
+test('재참여 모집은 승인된 담백한 문구와 신청 버튼을 표시', () => {
+  const html = readFileSync(new URL('../public' + PAGE + 'index.html', import.meta.url), 'utf8');
+  assert.match(html, /<h1 class="sv-h1">서울 8·9기 재참여 신청<\/h1>/);
+  assert.match(html, /기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다\./);
+  assert.match(html, /참여할 일정을 선택해 주세요\./);
+  assert.match(html, /id="submit">재참여 신청하기<\/button>/);
+  assert.doesNotMatch(html, /다시 함께할 3일, 골라볼까요\?|편한 일정을 골라 재참여 할인가로 신청해 주세요\./);
+  assert.doesNotMatch(html, /btn\.textContent='제출하기'/);
+});
