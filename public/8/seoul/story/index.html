@@ -118,7 +118,8 @@ input:focus{border-color:#1a1a1a}
      이 파일은 1페이지에 들어간다: feeFirst 폼이 아니면 참가비 말이 빌드 검사에 걸림 -->
 <script>var HH_G=(function(){ var g=''; try{ var q=new URLSearchParams(location.search); g=(q.get('g')||'').toLowerCase();
   if(g!=='f'&&g!=='m'){ var m=/^(?:h\d+|ad)-[a-z]+-(m|f)-/.exec(q.get('src')||'')||/^(?:h\d+|ad)-[a-z]+-(m|f)-/.exec(q.get('utm_content')||''); g=m?m[1]:''; }   // g 가 없으면 광고 코드(h4-seoul-f-...)의 성별
- }catch(e){} return g==='f'||g==='m'?g:'x'; })();</script>
+ }catch(e){} return g==='f'||g==='m'?g:'x'; })();
+try{ document.documentElement.setAttribute('data-hhg',HH_G); }catch(e){}   // 성별 판마다 다른 구역(첫 화면 다음 구역의 여성판)을 CSS 로 고름</script>
 <style>
 :root{--hh-g:20px;--hh-ink:#131A26;--hh-ink2:#465061;--hh-mute:#6B7586;--hh-line:#E3E8EF;--hh-blue:#2F7BD6;--hh-sky:#EEF5FD;--hh-sky2:#DCEBFA}
 .wrap{max-width:520px;padding:0 var(--hh-g) 120px}
@@ -158,12 +159,12 @@ input:focus{border-color:#1a1a1a}
 .ld-h1{margin-top:22px;font-size:clamp(22px,7.2vw,32px);line-height:1.3;font-weight:800;letter-spacing:-.035em}
 .ld-sub{margin-top:10px;font-size:15.5px;line-height:1.55;color:var(--hh-ink2)}
 /* 첫 화면 그림: 앱 스토어 소개 이미지처럼 큰 앱 화면 뒤로 실제 일상 사진을 겹침. 앱 화면은 링크 성별에 맞추고 실제 사진은 공통. */
-/* 안내 칸: 이름표 + 값 상자 (첫 화면의 진행 일정/참여 대상/그룹 구성, 신청 안내의 마감/확정 문자) */
+/* 안내 칸: 이름표 + 값 상자 (첫 화면의 진행 일정/참여 대상/그룹 구성, 신청 안내의 마감/확정 문자). 신청 안내 구역과 신청서 머리 카드는 .ld 밖이라 위 초기화가 안 걸림 → dd 여백을 여기서 0 으로 (10/26 사용자: "깨졌는디", 값 상자가 40px 밀려 있었음) */
 .ld-if{margin-top:16px}
 .ld-if:empty{display:none}
 .ld-if>div{margin-top:9px}
 .ld-if dt{display:inline-block;padding:4px 11px 3px;border-radius:9px 9px 0 0;background:var(--hh-blue);color:#fff;font-size:12.5px;font-weight:800;line-height:1.4}
-.ld-if dd{padding:10px 14px;border:1.5px solid var(--hh-blue);border-radius:0 12px 12px 12px;background:#fff;font-size:15px;font-weight:700;line-height:1.4}
+.ld-if dd{margin:0;padding:10px 14px;border:1.5px solid var(--hh-blue);border-radius:0 12px 12px 12px;background:#fff;font-size:15px;font-weight:700;line-height:1.4}
 .ld-if dd small{display:block;margin-top:3px;font-size:13px;font-weight:500;line-height:1.45;color:var(--hh-ink2)}
 .ld-if dd small b{font-weight:700;color:var(--hh-ink)}
 .ld-if dd s{margin-right:4px;font-weight:500;color:var(--hh-mute)}
@@ -595,6 +596,23 @@ html[data-mode="form"] .fm-q{display:block}
 .ld-pp-fr p{margin-top:2px;font-size:13.5px;line-height:1.5;color:var(--hh-ink2)}
 .ld-pp-fr .ld-pp-tag{margin-top:8px}
 @media(prefers-reduced-motion:reduce){.ld-js .ld-pp-turn img{opacity:1;transform:none;transition:none}}
+/* 여성판 중간 구역 (10/26 사용자: "처음 보는 사람이 몰입하지 못할 것 같다, 호소력도 약하다" + Notion 소구점 페이지 + "여자 타겟으로" → 여러 판 끝에 메시지 "서로의 일상이 대화가 되는 소개팅" 을 사용자가 고름).
+   링크 성별이 f 일 때만 .ld-ppw 가 보이고 그 밖(m, 기본)은 .ld-ppd(방 채팅 인사이트 판) 그대로. html 의 data-hhg 는 맨 위 HH_G 스크립트가 붙임.
+   글 형식: 걸이 + 한 줄 → 3초 칸(하늘 칸 + 입체 이모지 + 3초 딱지) 에서 나온 내 질문(파란 말풍선) 세 줄 → 번호 카드 넷(.ld-pp-pt 그대로) → 하루 구름 + 일상으로 알아가면 → 친구 줄 */
+.ld-ppw{display:none}
+html[data-hhg="f"] .ld-ppw{display:flex;flex-direction:column}
+html[data-hhg="f"] .ld-ppd{display:none}
+.ld-wt-ex{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.ld-wt-ex li{display:flex;align-items:center;gap:10px}
+.ld-wt-ex li:nth-child(2){transition-delay:.08s}.ld-wt-ex li:nth-child(3){transition-delay:.16s}
+.ld-wt-clip{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:104px;height:84px;border-radius:14px;background:linear-gradient(160deg,#E4F0FC,#C9E0F8);box-shadow:inset 0 0 0 1px rgba(47,123,214,.08)}
+.ld-wt-clip i{position:absolute;left:6px;top:6px;padding:0 6px;border-radius:6px;background:rgba(19,26,38,.5);color:#fff;font-style:normal;font-size:10.5px;font-weight:800;line-height:1.6}
+.ld-wt-clip img{width:38px;height:38px;margin-top:8px;filter:drop-shadow(0 4px 6px rgba(31,89,148,.18))}
+.ld-wt-clip span{font-size:12px;font-weight:800;line-height:1.3;color:#1F3B63}
+.ld-wt-ex b{margin-left:auto;padding:10px 14px;border-radius:18px 18px 5px 18px;background:var(--hh-blue);color:#fff;font-size:14.5px;font-weight:700;line-height:1.4;text-wrap:pretty}
+.ld-wt-ex+.ld-pp-pt{margin-top:32px}
+.ld-wt-sub{margin-top:10px;font-size:15px;line-height:1.6;font-weight:600;color:var(--hh-ink2)}
+@media(max-width:359px){.ld-wt-clip{width:92px;height:78px}.ld-wt-ex b{padding:9px 12px;font-size:14px}}
 /* 진행 방식 (10/26 사용자: 호기심이 느껴지게 → 같은 날 "DAY 가 아니라 golmoking.kr/dating 처럼 큰 흐름으로"): 번호 다섯 개를 세로 선으로 잇고 단계마다 짧은 이름 + 한 줄 + 앱 조각 하나. DAY 딱지는 뺌.
    3단계는 날마다 생기는 일(미션, 소개 공개, 익명 질문)을 한 장에 모음. 잠긴 소개(🔒 흔들림), 보낸 사람 ??? 는 그대로.
    사진이 흐리다가 서로 고르면 사진과 닉네임이 열린다는 말과 움직임은 넣지 않음(10/26 사용자: "처음에는 사진 블러되고, 흐렸던 사진과 닉네임이 열리고 이런 거 넣지 마, 별로임"). 흐린 사진 그림은 1, 4단계에 그대로 */
@@ -767,6 +785,26 @@ html[data-mode="form"] .fm-q{display:block}
 <!-- 방 채팅에서 얻은 인사이트로 설득 (10/26 사용자: "안 와닿는다, 방 운영 채팅 보고 인사이트 얻어서 작성해봐". 강조 메시지: 일상으로 알아가면 부담 없이 그 사람의 다양한 모습을 알 수 있다).
      근거(1~6기 실참가 21개 방 그룹 채팅, 참가자 메시지 11,851건, 운영 계정 제외): 취미를 대놓고 묻는 말은 2번뿐, 3초 영상 답장 841건 중 29% 가 질문(영상 속 물건, 장소, 활동을 물음), '저도/나도'는 21개 방 모두,
      밥, 날씨, 잘 자 같은 안부가 여러 방, 3일이 짧다는 말 10개 방 이상, 사흘째 한 사람의 영상만으로 취미 목록을 정리한 사례. 실제 메시지는 옮기지 않고 같은 결로 새로 씀. 페이지에 '채팅을 읽었다'는 말은 쓰지 않음 -->
+<!-- 여성판 (링크 성별 f 만). 10/26 사용자: "흡입력, 호소력이 약하다" + Notion 소구점 페이지 + "여자 타겟으로" → 장면 판 "ㄴㄴ 텍스트형태로" → 고민 글 판 "영 맘에 안 든다" → 후보 넷 "메시지가 다 별로"
+     → 메시지 후보 여섯 중 사용자가 Notion 팀 문장 "서로의 일상이 대화가 되는 소개팅" + "할 말을 짜내지 않아도, 오늘 올라온 3초에 물어볼 게 생겨요." 를 고름.
+     그 아래: 3초 → 물어볼 말 세 줄(뷰, 마라탕, 강아지. Notion 여성 소구점과 카피 후보에서) → 번호 카드 넷(Notion 여성 소구점) → 하루 구름 + 일상으로 알아가면. 대화 예시는 지어낸 것 -->
+<div class="ld-ppw">
+<h2 class="ld-pp-hook">서로의 일상이<br>대화가 되는 소개팅</h2>
+<p class="ld-pp-lead">할 말을 짜내지 않아도, <br>오늘 올라온 3초에 물어볼 게 생겨요.</p>
+<ul class="ld-wt-ex">
+<li class="ld-fx"><span class="ld-wt-clip"><i>3초</i><img src="/img/L_e_city.webp" width="38" height="38" loading="lazy" decoding="async" alt=""><span>오늘의 뷰</span></span><b>여기 어디예요? 뷰 좋다</b></li>
+<li class="ld-fx"><span class="ld-wt-clip"><i>3초</i><img src="/img/L_e_mala.webp" width="38" height="38" loading="lazy" decoding="async" alt=""><span>점심은 마라탕</span></span><b>저도 마라탕파예요! 몇 단계 먹어요?</b></li>
+<li class="ld-fx"><span class="ld-wt-clip"><i>3초</i><img src="/img/L_e_dog.webp" width="38" height="38" loading="lazy" decoding="async" alt=""><span>저녁 산책</span></span><b>강아지 이름이 뭐예요?</b></li>
+</ul>
+<ol class="ld-pp-pt">
+<li class="ld-fx"><i>01<img src="/img/L_e_house.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>처음부터 단둘이 아니에요</b><p>남녀 여럿이 한 방에서 같이 시작해요. 편하게 지켜보다가 궁금한 사람이 생기면, 그때 말 걸면 돼요.</p></li>
+<li class="ld-fx"><i>02<img src="/img/L_e_camera.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>사진 밖, 평소 모습을 서로 봐요</b><p>1교시 가는 길, 점심 메뉴, 주말의 취미까지 매일 3초 영상에 담겨요. 나도 꾸민 사진 말고, 평소의 나로 소개돼요.</p></li>
+<li class="ld-fx"><i>03<img src="/img/L_e_chat.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>대화하는 모습도 미리 보여요</b><p>단체방에선 누가 먼저 말을 거는지, 남의 얘기에 어떻게 답하는지 다 보여요. 대화를 같이 이어 가는 사람인지 미리 알 수 있어요.</p></li>
+<li class="ld-fx"><i>04<img src="/img/L_e_letter.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>마음은 마지막 날, 몰래 정해요</b><p>3일을 다 보고 마음 가는 사람을 몰래 골라요. 한쪽만 골랐다면 상대는 끝까지 몰라서, 고백했다 어색해질 일도 거절하느라 미안할 일도 없어요.</p></li>
+</ol>
+<div class="ld-pp-turn ld-fx"><img src="/img/L_cloud_happy.svg" width="130" height="88" loading="lazy" decoding="async" alt=""><h2><span class="ld-hl">일상<svg viewBox="0 0 200 30" preserveAspectRatio="none" aria-hidden="true"><path d="M3 20 C 38 9, 74 25, 110 16 S 168 6, 197 13"/></svg></span>으로 알아가면,<br>부담 없이 더 많이 보여요</h2><p class="ld-wt-sub">하루하루는 3일 동안 같은 방에서,<br>서로의 하루부터 봐요.</p></div>
+</div>
+<div class="ld-ppd">
 <p class="ld-k">하루하루 방에서는</p>
 <h2 class="ld-pp-hook">"취미가 뭐예요?"를<br>거의 안 물어봐요</h2>
 <p class="ld-pp-lead">3일 동안 올라오는 3초 영상에 다 나오거든요.</p>
@@ -777,6 +815,7 @@ html[data-mode="form"] .fm-q{display:block}
 <li class="ld-fx"><i>04<img src="/img/L_e_rain.webp" width="34" height="34" loading="lazy" decoding="async" alt=""></i><b>어느새 서로의 하루를 챙겨요</b><p>"점심은 먹었어요?" "비 안 맞았어요?" 하루를 보다 보면 안부가 먼저 나와요. 그래서 끝날 땐 3일이 짧다는 말이 나와요.</p></li>
 </ol>
 <div class="ld-pp-turn ld-fx"><img src="/img/L_cloud_happy.svg" width="130" height="88" loading="lazy" decoding="async" alt=""><h2><span class="ld-hl">일상<svg viewBox="0 0 200 30" preserveAspectRatio="none" aria-hidden="true"><path d="M3 20 C 38 9, 74 25, 110 16 S 168 6, 197 13"/></svg></span>으로 알아가면,<br>부담 없이 더 많이 보여요</h2></div>
+</div>
 <div class="ld-pp-fr ld-fx"><img class="emo" src="/img/L_e_friends.webp" width="40" height="40" loading="lazy" decoding="async" alt=""><div><b>혼자가 어색하면, 친구랑 같이</b><p>같은 방도, 다른 방도 고를 수 있어요.</p><span class="ld-pp-tag">둘 다 2,000원 할인</span></div></div>
 </section>
 
