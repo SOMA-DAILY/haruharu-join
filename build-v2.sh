@@ -22,7 +22,9 @@ EARLY_CARD=open('src/early-info.html',encoding='utf-8').read()
 LANDING=open('src/landing.v2.html',encoding='utf-8').read()
 LANDING_V3=open('src/landing.v3.html',encoding='utf-8').read()   # 랜딩 3판 (10/12): 등록부 landingV3 폼만
 LANDING_V3B=open('src/landing.v3b.html',encoding='utf-8').read()   # 랜딩 3판 B (10/20): 등록부 abTest 폼의 B 팔. 첫 화면 실제 캡처 6칸 + 훅 + 금액 칩, 후기 5, 진행 과정/걱정 접힘, 결제 구역 v3 (PAY_V3_TAIL)
+LANDING_V4=open('src/landing.v4.html',encoding='utf-8').read()   # 이야기판 (10/22, ucling.co.kr 구성 참고): 등록부 landingV4 폼만. landingV3 조립(phonePage, 안내 카드, 검사)은 그대로 타고 랜딩 파일만 이것으로
 DONE_SURVEY=open('src/done-survey.html',encoding='utf-8').read()
+FOOTER=re.sub(r'^<!--.*?-->\n', '', open('src/footer.html',encoding='utf-8').read(), count=1, flags=re.S)   # 바닥글: 약관 링크와 사업자 정보 (10/23 이야기판 폼만)
 PICK_TAIL=open('src/cohort-pick.html',encoding='utf-8').read()   # 기수 고르기 (10/23): 등록부 pick 폼의 신청 안내 아래 기수 카드 모양과 동작
 # 자정 마감 할인 (10/13): 짧은 소개 + 남은 시간. 문항/버튼 모양은 랜딩 3판의 style 을 그대로 가져다 씀 (모양을 한 곳에서만 고치게)
 COMEBACK=re.sub(r'^<!--.*?-->\n', '', open('src/landing.comeback.html',encoding='utf-8').read(), count=1, flags=re.S)
@@ -153,6 +155,75 @@ PAY_V3_TAIL = r"""<style>
   try{ location.href=url; }catch(x){}
   setTimeout(function(){ if(!document.hidden&&!wasHidden&&direct) direct.classList.add('on'); },1200); });   // 토스가 안 열리면 직접 입금 줄 강조
  document.addEventListener('visibilitychange',function(){ if(document.hidden){ if(clicked) wasHidden=true; } else if(wasHidden&&back){ back.hidden=false; if(sub) sub.classList.add('pulse'); setTimeout(function(){ try{ nameIn.focus({preventScroll:true}); back.scrollIntoView({block:'center'}); }catch(x){} },200); } });   // 돌아오면 이름 칸으로
+})();
+</script>
+"""
+
+
+# 이야기판 폼 꼬리 (10/23, 사용자가 붙여 준 폼 UX 분석 적용): 단계 표시 모양, 전화번호/동의 안내 모양, [자세히 보기], 칸을 떠날 때 바로 오류 표시
+STORY_TAIL = r"""<style>
+.qh{margin:-4px 0 10px;font-size:13.5px;line-height:1.5;color:var(--hh-ink2)}
+.qh .ag-more{padding:0;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:#1F5FA9;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.q[data-name="consent"] .note[hidden]{display:none}
+.qh-scope{display:grid;gap:7px;margin:0 0 12px;padding:11px 13px;border-radius:12px;background:#F6F8FB;font-size:13px;line-height:1.45;color:var(--hh-ink2)}
+.qh-scope p{margin:0}
+.qh-scope b{display:block;margin-bottom:1px;font-size:12px;color:var(--hh-ink)}
+.pstep{display:flex;align-items:center;gap:8px;margin:26px 0 0;font-size:14.5px;font-weight:700;color:var(--hh-ink)}
+.pstep b{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:var(--hh-sky2);color:#1F5FA9;font-size:12.5px;font-weight:800}
+.pstep span{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--hh-mute)}
+.pstep+.q{margin-top:10px}
+.pstep+.pay-card{margin-top:12px}
+.opt[hidden]{display:none}
+.fr-toggle.off{background:#F1F4F8;color:var(--hh-ink2)}
+.fm-only{display:none}
+html[data-mode="form"] .fm-only{display:flex;margin-bottom:4px}
+html[data-mode="form"] .ld-fcard .ld-top{display:none}
+html[data-mode="form"] .pk{margin-top:18px}
+.dn-card{margin:22px 0 6px;padding:18px 18px 14px;border:1.5px solid var(--hh-line);border-radius:18px;background:#fff;text-align:left}
+.dn-card[hidden]{display:none}
+.dn-rows{margin:0;padding:0}
+.dn-rows div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;font-size:14.5px}
+.dn-rows dt{color:var(--hh-mute);font-weight:500;white-space:nowrap}
+.dn-rows dd{margin:0;font-weight:700;color:var(--hh-ink);text-align:right;word-break:keep-all}
+.dn-rows dd.hl{color:var(--hh-blue)}
+.dn-note{margin:12px 0 0;padding-top:12px;border-top:1.5px dashed var(--hh-line);font-size:13px;line-height:1.5;color:#1F5FA9;font-weight:700}
+</style>
+<script>
+(function(){ var form=document.getElementById('f'); if(!form) return;
+ // [자세히 보기]: 접어 둔 동의 전문 펼치기 (문자 동의 폼의 모두 동의 꼬리와 같은 동작. 이 폼엔 모두 동의 칸이 없어 따로 둠)
+ [].forEach.call(document.querySelectorAll('.qh .ag-more'),function(b){ b.addEventListener('click',function(){ var q=b.closest('.q'), n=q&&q.querySelector('.note'); if(!n) return; var open=n.hidden; n.hidden=!open; b.setAttribute('aria-expanded',open?'true':'false'); b.textContent=open?'접기':'자세히 보기'; }); });
+ // 칸을 떠날 때 바로 오류 표시 (비어 있으면 아직 안 보임, 다음 버튼이 알려 줌). 규칙은 템플릿 validate 와 같음. 고친 뒤에는 입력하는 대로 오류가 사라짐
+ function check(inp){ var q=inp.closest('.q'); if(!q) return; var v=inp.value.trim(); if(!v){ q.classList.remove('bad'); return; } var bad=false;
+  if(inp.name==='birth_year') bad=!/^(19|20)\d{2}$/.test(v)||Number(v)<1990||Number(v)>2007;
+  if(inp.name==='phone') bad=!/^01[016789]-?\d{3,4}-?\d{4}$/.test(v.replace(/\s/g,''));
+  q.classList.toggle('bad',bad); }
+ function watched(el){ return !!(el&&el.name&&(el.name==='birth_year'||el.name==='phone')); }
+ form.addEventListener('focusout',function(e){ if(watched(e.target)) check(e.target); });
+ form.addEventListener('input',function(e){ var el=e.target, q=el&&el.closest&&el.closest('.q'); if(watched(el)&&q&&q.classList.contains('bad')) check(el); });
+ // 친구 번호 칸은 항상 보임 (10/23 사용자). 번호를 적었는데 방을 안 골랐으면 숨긴 '상관없음' 을 고른 것으로, 지우면 다시 없는 것으로
+ var bq=form.querySelector('.q[data-name="buddy_room"]');
+ if(bq){ var bIn=bq.querySelector('input[name="buddy"]'), bAny=bq.querySelector('input[name="buddy_room"][value="상관없음"]');
+  bIn&&bIn.addEventListener('input',function(){ var ok=bIn.value.replace(/\D/g,'').length>=10, ch=bq.querySelector('input[name="buddy_room"]:checked');
+   if(ok&&!ch&&bAny){ bAny.checked=true; bAny.dispatchEvent(new Event('change',{bubbles:true})); }
+   else if(!ok&&ch===bAny&&bAny){ bAny.checked=false; bAny.dispatchEvent(new Event('change',{bubbles:true})); } }); }
+ // '친구랑 신청해요' 버튼이 펼친 뒤에도 남아 '취소' 로 바뀌고, 누르면 번호/선택을 지우고 접음 (10/23 사용자). 펼치기 자체는 템플릿 꼬리(FOLD_TAIL)가 하고, 여기서는 그 뒤에 글자와 닫기만
+ if(bq){ var tg=bq.querySelector('.fr-toggle'), mo=bq.querySelector('.fr-more'), wasOpen=false;
+  function label(){ if(!tg||!mo) return; tg.hidden=false; var open=!mo.hidden; tg.textContent=open?'취소':'친구랑 신청해요'; tg.classList.toggle('off',open); tg.setAttribute('aria-expanded',open?'true':'false'); }
+  if(tg&&mo){ tg.addEventListener('click',function(){ wasOpen=!mo.hidden; },true);
+   tg.addEventListener('click',function(){ if(wasOpen){ var ch=bq.querySelector('input[name="buddy_room"]:checked'); if(bIn) bIn.value=''; if(ch){ ch.checked=false; ch.dispatchEvent(new Event('change',{bubbles:true})); } bq.classList.remove('bad'); mo.hidden=true; } label(); });
+   if(window.MutationObserver) new MutationObserver(label).observe(mo,{attributes:true,attributeFilter:['hidden']});
+   new MutationObserver(function(){ if(tg.hidden) label(); }).observe(tg,{attributes:true,attributeFilter:['hidden']}); } }
+ // 완료 화면 요약 카드 (10/23 사용자: 신청을 다 하면 본인이 적은 내용이 나오게). 신청 번호는 날짜 + 신청 ID 끝 네 자리
+ var done=document.querySelector('.page[data-page="done"]'), card=document.getElementById('dnCard');   // 완료 화면은 form 밖에 있음
+ function val(n){ var e=form.querySelector('input[name="'+n+'"]:checked')||form.querySelector('input[name="'+n+'"]'); return e?e.value:''; }
+ function fill(){ if(!card) return; var id=String(window.HH_APP_ID||''), d=new Date(), p2=function(n){ return (n<10?'0':'')+n; };
+  var no='HH-'+String(d.getFullYear()).slice(2)+p2(d.getMonth()+1)+p2(d.getDate())+'-'+(id.replace(/-/g,'').slice(-4).toUpperCase()||'0000');
+  var fee=document.querySelector('.fr-fee'), ac=document.getElementById('acctCopy'), room=val('buddy_room');
+  var rows={dnNo:no,dnCo:(val('cohort_pick')||(typeof COHORT==='string'?COHORT:''))+'기',dnG:val('gender'),dnBy:val('birth_year')+'년생',dnSc:val('school'),dnPh:val('phone').replace(/\D/g,''),
+   dnAc:ac?'토스뱅크 '+ac.getAttribute('data-acct'):'',dnFee:(fee?fee.textContent:'')+'원'+(room&&room!=='혼자'?' (친구 할인)':''),dnNm:val('name')};
+  for(var k in rows){ var e=document.getElementById(k); if(e) e.textContent=rows[k]; }
+  card.hidden=false; }
+ if(done&&card&&window.MutationObserver) new MutationObserver(function(){ if(done.classList.contains('on')) fill(); }).observe(done,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 """
@@ -308,7 +379,7 @@ def gen(path, f):
         t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
-        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
+        t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V4 if f.get('landingV4') else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
         if comeback and f.get('leftKo') == '':
             t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left" id="cbLeft" hidden></p>', 1)
@@ -344,7 +415,7 @@ def gen(path, f):
         '__LD_BADGE__': '지난 참가자 전용' if survey else f"{cohort}기 " + ('사전 알림' if prealert else '모집 중'), '__LD_WHO__': f"{region} {'직장인' if work else '대학생'}",
         '__LD_INFO__': ld_cells(ld_info), '__LD_ROWS__': ld_cells(ld_rows), '__LD_STEPS__': ld_steps,
         '__LD_NOTES__': ''.join(f'<p>{n}</p>' for n in ld_notes),
-        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells(rows_a), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,
+        '__LD_ROWS_A__': ld_cells(rows_a), '__LD_ROWS_G__': ld_cells([r for r in rows_a if not (f.get('landingV4') and r[0] in ('진행 기간', '신청 마감'))]), '__LD_PERIOD__': short(info.get('period', '추후 안내')), '__LD_DEADLINE__': short(deadline_ko), '__LD_FEE__': fee,   # 이야기판 신청 안내는 기수마다 다른 진행 기간, 신청 마감을 빼고 기수 카드에만 (10/26 사용자)
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
@@ -382,8 +453,8 @@ def gen(path, f):
                     .replace('__NOTICE__', notice).replace('__HOWTO__', howto).replace('__REFUND__', refund))
         t = re.sub(r'<img class="img" data-img="P4"[^>]+>', lambda m: card, t)
     if f.get('rejoin') or f.get('noSource'):
-        # 재참여는 유입 경로와 신청 마음을 다시 묻지 않음. URL의 src/utm 추적은 유지.
-        for question in ('source', 'intent') + (('gender', 'birth_year', 'device') if phone_only else ()):
+        # 재참여는 유입 경로와 신청 마음을 다시 묻지 않음. URL의 src/utm 추적은 유지. noDevice(10/23 이야기판): 기기 문항도 뺌, 서버가 접속 기기로 채움
+        for question in ('source', 'intent') + (('device',) if f.get('noDevice') and not phone_only else ()) + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
     if phone_only:
@@ -626,16 +697,16 @@ def gen(path, f):
         assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
         t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
         assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
-    if f.get('pick'):
+    if f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
         # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
         #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
         g_open = '<div class="q" data-name="gender">'
         assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
-        rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == f.get('entry')], key=lambda x: int(ms(DL[x[1]['cohort']])))
-        assert len(rows) >= 2 and any(p == path for p, _ in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
+        rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
+        assert len(rows) >= 2 and any(g['cohort'] == cohort for _, g in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
         pk_short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
         def pk_card(p, g):
-            c = g['cohort']; on = p == path; per, dko = INFO[c]['period'], DLKO[c]
+            c = g['cohort']; on = (p == path) or (bool(f.get('pickFrom')) and c == cohort); per, dko = INFO[c]['period'], DLKO[c]
             return (f'<button type="button" class="pk-c{" on" if on else ""}" role="radio" aria-checked="{"true" if on else "false"}" data-cohort="{c}" data-deadline="{ms(DL[c])}"'
                     f' data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
                     f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
@@ -656,7 +727,7 @@ def gen(path, f):
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
         assert os.path.exists('public/img/' + img), f'{path} 이미지 없음: {img}'
-    if cand and f.get('landingV3') and f.get('phonePage') and not survey and not comeback and not share_only and not phone_only:
+    if (cand or f.get('payV3')) and f.get('landingV3') and f.get('phonePage') and not survey and not comeback and not share_only and not phone_only:   # payV3 (10/23 이야기판): B 팔과 같은 결제 구역을 A 쪽 폼에도
         name_open = '<div class="q" data-name="name">'; name_end = '<p class="err">송금자 이름을 입력해 주세요</p></div>'
         a0 = t.index(name_open); a1 = t.index(name_end, a0) + len(name_end); blk = t[a0:a1]
         mb = re.search(r'\n*<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', t[a1:], flags=re.S)
@@ -677,6 +748,85 @@ def gen(path, f):
         t = t[:a0] + new_blk + t[a1:].replace(mb.group(0), '\n\n', 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PAY_V3_TAIL + foot, 1)
+        if cand:
+            arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
+            assert arm_line, f'{path} ARM 줄을 못 찾음'
+            t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if f.get('landingV4') and f.get('phonePage') and not survey and not phone_only and not prealert:
+        # 이야기판 폼 (10/23 사용자: 붙여 준 폼 UX 분석 적용). 1) 전화번호 칸에 받는 까닭과 공개 범위, 2) 동의는 핵심 한 줄 + [자세히 보기] 로 접은 전문,
+        #   3) 페이지마다 '2/3 연락처 확인' 식 단계 표시와 '다음: 참가비 확인' 버튼, 4) 전화번호/이름/출생년도 자동완성, 5) 출생년도/전화번호는 칸을 떠날 때 바로 오류 표시
+        #   유입경로/기기/신청 마음 문항은 등록부 noSource, noDevice 로 위에서 빠지고, 결제 구역은 payV3 로 위에서 B 팔과 같게 바뀜
+        rf = '<li>인원이 안 맞아 방이 열리지 않으면 전액 돌려드려요</li>'; assert t.count(rf) == 1, f'{path} 환불 안내를 못 찾음'
+        t = t.replace(rf, '<li>인원이 안 맞아 방이 열리지 않으면 다음 기수로 이월하거나 환불할 수 있어요</li>', 1)   # 10/23 사용자 문구
+        sub = ' <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'; assert t.count(sub) == 1, f'{path} 송금자 이름 안내를 못 찾음'; t = t.replace(sub, '', 1)   # 10/23 사용자: 이 안내문은 뺌
+        ph0 = '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive">'
+        assert t.count(ph0) == 1, f'{path} 전화번호 칸을 못 찾음'
+        t = t.replace(ph0, '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <p class="qh">초대 코드와 일정 안내를 문자로 보내 드리려고 받아요.</p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive" autocomplete="tel">', 1)
+        mc = re.search(r'<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">\*</span></p>\n <p class="note">(.*?)</p>\n <label class="chk">', t, flags=re.S)
+        assert mc, f'{path} 동의 칸을 못 찾음'
+        t = t.replace(mc.group(0), '<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">*</span></p>\n'
+                      ' <p class="qh">참가자 확인, 방 배정, 신청 진행과 마감 안내, 초대 코드와 일정 안내에만 써요. 기수가 끝나고 6개월 뒤 지워요. <button type="button" class="ag-more" aria-expanded="false">자세히 보기</button></p>\n'
+                      ' <p class="note" hidden>' + mc.group(1) + '</p>\n'
+                      ' <label class="chk">', 1)
+        g0 = '<div class="q" data-name="gender">'; p0 = '<div class="q" data-name="phone">'; s3 = '<section class="page" data-page="3">\n'
+        assert t.count(g0) == 1 and t.count(p0) == 1 and t.count(s3) == 1, f'{path} 단계 표시 자리를 못 찾음'
+        t = t.replace(g0, '<p class="pstep"><b>1/3</b>기본 정보</p>\n' + g0, 1)
+        t = t.replace(p0, '<p class="pstep"><b>2/3</b>연락처 확인</p>\n' + p0, 1)
+        t = t.replace(s3, s3 + '<p class="pstep"><b>3/3</b>참가비</p>\n', 1)
+        n1 = '<button type="button" class="btn" data-next="2">다음 페이지 →</button>'; n2 = '<button type="button" class="btn" data-next="3">다음 페이지 →</button>'
+        assert t.count(n1) == 1 and t.count(n2) == 1, f'{path} 다음 버튼을 못 찾음'
+        t = t.replace(n1, '<button type="button" class="btn" data-next="2">다음 →</button>', 1).replace(n2, '<button type="button" class="btn" data-next="3">다음 →</button>', 1)
+        nm = 'name="name" placeholder="실명을 입력해 주세요" required class="mp-sensitive"'
+        assert t.count(nm) == 1, f'{path} 송금자 이름 칸을 못 찾음'
+        t = t.replace(nm, nm + ' autocomplete="name"', 1)
+        t, nby = re.subn(r'(<input[^>]*name="birth_year"(?![^>]*autocomplete)[^>]*)>', r'\1 autocomplete="bday-year">', t, count=1)
+        assert nby == 1, f'{path} 출생년도 칸을 못 찾음'
+        d0 = t.index('<section class="page" data-page="done">'); d1 = t.index('</p>', d0) + 4
+        t = t[:d1] + ('\n<div class="dn-card" id="dnCard" hidden><dl class="dn-rows">'
+                     '<div><dt>참여 기수</dt><dd id="dnCo"></dd></div><div><dt>성별</dt><dd id="dnG"></dd></div><div><dt>출생년도</dt><dd id="dnBy"></dd></div>'
+                     '<div><dt>학교</dt><dd id="dnSc"></dd></div><div><dt>전화번호</dt><dd id="dnPh"></dd></div><div><dt>입금 금액</dt><dd class="hl" id="dnFee"></dd></div>'
+                     '<div><dt>입금자명</dt><dd id="dnNm"></dd></div></dl>'
+                     '<p class="dn-note">문의할 때 필요하니 이 화면을 캡처해 두세요.</p></div>') + t[d1:]
+        foot = '<p class="foot">'; assert t.count(foot) == 1
+        t = t.replace(foot, STORY_TAIL + foot, 1)
+        for need in ('class="pstep"', 'autocomplete="tel"', 'class="pay-card"'):
+            assert t.count(need) >= 1, f'{path} 이야기판 폼 조각이 빠짐: {need}'
+        for gone in ('data-name="source"', 'data-name="device"', 'data-name="intent"'):
+            assert f'<div class="q" {gone}>' not in t, f'{path} 빠져야 할 문항이 남음: {gone}'
+        # 기수 고르기는 랜딩 맨 끝 (10/26 사용자: 스크롤하면 신청서가 이어지는 대신 신청 안내 → 기수 고르기 → 신청하기를 눌러야 1, 2, 3단계 신청서).
+        #   카드는 아무것도 안 골라진 채(기수를 직접 고르게), 그 아래 신청하기 버튼(data-cta="pick")과 다음 기수 알림 링크. 첫 화면, 아래 고정 버튼은 이 구역으로 내려옴(랜딩 스크립트)
+        #   신청서 모드에서는 이 구역과 신청 안내가 숨고, 로고 줄과 머리 카드(고른 기수의 진행 기간, 신청 마감으로 바뀐 안내) 다음에 1단계 문항
+        pk = re.search(r'<div class="pk" id="pick".*?</div>\n\n', t, flags=re.S)
+        ge = re.search(r'<section class="ld-sec ld-only" id="ld-guide".*?</section>\n', t, flags=re.S)
+        assert pk and ge and pk.start() > ge.end(), f'{path} 기수 카드/신청 안내 자리를 못 찾음'
+        a0 = ge.group(0).find('<div class="ld-al">'); a1 = ge.group(0).find('<div class="ld-gn">', a0)
+        assert 0 < a0 < a1, f'{path} 다음 기수 알림 자리를 못 찾음'
+        alert = ge.group(0)[a0:a1]
+        cards = pk.group(0).rstrip('\n').replace('class="pk-c on" role="radio" aria-checked="true"', 'class="pk-c" role="radio" aria-checked="false"')
+        go = ('<button type="button" class="ld-btn ld-btn-ar is-off" data-cta="pick" id="ldPickGo"><span>기수를 골라 주세요</span>'
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>\n')
+        pick_sec = ('<section class="ld-sec ld-only ld-pick" id="ldCohort" data-sec="pick">\n<p class="ld-k">기수 선택</p>\n<h2>참여할 기수를 골라 주세요</h2>\n'
+                    + cards + '\n' + go + '<p class="ld-pk-note">참가 확정 문자는 고른 기수의 신청 마감일까지 보내드려요</p>\n' + alert + '\n</section>\n')
+        # 신청서 모드에서는 로고 줄이 맨 위에 오게: 머리 카드 앞에 로고 줄(신청서 모드에서만 보임)을 두고 머리 카드의 로고 줄은 숨김
+        logo = '<div class="ld-top fm-only"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">__LD_BADGE__</span></div>\n'.replace('__LD_BADGE__', f"{cohort}기 모집 중")
+        t = t.replace(pk.group(0), '', 1).replace(ge.group(0), ge.group(0).replace(alert, '', 1) + pick_sec + logo, 1)
+        # 1단계 문항은 신청하기를 누른 뒤에만 보임 (소개 모드에서 스크롤로 신청서가 이어지지 않게)
+        q0 = '<p class="pstep"><b>1/3</b>기본 정보</p>\n'; nv = '<div class="nav"><button type="button" class="btn" data-next="2">다음 →</button></div>'
+        assert t.count(q0) == 1 and t.count(nv) == 1, f'{path} 1단계 문항 자리를 못 찾음'
+        t = t.replace(q0, '<div class="fm-q">\n' + q0, 1).replace(nv, nv + '\n</div>', 1)
+        # 모집 중 딱지는 열린 기수 전부 (10/23 사용자: 'N기 모집 중' → '8, 9기 모집 중')
+        cos = ', '.join(g['cohort'] for _, g in rows)
+        t = t.replace(f'{cohort}기 모집 중', f'{cos}기 모집 중')
+        # 친구 문항 (10/23 사용자): '혼자 신청해요' 와 '방은 상관없어요' 선택지는 빼고, 번호 칸은 고르지 않아도 보이게. 번호를 적고 방을 안 고르면 숨긴 '상관없음' 으로 접수
+        la = '  <label class="opt"><span class="k">A</span><input type="radio" name="buddy_room" value="혼자">혼자 신청해요</label>\n'
+        ld = '  <label class="opt"><span class="k">D</span><input type="radio" name="buddy_room" value="상관없음" data-other="buddy">친구랑 신청했고, 방은 상관없어요</label>'
+        ob = '<div class="other" id="other-buddy">'
+        assert t.count(la) == 1 and t.count(ld) == 1 and t.count(ob) == 1, f'{path} 친구 선택지를 못 찾음'
+        t = t.replace(la, '', 1).replace(ld, '  <label class="opt" hidden><input type="radio" name="buddy_room" value="상관없음" data-other="buddy"></label>', 1).replace(ob, '<div class="other show" id="other-buddy">', 1)
+        # 바닥글 (10/23 사용자: 사업자 정보로 신뢰 확보, 문의 메일 sw.team.haruharu@gmail.com). 맨 아래 안내 줄 다음에
+        fm = re.search(r'<p class="foot">.*?</p>\n', t); assert fm, f'{path} 바닥 안내 줄을 못 찾음'
+        t = t.replace(fm.group(0), fm.group(0) + FOOTER, 1)
+        assert not [c for c in BAD if c in t], f'{path} 이야기판 조각에 금지 문자'
         arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
         assert arm_line, f'{path} ARM 줄을 못 찾음'
         t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
@@ -691,6 +841,10 @@ def gen(path, f):
         prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
         tail = open('src/gender-fee.html',encoding='utf-8').read().replace('__GENDER_PRICES__',prices)
         t = t.replace('<p class="foot">', tail + '<p class="foot">', 1)
+    if f.get('landingV4') and f.get('maleFee'):
+        # 이야기판 신청 안내의 참가비 칸은 성별과 상관없이 남녀 금액을 다 적음 (10/23 사용자: 기존 폼처럼 명시). 3페이지 참가비 안내와 송금은 고른 성별 금액 그대로
+        t, nfee = re.subn(r'<dt>참가비</dt><dd><bdi data-price="full">[^<]*</bdi>원', f'<dt>참가비</dt><dd>남성 {f["maleFee"]:,}원 / 여성 {f["fee"]:,}원', t)
+        assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 

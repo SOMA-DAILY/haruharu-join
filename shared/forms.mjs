@@ -116,6 +116,9 @@ export const FORMS = {
   //   pick (10/23 사용자): 신청서의 신청 안내 바로 아래(성별 앞)에 8기, 9기 일정 카드. 지금 폼 기수가 골라진 채로 나오고, 다른 기수를 누르면 그 자리에서 골라짐(페이지 이동, 스크롤 없음).
   //   다른 기수를 고르면 숨은 칸 cohort_pick 에 그 기수가 담겨 서버가 그 기수 줄로 접수(pickTarget). build-v2.sh 가 pick 줄끼리 카드를 만듦(src/cohort-pick.html). 끄려면 두 줄에서 pick 만 빼고 build
   '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true, pick: true },
+  // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 와 아래 셋을 붙이고 이 줄은 지움
+  //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 8기/9기 카드는 pickFrom 으로 고정 링크의 pick 폼 카드를 빌려 씀(이 줄엔 pick 없음)
+  '/8/seoul/story/':        { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생 - 이야기판', feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pickFrom: '/seoul/student/' },
   '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', pick: true },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
@@ -231,8 +234,10 @@ export function entryTarget(entry, now = Date.now(), env, g = '') {
 // 기수 고르기 (10/23): pick 폼 신청서에서 고른 기수(cohort_pick)의 접수 경로. 같은 고정 링크(entry)의 pick 줄만, 아니면 null
 export function pickTarget(path, cohort) {
   const f = formOf(path);
-  if (!f || !f.pick) return null;
-  return Object.keys(FORMS).find((p) => FORMS[p].pick && FORMS[p].entry === f.entry && FORMS[p].cohort === String(cohort)) || null;
+  if (!f || !(f.pick || f.pickFrom)) return null;
+  const e = f.pickFrom || f.entry;   // pickFrom (10/23 이야기판): 고정 링크의 pick 줄을 빌려 씀. 자기 기수면 자기 줄
+  if (f.pickFrom && String(cohort) === String(f.cohort)) return path;
+  return Object.keys(FORMS).find((p) => FORMS[p].pick && FORMS[p].entry === e && FORMS[p].cohort === String(cohort)) || null;
 }
 export function cohortStatus(now = Date.now(), env, cohort = CURRENT_COHORT) {
   const deadline = cohortDeadline(cohort, env);
