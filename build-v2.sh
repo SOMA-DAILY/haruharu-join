@@ -42,17 +42,23 @@ def survey_html(f):
     # 주관식 문항 (10/17 운영자: 고르는 설문 대신 후기와 바라는 점 두 칸). 글자 칸은 템플릿 검사가 안 봐서 숨긴 _ok 칸을 min 자 이상일 때 채움 (src/rejoin-survey.html)
     E = lambda s: html.escape(str(s), quote=True)
     out = '<div class="sv" id="sv">\n'
-    if not f.get('reviewCohort'):
+    if not f.get('reviewCohort') and not f.get('wishOnly'):
         out += '<div class="q sv-cohort-q" data-name="sv_cohorts"><p class="t">어느 기수에 참여하셨나요?<span class="req">*</span></p><p class="sv-hint">여러 번 참여했다면 모두 골라 주세요</p><div class="sv-cohort-choices" role="group" aria-label="참여했던 기수">'
         for choice in SV['COHORTS']:
             out += f'<button type="button" data-sv-cohort="{E(choice["value"])}" data-open-after="{choice.get("availableAt", 0)}" aria-pressed="false">{E(choice["label"])}</button>'
         out += '</div><input type="text" name="sv_cohorts" value="" hidden required><p class="err">참여했던 기수를 골라 주세요</p></div>\n'
     for k in [k for sec in SV['SECTIONS'] for k in sec['keys']]:
+        if f.get('wishOnly') and k != 'sv_wish': continue
         q = SV['Q'][k]; assert q['type'] == 'text', f'{k} 주관식만 찍음'
-        out += (f'<div class="q sv-q" data-name="{k}"><p class="t">{E(q["title"])}<span class="req">*</span></p>\n'
-                + (f' <p class="sv-hint">{E(q["hint"])}</p>\n' if q.get('hint') else '')
-                + f' <textarea name="{k}" rows="4" maxlength="{q.get("max", 1000)}" data-min="{q.get("min", 1)}" placeholder="{E(q["placeholder"])}"></textarea>\n'
-                + f' <input type="text" name="{k}_ok" value="" hidden required>\n <p class="err">{q.get("min", 1)}자 이상 적어 주세요</p></div>\n\n')
+        optional = bool(f.get('wishOnly')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
+        minimum = 1 if optional else q.get('min', 1)
+        required = '' if optional else ' required'
+        placeholder = '' if optional else f' placeholder="{E(q["placeholder"])}"'
+        hint = '방 구성이나 진행 방식에 바라는 점이 있다면 적어주세요.' if optional else q.get('hint', '')
+        out += (f'<div class="q sv-q" data-name="{k}"><p class="t">{E(q["title"])}{mark}</p>\n'
+                + (f' <p class="sv-hint">{E(hint)}</p>\n' if hint else '')
+                + f' <textarea name="{k}" rows="4" maxlength="{q.get("max", 1000)}" data-min="{minimum}"{placeholder}></textarea>\n'
+                + f' <input type="text" name="{k}_ok" value="" hidden{required}>\n <p class="err">{minimum}자 이상 적어 주세요</p></div>\n\n')
     return out + '</div>\n\n'
 def join_html(f):
     # 다음 기수 문항 (10/18 운영자): 후기만 남기는 게 기본. 다음 기수 날짜와 [재참여하면 2,000원 할인돼요] 를 보여 주고, 보이는 칸은 [네, 신청할래요] 하나(다시 누르면 꺼짐).
@@ -77,12 +83,17 @@ def join_html(f):
             at += f' data-exclude-g="{E(excluded)}"'
         cos.append(f'  <p class="sv-co" {at}><b>{E(v)}</b>{E(short(period))} 진행<small>신청 마감 {E(short(dko))}</small></p>\n')
         yes.append(f'  <label class="opt fr-card" {at}><span class="k">A</span><input type="radio" name="sv_join" value="{E(v)}"><span class="fr-l">네, <span class="sv-c">{E(v)} </span>신청할래요</span></label>\n')
-    assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 후기만 칸이 없음'
+    if f.get('joinRequired'):
+        no = '  <label class="opt" hidden><input type="radio" name="sv_join" value="" checked></label>\n'
+    assert no and yes, f'{f["path"]} 다음 기수 문항에 기수나 기본 칸이 없음'
     off = f"{f['wasFee'] - f['fee']:,}"
-    return ('<div class="q sv-q" data-name="sv_join"><p class="t">다음 기수도 신청할래요?</p>\n'
+    title = '참여할 일정을 선택해 주세요.' if f.get('joinRequired') else '다음 기수도 신청할래요?'
+    required_attr = ' data-required-join="true"' if f.get('joinRequired') else ''
+    empty = '<p class="sv-hint sv-join-empty" hidden>지금 신청할 수 있는 기수가 없어요. 다음 모집 때 만나요!</p>' if f.get('joinRequired') else ''
+    return (f'<div class="q sv-q" data-name="sv_join"{required_attr}><p class="t">{title}</p>\n'
             + ' <p class="sv-hint">이전에 만났던 분과는 다른 방으로 배정해 드려요.</p>\n'
             + f' <p class="sv-off">재참여하면 <b>{off}원 할인</b>돼요<small><s>{f["wasFee"]:,}원</s> → {f["fee"]:,}원</small></p>\n'
-            + ' <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n</div>\n\n')
+            + ' <div class="sv-cos">\n' + ''.join(cos) + ' </div>\n <div class="opts sv-join">\n' + ''.join(yes) + no + ' </div>\n' + empty + '</div>\n\n')
 FRIEND_FN=re.sub(r'^export ', '', re.sub(r'^//.*\n', '', open('shared/friend-discount.mjs',encoding='utf-8').read(), flags=re.M), flags=re.M).strip()
 assert FRIEND_FN.startswith('function friendFee(')
 # 완료 화면의 앱 설치 안내 (src/app-install.html, 맨 위 주석은 빼고 끼움)
@@ -318,7 +329,7 @@ def gen(path, f):
         consent = ('성별, 출생연도, 전화번호, 하시는 일, 신청자 확인용 이름, 함께 신청한 친구의 전화번호' if work
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
         if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
-        if survey: done_body = '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.'
+        if survey: done_body = ('다시 함께해 주셔서 고마워요!<br>방이 열리면 초대 코드를 문자로 보내드려요.' if f.get('wishOnly') else '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.')
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -408,7 +419,7 @@ def gen(path, f):
         '__LD_CITY_KO__': f['cityKo'], '__LD_LIFE__': ('adgrid' if f['city'] == 'seoul' else 'feed'),   # 랜딩 3판: 헤드/눈썹 지역, 일상 사진은 서울만 집행 광고 그리드(칸에 서울 글자), 광주는 앱 화면
         '__CITY__': f['city'], '__CITY_KO__': f['cityKo'], '__TARGET_KO__': target_ko, '__TARGET_SHORT__': ('직장인' if work else '대학생'),
         '__TRACK__': f.get('track',''),
-        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '설문 시작하기 💌' if survey else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
+        '__LD_CTA__': ('사전 알림 신청하기 💌' if prealert else '재참여 신청하기' if f.get('wishOnly') else '설문 시작하기 💌' if survey else '소개팅 신청하기 💌'), '__LD_WAS__': f"{f.get('wasFee', 0):,}", '__CB_UNTIL__': f.get('untilKo', '오늘 자정'), '__CB_LEFT__': f.get('leftKo') or f"{f.get('afterKo', '자정이')} 지나면 다시 {f.get('wasFee', 0):,}원이에요",
         '__IMG_P1__': p1, '__SCHEDULE__': sched, '__COHORT__': cohort, '__PLAN__': plan,
         '__FEE_NOTE__': fee_note, '__PAY_URL__': f.get('pay') or '#', '__FEE__': fee, '__MP__': MP,
         '__DEADLINE_MS__': deadline_ms, '__DEADLINE_KO__': deadline_ko, '__NEXT_LINK__': next_link, '__FLOW__': flow,
@@ -449,7 +460,7 @@ def gen(path, f):
     if phone_only:
         # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호, 설문 폼은 첫 설문 문항)으로
         assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
-        t = t.replace('.q[data-name="gender"]', '.q[data-name="sv_review"]' if survey else '.q[data-name="phone"]')
+        t = t.replace('.q[data-name="gender"]', '.q[data-name="sv_join"]' if f.get('wishOnly') else '.q[data-name="sv_review"]' if survey else '.q[data-name="phone"]')
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
         start = t.index('<div class="q" data-name="source">'); end = t.index('<div class="q" data-name="intent">', start)
@@ -506,7 +517,9 @@ def gen(path, f):
                 mc = re.search(r'<div class="q" data-name="consent">.*?</div>\n\n', m.group(0), flags=re.S)
                 assert mc, f'{path} 동의 문항을 못 찾음'
                 notice = '<p class="rj-privacy">신청 확인, 방 배정, 초대 코드와 일정 안내를 위해 전화번호와 이름, 지난 신청 때 적어 주신 성별, 출생년도, 학교를 이용해요. 후기와 바라는 점은 방 구성과 진행을 고치는 데 써요. 기수 종료 6개월 뒤 파기합니다.</p>\n\n'
-                t = t.replace(join + m.group(0), survey_html(f) + (join_html(f) if f.get('joins') else '') + m.group(0).replace(mc.group(0), notice), 1)
+                if f.get('wishOnly'): notice = notice.replace('후기와 바라는 점은', '선택해서 적어 주신 바라는 점은')
+                questions = ((join_html(f) if f.get('joins') else '') + survey_html(f)) if f.get('wishOnly') else (survey_html(f) + (join_html(f) if f.get('joins') else ''))
+                t = t.replace(join + m.group(0), questions + m.group(0).replace(mc.group(0), notice), 1)
                 t = t.replace('<div class="nav">' + nav3 + '</div>\n', '<div class="nav"><button type="submit" class="btn" id="submit">제출하기</button></div>\n', 1)
             elif phone_only:
                 # 한 페이지에 전부 (10/11 운영자: 다음 페이지 없이 한번에). 전화번호, 친구 문항, 참가비, 제출 버튼 순서, 그 아래 친구 추천 칸
@@ -537,7 +550,8 @@ def gen(path, f):
                 p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
                 assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1 and qc not in t and '<div class="ld">' not in t, f'{path} 설문 폼 한 페이지 구성이 어긋남'
                 assert p1.index('id="sv"') < p1.index(qp) < p1.index('class="rj-privacy"') < p1.index('<div class="q" data-name="name">') < p1.index('id="submit"'), f'{path} 설문 폼 문항 순서가 다름'   # 친구 문항은 아래 친구 할인 조각이 참가비 위로 옮기고 확인
-                assert all(f'data-name="{k}"' in p1 for sec in SV['SECTIONS'] for k in sec['keys']), f'{path} 설문 문항이 빠짐'
+                expected = ['sv_wish'] if f.get('wishOnly') else [k for sec in SV['SECTIONS'] for k in sec['keys']]
+                assert all(f'data-name="{k}"' in p1 for k in expected), f'{path} 설문 문항이 빠짐'
             elif phone_only:
                 p1 = t.split('data-page="1"', 1)[1].split('data-page="done"', 1)[0]
                 assert 'data-page="2"' not in t and 'data-next=' not in t and 'data-prev=' not in t and t.count('id="submit"') == 1, f'{path} 한 페이지 구성이 어긋남'
@@ -642,6 +656,18 @@ def gen(path, f):
                 title = f'{f["reviewCohort"]}기, 어땠어요?'
                 t = t.replace('지난 기수, 어땠어요?', title).replace('지난 참가자 전용', f'{f["reviewCohort"]}기 참가자 전용')
                 t = t.replace('하루하루 지난 기수 후기', f'하루하루 {f["reviewCohort"]}기 후기').replace('지난 기수 어땠어요? 후기를 들려주세요', title + ' 후기를 들려주세요')
+            if f.get('wishOnly'):
+                t = t.replace('지난 기수, 어땠어요?', '서울 8·9기 재참여 신청')
+                t = t.replace('남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
+                t = t.replace('지난 참가자 전용', '기존 참가자 전용')
+                t = t.replace('하루하루 지난 기수 후기 💌', '서울 8·9기 재참여 신청 | 하루하루')
+                t = t.replace('지난 기수 어땠어요? 후기를 들려주세요 💌', '서울 8·9기 재참여 신청')
+                t = t.replace('후기를 남겨 주세요. 다음 기수에 다시 참여하면 2,000원 할인돼요', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
+                t = t.replace('id="submit">제출하기</button>', 'id="submit">재참여 신청하기</button>')
+                t = t.replace("btn.textContent='제출하기'", "btn.textContent='재참여 신청하기'")
+                button_copy = "btn.textContent=join?'신청하기':requiredJoin?'참여할 기수를 선택해 주세요':'후기 보내기'"
+                assert t.count(button_copy) == 1, f'{path} 기수 선택 버튼 문구를 못 찾음'
+                t = t.replace(button_copy, "btn.textContent=join?'재참여 신청하기':'참여할 일정을 선택해 주세요.'")
             if f.get('joins'):
                 # 기수를 고르는 한 장 (10/18): 고른 기수가 그새 마감되면(서버 409) 페이지를 닫지 않고 그 칸만 숨김(hhSvClosed), 후기만이면 메타 Lead 를 안 보냄
                 for a, b in (("if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); }",
@@ -693,7 +719,11 @@ def gen(path, f):
         t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PICK_TAIL + foot, 1)
-    bad = [c for c in BAD if c in t.replace('받은 질문 · 1','')]
+    checked_text = t.replace('받은 질문 · 1', '')
+    if f.get('wishOnly'):
+        # 사용자 확정 제목의 가운데점만 허용하고 다른 금지 문자 검사는 유지.
+        checked_text = checked_text.replace('서울 8·9기 재참여 신청', '')
+    bad = [c for c in BAD if c in checked_text]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
         assert os.path.exists('public/img/' + img), f'{path} 이미지 없음: {img}'
