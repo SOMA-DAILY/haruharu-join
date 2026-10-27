@@ -317,7 +317,7 @@ dd{margin:0;word-break:break-all}
         <div class="tile"><div class="k" id="aDoneK">처리 현황</div><div class="v num" id="aDone">-</div><div class="s" id="aDoneS"></div></div>
       </div>
       <div class="card" style="margin-bottom:12px"><h3 id="aBySrcH">광고별 신청 <span class="muted">어느 광고에서 들어왔나</span></h3>
-        <table class="list" style="min-width:0"><thead id="aBySrcHead"><tr><th>유입경로</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
+        <table class="list" style="min-width:0"><thead id="aBySrcHead"><tr><th>유입경로</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
       <div class="strip" id="aStrip"></div>
       <div class="filters" style="margin-bottom:10px">
         <input id="q" placeholder="이름, 전화번호, 학교, 하는 일 검색" style="min-width:220px">
@@ -351,9 +351,9 @@ function isAlertR(r){return cohortOf(r)==='alert'}
 function stList(r){return isAlertR(r)?ALERT_ST:STATUSES}
 function stLabel(r,s){return s||(isAlertR(r)?'미연락':'미처리')}
 function ageOf(y){var n=Number(y);return n>1900?(new Date(Date.now()+9*3600e3).getUTCFullYear()-n):''}
-// 송금확인 안됨: 목록엔 남기고 신청자 관리 화면 집계(총 신청, 오늘, 성비, 처리 현황, 광고별)에서만 뺌
+// 신청자 관리 집계는 미처리·송금확인만 포함. 목록과 행동 지표는 유지한다.
 var UNPAID='송금확인 안됨';
-function counted(r){return r.status!==UNPAID}
+function counted(r){return !r.status||r.status==='송금확인'}
 var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',marketing:'문자 수신 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
 var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'cohort:'+REG.CURRENT,src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
@@ -692,14 +692,14 @@ function renderAppSummary(){
   var dk=function(off){return new Date(dayStart(off)+9*3600e3).toISOString().slice(0,10)};
   var td=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(0)}).length,yd=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(-1)}).length;
   var f=all.filter(function(r){return r.gender==='여성'}).length,m=all.filter(function(r){return r.gender==='남성'}).length;
-  var done=all.filter(function(r){return r.status}).length,conf=all.filter(function(r){return r.status==='확정'}).length;
+  var done=all.filter(function(r){return r.status==='송금확인'}).length;
   var ca=S.apps.filter(function(r){return counted(r)&&cohortOf(r)===S.cohort}),byT={};ca.forEach(function(r){var t=trackOf(r);byT[t]=(byT[t]||0)+1});
   var tsum=trackList(S.cohort).map(function(t){return (TRACK_KO[t]||t)+' '+(byT[t]||0)}).join(' / ');
-  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(cohortKo(S.cohort)+(S.track?' '+(TRACK_KO[S.track]||S.track)+'만':' / '+tsum))+(ex?' <span class="nw">/ 송금확인 안됨 '+ex+'명 제외</span>':'');
+  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(cohortKo(S.cohort)+(S.track?' '+(TRACK_KO[S.track]||S.track)+'만':' / '+tsum))+(ex?' <span class="nw">/ 기타 상태 '+ex+'명 제외</span>':'');
   $('aToday').textContent=td;$('aTodayS').textContent='어제 '+yd;
   $('aGen').textContent=f+' : '+m;$('aGenS').textContent=all.length?('여성 '+pct(f,all.length)):'';
-  var paid=all.filter(function(r){return r.status==='송금확인'||r.status==='연락함'||r.status==='확정'}).length;$('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 이상 '+paid+' / 확정 '+conf+' / 미처리 '+(all.length-done);
-  var bs={};all.forEach(function(r){var k=r.src||'';var o=bs[k]||(bs[k]={k:k,n:0,f:0,m:0,t:0,p:0});o.n++;if(r.gender==='여성')o.f++;if(r.gender==='남성')o.m++;if((r.submitted_at||'').slice(0,10)===dk(0))o.t++;if(r.status==='송금확인'||r.status==='연락함'||r.status==='확정')o.p++});
+  $('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 '+done+' / 미처리 '+(all.length-done);
+  var bs={};all.forEach(function(r){var k=r.src||'';var o=bs[k]||(bs[k]={k:k,n:0,f:0,m:0,t:0,p:0});o.n++;if(r.gender==='여성')o.f++;if(r.gender==='남성')o.m++;if((r.submitted_at||'').slice(0,10)===dk(0))o.t++;if(r.status==='송금확인')o.p++});
   var bl=Object.keys(bs).map(function(k){return bs[k]}).sort(function(a,b){return b.n-a.n});
   $('aBySrc').innerHTML=bl.length?bl.map(function(o){return '<tr><td>'+srcCell(o.k)+'</td><td class="r num"><b>'+o.n+'</b></td><td class="r num">'+o.f+'</td><td class="r num">'+o.m+'</td><td class="r num">'+o.t+'</td><td class="r num">'+o.p+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty" style="padding:18px">아직 신청이 없음</td></tr>';
   // 오늘 폼 퍼널 한 줄 (지역 탭 반영)
@@ -717,7 +717,7 @@ function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newA
   appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button>')+'</tr>'}
 function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
   if(S.cohort==='alert'){$('appRows').innerHTML=rs.map(alertRow).join('');return}
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status===UNPAID?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
     appCell('이름','<b class="app-name">'+esc(r.name||(cohortOf(r)==='review'?'(후기만)':'(사전알림)'))+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':''))+appCell('성별',esc(r.gender))+appCell('출생',esc(r.birth_year))+appCell('학교 / 하는 일',esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':''))+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+
     appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button>')+'</tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
