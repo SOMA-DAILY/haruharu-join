@@ -134,6 +134,11 @@ button.fr-card{appearance:none;-webkit-appearance:none;-webkit-tap-highlight-col
    var empty=jq.querySelector('.sv-join-empty'); if(empty) empty.hidden=!!show.length;
    if(!jq.querySelector('input:checked')) toNo();
    sync(); }
+  document.addEventListener('hh-capacity-change',function(){
+   var states=window.hhCapacityStates||{};
+   yes.forEach(function(o){var p=o.getAttribute('data-path');if(states[p])open[p]=!!states[p].open});
+   vis();
+  });
   // [네] 를 다시 누르면 꺼짐 (라디오라 그냥은 안 꺼져서, 누르기 전에 켜져 있었는지 보고 후기만으로 돌림)
   yes.forEach(function(o){ var was=false, r=o.querySelector('input');
    o.addEventListener('pointerdown',function(){ was=r.checked; });

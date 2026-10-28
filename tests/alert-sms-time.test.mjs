@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
+import vm from 'node:vm';
 import { onRequest } from '../functions/api/[[path]].js';
 
 async function fixture() {
@@ -62,8 +63,9 @@ test('only alert rows accept this field; normal marking and authentication still
 });
 test('submission retry preserves send metadata, and core insert works before the new migration',()=>{
  const source=readFileSync(new URL('../functions/api/[[path]].js',import.meta.url),'utf8');
- const query=source.match(/env\.DB\.prepare\(`(INSERT INTO submissions[\s\S]*?)`\)/)[1];
- for(const migrated of [false,true]){
+ const queryTemplate=source.match(/env\.DB\.prepare\(`(INSERT INTO submissions[\s\S]*?)`\)/)[1];
+ for(const limited of [false,true])for(const migrated of [false,true]){
+  const query=vm.runInNewContext('`'+queryTemplate+'`',{limited});
   const db=new DatabaseSync(':memory:');
   for(const f of readdirSync(new URL('../migrations/',import.meta.url)).filter(f=>f.endsWith('.sql')).sort()){
    if(!migrated&&f==='0016_alert_sms_sent_at.sql')continue;
@@ -72,6 +74,7 @@ test('submission retry preserves send metadata, and core insert works before the
   db.exec("INSERT INTO submissions(application_id,cohort,status,memo) VALUES('retry-test-0001','alert','문자 보냄','preserved')");
   if(migrated)db.exec("UPDATE submissions SET last_sms_sent_at='2026-10-26 12:55:17' WHERE application_id='retry-test-0001'");
   const args=['retry-test-0001','s:retry','/alert/seoul/','seoul','alert','local','local',1,'2026-10-28 10:00:00','test','01000000011','01000000011','여성','2004','','','iPhone','','','동의합니다','','prealert',''];
+  if(limited)args.push('seoul-student');
   const params=[...query.matchAll(/\?(\d+)/g)].map(m=>args[Number(m[1])-1]);
   db.prepare(query.replace(/\?\d+/g,'?')).run(...params);
   const row=db.prepare("SELECT * FROM submissions WHERE application_id='retry-test-0001'").get();

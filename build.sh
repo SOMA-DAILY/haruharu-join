@@ -199,3 +199,4 @@ echo "done. 배포는 main push (CI). 비상시: npx wrangler pages deploy publi
 
 # 개선판 폼 (등록부의 variant: 'v2'). 기존 폼과 따로, 새 주소에만 씀
 MIXPANEL_TOKEN="$MP" ./build-v2.sh
+cp src/capacity.js public/capacity.js

@@ -708,7 +708,7 @@ def gen(path, f):
         def pk_card(p, g):
             c = g['cohort']; on = (p == path) or (bool(f.get('pickFrom')) and c == cohort); per, dko = INFO[c]['period'], DLKO[c]
             return (f'<button type="button" class="pk-c{" on" if on else ""}" role="radio" aria-checked="{"true" if on else "false"}" data-cohort="{c}" data-deadline="{ms(DL[c])}"'
-                    f' data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
+                    f' data-path="{p}" data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
                     f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
                     f'<span class="pk-chips"><span class="pk-chip p">🗓️ {pk_short(per)}</span><span class="pk-chip d">⏰ {pk_short(dko)} 신청 마감</span></span></button>')
         t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
