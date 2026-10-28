@@ -23,7 +23,9 @@ const FESTIVAL_FIELDS = ['major', 'avoid_same_major'];
 // 4기 직장인 사전알림 문항. 하시는 일은 school 칸을 그대로 씀(라벨만 다름), 편한 진행 시기만 새 칸
 const WORK_FIELDS = ['schedule_pref'];
 // 캡처 이미지는 FIELDS 에 넣지 않음: /partial(D1 sessions.fields)로는 절대 안 들어가게 제출 본문의 capture 로만 받음
-const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS, ...WORK_FIELDS];
+// 기타 사항 (10/28 이야기판): 제출 바로 앞 선택 글 칸. 500자까지. CSV 는 맨 끝 열, D1 은 submissions.note (migrations/0018, batch 밖에서 따로)
+const NOTE_FIELDS = ['note'];
+const FIELDS = [...BASE_FIELDS, ...FESTIVAL_FIELDS, ...WORK_FIELDS, ...NOTE_FIELDS];
 const HIDDEN = ['g', 'src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'city', 'cohort', 'channel', 'plan', 'device_auto', 'arm'];   // arm (10/20): 50/50 팔 a|b (functions/7/seoul 쿠키)
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebot|meta-externalagent|preview|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
 
@@ -32,7 +34,7 @@ async function readBody(request) {
 }
 function clean(fields) {
   const o = {};
-  for (const k of FIELDS) if (fields && typeof fields[k] === 'string') o[k] = fields[k].slice(0, 200);
+  for (const k of FIELDS) if (fields && typeof fields[k] === 'string') o[k] = fields[k].slice(0, k === 'note' ? 500 : 200);
   return o;
 }
 function cleanHidden(h) {
@@ -386,6 +388,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (sv && dbOk) {
       try { await env.DB.prepare('UPDATE submissions SET survey = ?2 WHERE application_id = ?1').bind(id, JSON.stringify(sv.survey)).run(); } catch (e) {}
     }
+    // 기타 사항(migrations/0018)도 batch 밖에서: 원격에 0018 이 없어도 신청자 행은 남고 글은 KV 정본에만
+    if (f.note && dbOk) {
+      try { await env.DB.prepare('UPDATE submissions SET note = ?2 WHERE application_id = ?1').bind(id, f.note).run(); } catch (e) {}
+    }
     // 트랙/직장인 문항(migrations/0008)도 batch 밖에서: 원격에 0008 이 없어도 신청자 행은 남음
     if (form && dbOk) {
       try {
@@ -449,12 +455,12 @@ export async function onRequest({ request, env, params, waitUntil }) {
     rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
     if (url.searchParams.get('format') === 'json') return json(rows);
     const HIDDEN_CSV = HIDDEN.filter((k) => k !== 'arm');   // arm 은 맨 끝 (기존 열 위치 유지)
-    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN_CSV, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track', 'arm'];
+    const head = ['application_id', 'submitted_at', ...BASE_FIELDS, 'phone_digits', ...HIDDEN_CSV, 'ref', 'sid', ...FESTIVAL_FIELDS, ...WORK_FIELDS, 'track', 'arm', ...NOTE_FIELDS];
     const lines = [head.join(',')];
     for (const r of rows) {
       const f = r.fields || {}, h = r.hidden || {};
       lines.push([r.application_id || r.id, r.submitted_at, ...BASE_FIELDS.map((k) => f[k]), r.phone_digits, ...HIDDEN_CSV.map((k) => h[k]), r.ref, r.sid].map(esc)
-        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || ''), esc(h.arm || '')]).join(','));
+        .concat(FESTIVAL_FIELDS.map((k) => escFree(f[k]))).concat(WORK_FIELDS.map((k) => esc(f[k]))).concat([esc(r.track || ''), esc(h.arm || '')]).concat(NOTE_FIELDS.map((k) => escFree(f[k]))).join(','));
     }
     return csv(lines);
   }

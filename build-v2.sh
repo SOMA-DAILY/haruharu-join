@@ -761,7 +761,15 @@ def gen(path, f):
         sub = ' <p class="pay-sub">입금자명과 같아야 확인이 빨라요</p>\n'; assert t.count(sub) == 1, f'{path} 송금자 이름 안내를 못 찾음'; t = t.replace(sub, '', 1)   # 10/23 사용자: 이 안내문은 뺌
         ph0 = '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive">'
         assert t.count(ph0) == 1, f'{path} 전화번호 칸을 못 찾음'
-        t = t.replace(ph0, '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <p class="qh">초대 코드와 일정 안내를 문자로 보내 드리려고 받아요.</p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive" autocomplete="tel">', 1)
+        t = t.replace(ph0, '<div class="q" data-name="phone"><p class="t">전화번호<span class="req">*</span></p>\n <p class="qh">방 배정이 확정되면 문자를 드려요.</p>\n <input type="tel" name="phone" inputmode="numeric" placeholder="ex) 01012345678" required class="mp-sensitive" autocomplete="tel">', 1)
+        # 신청서 머리 카드의 신청 마감 칸 작은 줄 (10/28 사용자: 참가 확정 문자 안내 대신 "모집 현황에 따라 조기 마감될 수도 있다"). 이야기판만, 다른 폼은 rows_a 그대로
+        cf = '<small>참가 확정 문자는 마감일까지 보내드려요</small>'
+        assert cf in t, f'{path} 신청 마감 칸 작은 줄을 못 찾음'
+        t = t.replace(cf, '<small>모집 현황에 따라 조기 마감될 수 있어요</small>')
+        # 제출 바로 앞 (선택) 기타 사항 (10/28 사용자: "제출 전에 (선택)으로 기타 사항, 원하는 거 아무거나 적는 항목. 특이점이나 그런 거"). 비워도 제출됨. 서버 FIELDS 의 note (500자), D1 submissions.note(migrations/0018), 관리 화면 상세와 [기타 사항] 배지
+        nav3 = '<div class="nav"><button type="button" class="btn sec2" data-prev="2">← 이전</button><button type="submit" class="btn" id="submit">제출하기</button></div>'
+        assert t.count(nav3) == 1, f'{path} 제출 버튼 자리를 못 찾음'
+        t = t.replace(nav3, '<div class="q" data-name="note"><p class="t">기타 사항<span class="opt-t">(선택)</span></p>\n <p class="qh">특이 사항이나 운영진에게 하고 싶은 말을 자유롭게 적어 주세요.</p>\n <textarea name="note" rows="3" maxlength="500"></textarea></div>\n\n' + nav3, 1)
         mc = re.search(r'<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">\*</span></p>\n <p class="note">(.*?)</p>\n <label class="chk">', t, flags=re.S)
         assert mc, f'{path} 동의 칸을 못 찾음'
         t = t.replace(mc.group(0), '<div class="q" data-name="consent"><p class="t">개인정보 수집 이용 동의<span class="req">*</span></p>\n'
@@ -794,7 +802,7 @@ def gen(path, f):
         for gone in ('data-name="source"', 'data-name="device"', 'data-name="intent"'):
             assert f'<div class="q" {gone}>' not in t, f'{path} 빠져야 할 문항이 남음: {gone}'
         # 기수 고르기는 랜딩 맨 끝 (10/26 사용자: 스크롤하면 신청서가 이어지는 대신 신청 안내 → 기수 고르기 → 신청하기를 눌러야 1, 2, 3단계 신청서).
-        #   카드는 아무것도 안 골라진 채(기수를 직접 고르게), 그 아래 신청하기 버튼(data-cta="pick")과 다음 기수 알림 링크. 첫 화면, 아래 고정 버튼은 이 구역으로 내려옴(랜딩 스크립트)
+        #   카드는 아무것도 안 골라진 채(기수를 직접 고르게), 그 아래 신청하기 버튼(data-cta="pick")과 다음 기수 알림 링크(10/28 사용자: 참가 확정 문자 안내 줄은 뺌). 첫 화면, 아래 고정 버튼은 이 구역으로 내려옴(랜딩 스크립트)
         #   신청서 모드에서는 이 구역과 신청 안내가 숨고, 로고 줄과 머리 카드(고른 기수의 진행 기간, 신청 마감으로 바뀐 안내) 다음에 1단계 문항
         pk = re.search(r'<div class="pk" id="pick".*?</div>\n\n', t, flags=re.S)
         ge = re.search(r'<section class="ld-sec ld-only" id="ld-guide".*?</section>\n', t, flags=re.S)
@@ -806,7 +814,7 @@ def gen(path, f):
         go = ('<button type="button" class="ld-btn ld-btn-ar is-off" data-cta="pick" id="ldPickGo"><span>기수를 골라 주세요</span>'
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>\n')
         pick_sec = ('<section class="ld-sec ld-only ld-pick" id="ldCohort" data-sec="pick">\n<p class="ld-k">기수 선택</p>\n<h2>참여할 기수를 골라 주세요</h2>\n'
-                    + cards + '\n' + go + '<p class="ld-pk-note">참가 확정 문자는 고른 기수의 신청 마감일까지 보내드려요</p>\n' + alert + '\n</section>\n')
+                    + cards + '\n' + go + alert + '\n</section>\n')
         # 신청서 모드에서는 로고 줄이 맨 위에 오게: 머리 카드 앞에 로고 줄(신청서 모드에서만 보임)을 두고 머리 카드의 로고 줄은 숨김
         logo = '<div class="ld-top fm-only"><span class="ld-logo"><img width="30" height="30" src="/img/L_app_icon.png" alt="">하루하루</span><span class="ld-live">__LD_BADGE__</span></div>\n'.replace('__LD_BADGE__', f"{cohort}기 모집 중")
         t = t.replace(pk.group(0), '', 1).replace(ge.group(0), ge.group(0).replace(alert, '', 1) + pick_sec + logo, 1)
