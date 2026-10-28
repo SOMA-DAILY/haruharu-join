@@ -10,10 +10,13 @@ const page = (p) => readFileSync(new URL('../public' + p + 'index.html', import.
 const block = (html) => { const a = html.indexOf('<div class="pk" id="pick"'); return a < 0 ? '' : html.slice(a, html.indexOf('\n</div>', a)); };
 
 test('등록부: pick 은 8기, 9기 서울 정가 폼만, 고정 링크는 그대로 마감 이른 기수로, pickTarget 은 같은 고정 링크의 pick 줄만', () => {
-  assert.deepEqual(Object.keys(FORMS).filter((p) => FORMS[p].pick), ['/8/seoul/', '/9/seoul/']);
+  assert.deepEqual(Object.keys(FORMS).filter((p) => FORMS[p].pick), ['/8/seoul/', '/9/seoul/cvr/']);   // 10/28: 9기 pick 줄은 CVR 개선판, 기존판은 pickFrom
   assert.equal(entryTarget('/seoul/student/', T('2026-10-23T15:00:00+09:00')), '/8/seoul/');
-  assert.equal(entryTarget('/seoul/student/', T('2026-10-29T18:00:00+09:00')), '/9/seoul/');
-  assert.equal(pickTarget('/8/seoul/', '9'), '/9/seoul/');
+  assert.equal(entryTarget('/seoul/student/', T('2026-10-29T18:00:00+09:00')), '/9/seoul/cvr/');
+  assert.equal(pickTarget('/8/seoul/', '9'), '/9/seoul/cvr/');
+  assert.equal(pickTarget('/9/seoul/cvr/', '8'), '/8/seoul/');
+  assert.equal(pickTarget('/9/seoul/cvr/', '9'), '/9/seoul/cvr/');
+  assert.equal(pickTarget('/9/seoul/', '9'), '/9/seoul/');   // 기존판은 pickFrom 으로 자기 줄
   assert.equal(pickTarget('/9/seoul/', '8'), '/8/seoul/');
   assert.equal(pickTarget('/8/seoul/', '8'), '/8/seoul/');
   assert.equal(pickTarget('/8/seoul/', '7'), null);

@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '8';   // 10/22 18:00 7기 마감 뒤 병합: 지역 선택, 마감된 7기 폼의 다음 기수 버튼과 302 를 8기로. 8기 마감(10/29 18:00) 뒤엔 '9'
+export const CURRENT_COHORT = '9';   // 10/29 18:00 8기 마감 뒤 병합: 지역 선택, 마감된 8기 폼의 다음 기수 버튼과 302 를 9기 CVR 개선판으로. 9기 마감(11/5 18:00) 뒤엔 '10'
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -118,10 +118,11 @@ export const FORMS = {
   '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true, pick: true },
   // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 와 아래 셋을 붙이고 이 줄은 지움
   //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 8기/9기 카드는 pickFrom 으로 고정 링크의 pick 폼 카드를 빌려 씀(이 줄엔 pick 없음)
-  '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', pick: true },
+  //   10/28 사용자: 9기 메인은 아래 CVR 개선판. 이 기존판은 직접 링크(문자, 수동 안내)로만 살려 둠 → listed/entry/pick 을 CVR 줄로 옮기고 카드는 pickFrom 으로 빌려 씀
+  '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 (기존판)', feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', pickFrom: '/seoul/student/' },
   // CVR 개선판 (10/28 사용자: 주소 /8/seoul/story/ → 9기 /9/seoul/cvr/. "story 말고 cvr 개선 같은 이름", 광고 연결은 광고 책임자가 함).
-  //   값과 화면은 위 이야기판 설명 그대로(landingV4, 8기 9기 고르기 pickFrom). 고정 링크, 지역 선택, 50/50 에는 안 나옴
-  '/9/seoul/cvr/':          { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 - CVR 개선판', feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pickFrom: '/seoul/student/' },
+  //   값과 화면은 위 이야기판 설명 그대로(landingV4). 10/28 사용자: 9기 메인 폼 → 고정 링크(entry), 지역 선택(listed), 기수 카드(pick) 전부 이 줄. 광고/바이오 URL 은 안 바꾸고 고정 링크 302 목적지만 바뀜 (메타 학습 유지). 50/50 없음
+  '/9/seoul/cvr/':          { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 - CVR 개선판', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pick: true },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
   //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
