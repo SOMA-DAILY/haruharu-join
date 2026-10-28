@@ -291,7 +291,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // 재참여 설문 폼(등록부 survey): 설문을 다 해야 할인이라 빠진 문항이 있으면 받지 않음. 값은 선택지에 있는 것만 남김
     // 전용 폼의 후기 기수는 서버 등록부가 확정한다. 신청 기수/클라이언트 응답으로 덮어쓰지 않음.
     const reviewCohort = page?.reviewCohort || form?.reviewCohort;
-    const sv = form?.wishOnly ? cleanOptionalWish(b.fields) : form && form.survey ? cleanSurvey(reviewCohort ? { ...b.fields, sv_cohorts: [reviewCohort] } : b.fields) : null;
+    const sv = form?.wishOnly ? cleanOptionalWish(b.fields) : form && form.survey ? cleanSurvey(reviewCohort ? { ...b.fields, sv_cohorts: [reviewCohort] } : b.fields, now, { wishOptional: !!form.wishOptional }) : null;
     if (sv) miss.push(...sv.miss);
     if (form && form.buddyOnly && !reviewOnly) {
       const room = f.buddy_room || '혼자';

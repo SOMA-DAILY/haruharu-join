@@ -41,6 +41,8 @@ const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, p
 // 7기 참가자 전용: 같은 화면/고정 참가비를 재사용하되 후기 출처는 7기, 재신청은 8/9기로 분리한다.
 const REVIEW7 = { ...REVIEW6, reviewCohort: '7' };
 const RETURNING_WISH = { ...REVIEW6, reviewCohort: null, wishOnly: true };
+// 남성 재참여 전용(10/28): 8/9기 정가 10,000원에서 2,000원 할인. 친구 동반 시에도 8,000원 고정.
+const RETURNING_MEN = { ...REVIEW7, fee: 8000, wasFee: 10000, pay: PAY + '/mr/', wishOptional: true };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -145,6 +147,11 @@ export const FORMS = {
                               joins: { '8기': '/8/seoul/rejoin/returning/', '9기': '/9/seoul/rejoin/returning/' } },
   '/8/seoul/rejoin/returning/': { ...S8, ...RETURNING_WISH, rejoin: true, label: '기존 참가자 8기 재신청 (바라는 점 선택)' },
   '/9/seoul/rejoin/returning/': { ...S9, ...RETURNING_WISH, rejoin: true, label: '기존 참가자 9기 재신청 (바라는 점 선택)' },
+  '/rejoin/seoul/returning-men/': { ...S8, cohort: 'review', ...RETURNING_MEN, noPage: false, noDeadline: true,
+                                  label: '7기 남성 후기 및 8/9기 재참여', landing: true, variant: 'v2', landingV3: true, noSource: true,
+                                  joins: { '8기': '/8/seoul/rejoin/returning-men/', '9기': '/9/seoul/rejoin/returning-men/', '후기만': '/rejoin/seoul/returning-men/' } },
+  '/8/seoul/rejoin/returning-men/': { ...S8, ...RETURNING_MEN, rejoin: true, label: '기존 남성 참가자 8기 재신청 (8,000원)' },
+  '/9/seoul/rejoin/returning-men/': { ...S9, ...RETURNING_MEN, rejoin: true, label: '기존 남성 참가자 9기 재신청 (8,000원)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },

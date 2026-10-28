@@ -50,7 +50,7 @@ def survey_html(f):
     for k in [k for sec in SV['SECTIONS'] for k in sec['keys']]:
         if f.get('wishOnly') and k != 'sv_wish': continue
         q = SV['Q'][k]; assert q['type'] == 'text', f'{k} 주관식만 찍음'
-        optional = bool(f.get('wishOnly')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
+        optional = bool(f.get('wishOnly') or (f.get('wishOptional') and k == 'sv_wish')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
         minimum = 1 if optional else q.get('min', 1)
         required = '' if optional else ' required'
         placeholder = '' if optional else f' placeholder="{E(q["placeholder"])}"'
