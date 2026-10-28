@@ -332,7 +332,7 @@ def gen(path, f):
         if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
         if survey: done_body = ('다시 함께해 주셔서 고마워요!<br>방이 열리면 초대 코드를 문자로 보내드려요.' if f.get('wishOnly') else '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.')
     if f.get('rejoin') and f.get('buddyOnly') and not survey:
-        fee_note = f'기존 남성 참가자 재참여 할인가 {fee}원이에요. 후기 작성 없이 신청할 수 있어요. 입금 확인 후 참가가 확정됩니다.'
+        fee_note = f'참가비는 {fee}원이에요. 입금 확인 후 참가가 확정됩니다.' if f.get('phonePaymentOnly') else f'기존 남성 참가자 재참여 할인가 {fee}원이에요. 후기 작성 없이 신청할 수 있어요. 입금 확인 후 참가가 확정됩니다.'
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -398,7 +398,7 @@ def gen(path, f):
             t = re.sub(r'<div class="cb-clock" id="cbClock".*?</div></div>\n', '', t, count=1, flags=re.S)
             t = t.replace('<span class="ld-live"><i></i>__DEADLINE_KO__ 마감</span>', '<span class="ld-live"><i></i>기존 참가자 전용</span>')
             t = t.replace('__CB_UNTIL__까지만<br>', '재참여 할인가로<br>')
-            t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left">후기 작성 없이, 기존 참가자는 8,000원에 신청하실 수 있어요.</p>')
+            t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '' if f.get('phonePaymentOnly') else '<p class="cb-left">후기 작성 없이, 기존 참가자는 8,000원에 신청하실 수 있어요.</p>')
             t, timer_removed = re.subn(r' var end=DEADLINE, off=0, done=false;.*?(?= var cta=document.querySelector)', '', t, count=1, flags=re.S)
             assert timer_removed == 1, f'{path} 상시 재참여에서 타이머를 못 뺌'
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
@@ -478,7 +478,7 @@ def gen(path, f):
         for question in ('source', 'intent') + (('device',) if f.get('noDevice') and not phone_only else ()) + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
-    if f.get('fixedGender'):
+    if f.get('fixedGender') and not phone_only:
         assert f['fixedGender'] == '남성', f'{path} 지원하지 않는 고정 성별'
         female = '<label class="opt"><span class="k">A</span><input type="radio" name="gender" value="여성" required>여성</label>'
         male = '<label class="opt"><span class="k">B</span><input type="radio" name="gender" value="남성">남성</label>'
@@ -486,7 +486,7 @@ def gen(path, f):
         t = t.replace(female, '', 1).replace(male, '<label class="opt on"><span class="k">A</span><input type="radio" name="gender" value="남성" required checked>남성</label>', 1)
     if phone_only:
         # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호, 설문 폼은 첫 설문 문항)으로
-        assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+        assert t.count('.q[data-name="gender"]') == (3 if direct_rejoin else 2), f'{path} 랜딩 신청 버튼 기준을 못 찾음'
         t = t.replace('.q[data-name="gender"]', '.q[data-name="sv_join"]' if f.get('wishOnly') else '.q[data-name="sv_review"]' if survey else '.q[data-name="phone"]')
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
@@ -880,6 +880,18 @@ def gen(path, f):
         # 이야기판 신청 안내의 참가비 칸은 성별과 상관없이 남녀 금액을 다 적음 (10/23 사용자: 기존 폼처럼 명시). 3페이지 참가비 안내와 송금은 고른 성별 금액 그대로
         t, nfee = re.subn(r'<dt>참가비</dt><dd><bdi data-price="full">[^<]*</bdi>원', f'<dt>참가비</dt><dd>남성 {f["maleFee"]:,}원 / 여성 {f["fee"]:,}원', t)
         assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
+    if f.get('phonePaymentOnly'):
+        # 화면에서는 전화번호만 입력. 기존 정보 조회는 서버에서만 하고 이름/친구 입력도 받지 않는다.
+        t, removed = re.subn(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', '', t, count=1, flags=re.S)
+        assert removed == 1, f'{path} 친구 문항을 못 뺌'
+        t, removed = re.subn(r' <p class="note">송금 후 송금자 이름을 적어주세요.</p>\n <input type="text" name="name".*?<p class="err">송금자 이름을 입력해 주세요</p>', '', t, count=1, flags=re.S)
+        assert removed == 1, f'{path} 송금자 이름 문항을 못 뺌'
+        t = t.replace('data-name="name"', 'data-name="payment"')
+        t = t.replace('참가비 안내<span class="req">*</span>', '참가비 안내')
+        t = re.sub(r'<p class="rj-privacy">.*?</p>', '<p class="rj-privacy">신청 확인과 방 배정, 입금 확인을 위해 전화번호와 이전 신청 정보를 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>', t, count=1, flags=re.S)
+        t = t.replace('id="submit">제출하기</button>', 'id="submit">송금 후 신청 완료</button>')
+        t = t.replace("btn.textContent='제출하기'", "btn.textContent='송금 후 신청 완료'")
+        assert all(not re.search(r'<input\b[^>]*name="' + k + '"', t) for k in ('gender', 'birth_year', 'school', 'device', 'consent', 'name', 'buddy', 'buddy_room')), f'{path} 전화번호 외 입력이 남음'
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 
