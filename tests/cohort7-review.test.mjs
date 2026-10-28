@@ -70,7 +70,7 @@ test('8/9기 선택은 해당 재신청 경로에 저장되며 후기 출처는 
     assert.equal(record.hidden.src, 'rejoin-7-msg');
     assert.equal(record.from_page, PAGE);
     assert.deepEqual(record.survey.sv_cohorts, ['7']);
-    const insert = runs.find(({ sql }) => /INSERT OR REPLACE INTO submissions/.test(sql));
+    const insert = runs.find(({ sql }) => /INSERT(?: OR REPLACE)? INTO submissions/.test(sql));
     assert.equal(insert.args[2], path);
     const review = reviewRows([{ application_id: record.id, path, survey: JSON.stringify(record.survey), submitted_ts: BEFORE }],
       { FORMS, DEADLINES: COHORT_DEADLINES, INFO: COHORT_INFO })[0];

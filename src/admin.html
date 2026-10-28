@@ -119,13 +119,18 @@ table.app-list th,table.app-list td{padding:10px 8px;white-space:normal;overflow
 .app-list .stsel{width:100%;max-width:144px;min-width:0}
 .app-list .room{display:block;width:100%;max-width:144px;margin:6px 0 0}
 .app-list .delete-app{padding:5px 6px}
-.app-list[data-mode="alert"] .col-status{width:14%}
-.app-list[data-mode="alert"] .col-time{width:13%}
-.app-list[data-mode="alert"] .col-gender{width:7%}
-.app-list[data-mode="alert"] .col-birth{width:11%}
-.app-list[data-mode="alert"] .col-phone{width:16%}
-.app-list[data-mode="alert"] .col-source{width:19%}
-.app-list[data-mode="alert"] .col-prior{width:14%}
+.app-list[data-mode="alert"] .col-status{width:24%}
+.app-list[data-mode="alert"] .col-time{width:11%}
+.app-list[data-mode="alert"] .col-gender{width:6%}
+.app-list[data-mode="alert"] .col-birth{width:9%}
+.app-list[data-mode="alert"] .col-phone{width:14%}
+.app-list[data-mode="alert"] .col-source{width:17%}
+.app-list[data-mode="alert"] .col-prior{width:13%}
+.sms-time{display:block;margin-top:8px;max-width:240px}
+.sms-time span{display:block;color:var(--sub);font-size:11px;margin-bottom:4px}
+.sms-time input,.sms-time-detail{display:block;width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:7px;font-size:12px;font-variant-numeric:tabular-nums}
+.sms-time input:focus-visible,.sms-time-detail:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.sms-time-detail{font-size:14px;padding:10px}
 #aBySrc td:first-child{white-space:normal;overflow-wrap:anywhere}
 .nw{white-space:nowrap}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f2f4;color:var(--sub)}
@@ -191,6 +196,7 @@ dd{margin:0;word-break:break-all}
   .app-list thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
   table.app-list tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 4px;border-bottom:1px solid var(--line)}
   table.app-list td{display:block;border:0;padding:6px 10px}
+  .app-list[data-mode="alert"] td.st{grid-column:1 / -1}
   .app-list td::before{content:attr(data-label);display:block;margin-bottom:4px;color:var(--sub);font-size:11px;font-weight:600}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .grid2,.grid3{grid-template-columns:1fr}
@@ -711,7 +717,11 @@ function renderAppSummary(){
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
 function appCell(label,content,cls){return '<td data-label="'+label+'"'+(cls?' class="'+cls+'"':'')+'><div class="cell-content">'+content+'</div></td>'}
+function smsInputValue(r){return (r.last_sms_sent_at||'').slice(0,16).replace(' ','T')}
+function smsNowValue(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,16)}
+function smsTimeControl(r){return '<label class="sms-time"><span>최근 문자 발송 (한국시간)</span><input type="datetime-local" class="alert-sms-at" data-id="'+esc(r.application_id)+'" value="'+esc(smsInputValue(r))+'" max="'+smsNowValue()+'" step="60" aria-label="'+esc(fmtPhone(r.phone_digits))+' 최근 문자 발송일시"></label>'}
 function statusCell(r){return appCell(isAlertR(r)?'상태':'상태 / 방','<select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name||fmtPhone(r.phone_digits)||'신청자')+' 상태">'+stList(r).map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
+  (isAlertR(r)&&(r.status==='문자 보냄'||r.last_sms_sent_at)?smsTimeControl(r):'')+
   (!isAlertR(r)&&r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40" aria-label="'+esc(r.name||'신청자')+' 방">':''),'st')}
 function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status==='제외'?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('알림 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('성별',esc(r.gender))+appCell('출생 (나이)',esc(r.birth_year)+(a?' <span class="muted">('+a+')</span>':''),'num')+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+appCell('이전 참여',joinedBefore(r)?'<span class="badge green">참여한 적 있음</span>':'<span class="muted">처음</span>')+
   appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button>')+'</tr>'}
@@ -749,9 +759,11 @@ function renderShare(){var cs=shareCohorts();
 renderShare();
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
-function saveMark(r,status,memo,room,bd){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}return post('mark',body).then(function(d){if(d.ok){r.status=status;r.memo=memo;r.room=room;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨')}})}
-$('appRows').addEventListener('change',function(e){var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim())}
-  var s=e.target.closest('select.stsel');if(!s)return;var r=appById(s.dataset.id);saveMark(r,s.value,r.memo).then(function(){if(s.value==='확정'){var i=document.querySelector('input.room[data-id="'+r.application_id+'"]');if(i)i.focus()}})});
+function saveMark(r,status,memo,room,bd,smsAt){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}if(isAlertR(r)&&smsAt!==undefined)body.last_sms_sent_at=smsAt;return post('mark',body).then(function(d){if(!d.ok)throw new Error(d.error||'저장하지 못했습니다. 다시 시도해 주세요.');r.status=status;r.memo=memo;r.room=room;r.status_updated_at=d.updated_at;if(Object.prototype.hasOwnProperty.call(d,'last_sms_sent_at'))r.last_sms_sent_at=d.last_sms_sent_at;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨');return d})}
+function markError(e){if(e.message!=='401')toast(e.message||'저장하지 못했습니다. 다시 시도해 주세요.')}
+$('appRows').addEventListener('change',function(e){var at=e.target.closest('input.alert-sms-at');if(at){if(!at.reportValidity())return;var ar=appById(at.dataset.id);return saveMark(ar,ar.status,ar.memo,undefined,undefined,at.value||null).catch(function(err){renderApps();markError(err)})}
+  var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim()).catch(markError)}
+  var s=e.target.closest('select.stsel');if(!s)return;var r=appById(s.dataset.id);saveMark(r,s.value,r.memo).then(function(){if(s.value==='확정'){var i=document.querySelector('input.room[data-id="'+r.application_id+'"]');if(i)i.focus()}}).catch(function(err){renderApps();markError(err)})});
 var deletingApp=false;
 function deleteApplicant(r,button){
   if(!r || deletingApp) return;
@@ -771,10 +783,13 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
     var ar=[['성별',r.gender],['출생연도',r.birth_year+(ag?' ('+ag+'세)':'')],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['이전 참여',joinedBefore(r)?'참여한 적 있음 (3기 자체폼부터 같은 번호)':'처음'],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['알림 남긴 폼',(r.path||'')]];
     $('panel').innerHTML='<h2>알림 신청</h2><div class="meta">'+esc(r.submitted_at)+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+ar.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+
       '<h4>상태</h4><select class="stsel" id="dSt" style="padding:8px;width:100%">'+ALERT_ST.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
+      '<h4><label for="dSmsAt">최근 문자 발송일시 (한국시간)</label></h4><input type="datetime-local" class="sms-time-detail" id="dSmsAt" value="'+esc(smsInputValue(r))+'" max="'+smsNowValue()+'" step="60">'+
       '<h4>메모</h4><textarea id="dMemo" placeholder="보낸 문자, 특이사항">'+esc(r.memo)+'</textarea>'+
       '<div class="acts"><button class="btn" id="dSave">저장</button><button class="btn ghost" id="dCopy">전화번호 복사</button><button class="btn ghost" id="dClose">닫기</button></div>';
     $('drawer').classList.remove('hidden');renderApps();
-    $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD;return;
+    var initialSmsInput=smsInputValue(r);
+    $('dSt').onchange=function(){if(this.value==='문자 보냄'&&r.status!=='문자 보냄'&&!$('dSmsAt').value)$('dSmsAt').value=smsNowValue()};
+    $('dSave').onclick=function(){if(!$('dSmsAt').reportValidity())return;var value=$('dSmsAt').value;saveMark(r,$('dSt').value,$('dMemo').value,undefined,undefined,value===initialSmsInput?undefined:(value||null)).then(closeD).catch(markError)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD;return;
   }
   var F=isFest(r);
   var RF=regOf(r.path);
@@ -794,7 +809,7 @@ $('svBtn').onclick=function(){surveyGallery.open(this)};
 $('csvBtn').onclick=function(){var rs=appsFiltered();
   if(S.cohort==='alert'){   // 알림 신청 CSV: 알림에 있는 칸만
     var ch=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-    var al=[['알림시각','성별','출생연도','나이','전화번호','광고','광고코드','이전참여','상태','메모','신청ID'].join(',')].concat(rs.map(function(r){return [r.submitted_at,r.gender,r.birth_year,ageOf(r.birth_year),fmtPhone(r.phone_digits),srcName(r.src),r.src,joinedBefore(r)?'Y':'N',stLabel(r,r.status),r.memo,r.application_id].map(ch).join(',')}));
+    var al=[['알림시각','성별','출생연도','나이','전화번호','광고','광고코드','이전참여','상태','메모','신청ID','최근문자발송일시'].join(',')].concat(rs.map(function(r){return [r.submitted_at,r.gender,r.birth_year,ageOf(r.birth_year),fmtPhone(r.phone_digits),srcName(r.src),r.src,joinedBefore(r)?'Y':'N',stLabel(r,r.status),r.memo,r.application_id,r.last_sms_sent_at||''].map(ch).join(',')}));
     var aa=document.createElement('a');aa.href=URL.createObjectURL(new Blob(['\ufeff'+al.join('\n')],{type:'text/csv;charset=utf-8'}));aa.download='하루하루_알림신청_'+new Date(Date.now()+9*3600e3).toISOString().slice(0,10)+'.csv';aa.click();return;
   }
   var head=['신청시각','지역','이름','성별','출생연도','학교/하는일','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처','기수','트랙','편한진행시기','최근1년소개팅','재참여설문'];
