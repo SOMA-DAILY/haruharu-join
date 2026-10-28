@@ -68,7 +68,7 @@ test('서버: 고른 값으로 기수 줄에 접수하고, 방문 기록은 페�
   assert.equal(six.record.hidden.cohort, '6'); assert.equal(six.record.hidden.plan, 'discount'); assert.equal(six.record.friend_fee, 3900);
   assert.equal(six.record.from_page, PAGE); assert.equal(six.record.fields.gender, '여성');
   assert.equal(six.record.survey.sv_wish, '비슷한 나이대끼리 모였으면 좋겠어요.');
-  const ins = runs.find(([sql]) => /INSERT OR REPLACE INTO submissions/.test(sql)), sess = runs.filter(([sql]) => /sessions/.test(sql));
+  const ins = runs.find(([sql]) => /INSERT(?: OR REPLACE)? INTO submissions/.test(sql)), sess = runs.filter(([sql]) => /sessions/.test(sql));
   assert.equal(ins[1][2], J6);   // 신청 사본은 고른 기수 줄
   assert.ok(sess.length === 2 && sess.every(([, a]) => a[1] === PAGE));   // 방문 기록은 페이지
   const seven = await submit(PAGE, { ...full(), sv_join: '7기', phone: '01011112222', name: '지난참가', buddy_room: '혼자' });

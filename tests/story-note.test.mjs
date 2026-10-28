@@ -30,7 +30,7 @@ test('서버: 기타 사항은 비워도 접수, 적으면 KV 정본에 500자�
     const none = await submit({});
     assert.equal(none.status, 200); assert.equal(none.rec.fields.note, undefined);
     const sql = [];
-    const db = { prepare: (q) => ({ bind: (...a) => ({ q, a, run: async () => { sql.push([q, a]); return {}; } }) }), batch: async () => [] };
+    const db = { prepare: (q) => ({ bind: (...a) => ({ q, a, run: async () => { sql.push([q, a]); return {}; }, all: async () => ({ results: [] }), first: async () => null }) }), batch: async () => [] };   // 정원 설정(#89)은 빈 표로 답함
     const one = await submit({ note: '둘째 날 저녁에는 일정이 있어요' }, db);
     assert.equal(one.status, 200); assert.equal(one.rec.fields.note, '둘째 날 저녁에는 일정이 있어요');
     const up = sql.find(([q]) => q.startsWith('UPDATE submissions SET note'));

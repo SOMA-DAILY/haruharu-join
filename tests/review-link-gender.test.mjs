@@ -24,7 +24,7 @@ test('기존/6기 후기만 제출: 남녀 링크 성별이 KV·D1에 남고 신
     const {response,record,runs} = await request(path,g,{gender:gender==='여성'?'남성':'여성',phone:'01000000001',name:'합성검증'});
     assert.equal(response.status,200);assert.equal(record.fields.gender,gender);assert.equal(record.hidden.g,g);
     assert.equal(record.phone_digits,'');assert.equal(record.fields.phone,undefined);assert.equal(record.fields.name,undefined);
-    assert.equal(runs.find(r=>/INSERT OR REPLACE INTO submissions/.test(r.sql)).args[12],gender);
+    assert.equal(runs.find(r=>/INSERT(?: OR REPLACE)? INTO submissions/.test(r.sql)).args[12],gender);
   }
 });
 

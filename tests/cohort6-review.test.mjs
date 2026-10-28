@@ -64,7 +64,7 @@ test('7기 마감 뒤에도 8기를 신청할 수 있고, 8기 마감 뒤에는 
     assert.equal(eight.res.status, 200);
     assert.equal(eight.record.hidden.cohort, '8');
     assert.deepEqual(eight.record.survey.sv_cohorts, ['6']);
-    const ins = eight.runs.find(({ sql }) => /INSERT OR REPLACE INTO submissions/.test(sql));
+    const ins = eight.runs.find(({ sql }) => /INSERT(?: OR REPLACE)? INTO submissions/.test(sql));
     assert.equal(ins.args[2], JOIN8);
   }
   const end = Date.parse(COHORT_DEADLINES['8']);

@@ -13,6 +13,33 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+.card#capacityCard{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;padding:10px 14px;border-radius:10px}
+#capacityCard h3{margin:0;font-size:13px;white-space:nowrap}
+.capacity-grid{display:flex;flex:1;flex-direction:column;gap:10px;min-width:0}
+.capacity-form{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;padding:0;margin:0}
+.capacity-form+.capacity-form{padding-top:10px;border-top:1px solid var(--line)}
+.capacity-form h4{margin:0;font-size:12px;font-weight:500;color:var(--sub)}
+.capacity-fields{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px}
+.capacity-fields label{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.capacity-fields input{width:64px;height:32px;min-height:0;border:1px solid var(--line);border-radius:6px;padding:4px 6px;text-align:center;font-variant-numeric:tabular-nums}
+.capacity-count{font-weight:400;color:var(--sub);font-variant-numeric:tabular-nums}
+.capacity-state{font-size:11px;color:var(--red)}
+.capacity-form .acts{margin:0;display:flex;align-items:center;gap:8px}
+.capacity-form .btn{height:32px;padding:4px 11px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:12px}
+.capacity-form .btn:hover{border-color:var(--blue);color:var(--blue)}
+.capacity-error:empty{display:none}
+#capacityError{margin:0}
+@media(max-width:600px){
+  .card#capacityCard{display:block;padding:10px 12px}
+  #capacityCard h3{margin-bottom:8px}
+  .capacity-form{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .capacity-form h4{grid-column:1;grid-row:1}
+  .capacity-fields{grid-column:1 / -1;grid-row:2;gap:10px 14px}
+  .capacity-fields input{width:56px;height:36px;font-size:16px}
+  .capacity-form .acts{grid-column:2;grid-row:1}
+  .capacity-form>.capacity-error{grid-column:1 / -1;margin:0}
+}
+.capacity-error{color:var(--red);font-size:13px}
 .num{font-variant-numeric:tabular-nums}
 .muted{color:var(--sub)}
 
@@ -119,13 +146,18 @@ table.app-list th,table.app-list td{padding:10px 8px;white-space:normal;overflow
 .app-list .stsel{width:100%;max-width:144px;min-width:0}
 .app-list .room{display:block;width:100%;max-width:144px;margin:6px 0 0}
 .app-list .delete-app{padding:5px 6px}
-.app-list[data-mode="alert"] .col-status{width:14%}
-.app-list[data-mode="alert"] .col-time{width:13%}
-.app-list[data-mode="alert"] .col-gender{width:7%}
-.app-list[data-mode="alert"] .col-birth{width:11%}
-.app-list[data-mode="alert"] .col-phone{width:16%}
-.app-list[data-mode="alert"] .col-source{width:19%}
-.app-list[data-mode="alert"] .col-prior{width:14%}
+.app-list[data-mode="alert"] .col-status{width:24%}
+.app-list[data-mode="alert"] .col-time{width:11%}
+.app-list[data-mode="alert"] .col-gender{width:6%}
+.app-list[data-mode="alert"] .col-birth{width:9%}
+.app-list[data-mode="alert"] .col-phone{width:14%}
+.app-list[data-mode="alert"] .col-source{width:17%}
+.app-list[data-mode="alert"] .col-prior{width:13%}
+.sms-time{display:block;margin-top:8px;max-width:240px}
+.sms-time span{display:block;color:var(--sub);font-size:11px;margin-bottom:4px}
+.sms-time input,.sms-time-detail{display:block;width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:7px;font-size:12px;font-variant-numeric:tabular-nums}
+.sms-time input:focus-visible,.sms-time-detail:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.sms-time-detail{font-size:14px;padding:10px}
 #aBySrc td:first-child{white-space:normal;overflow-wrap:anywhere}
 .nw{white-space:nowrap}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f2f4;color:var(--sub)}
@@ -191,6 +223,7 @@ dd{margin:0;word-break:break-all}
   .app-list thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
   table.app-list tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 4px;border-bottom:1px solid var(--line)}
   table.app-list td{display:block;border:0;padding:6px 10px}
+  .app-list[data-mode="alert"] td.st{grid-column:1 / -1}
   .app-list td::before{content:attr(data-label);display:block;margin-bottom:4px;color:var(--sub);font-size:11px;font-weight:600}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .grid2,.grid3{grid-template-columns:1fr}
@@ -310,6 +343,11 @@ dd{margin:0;word-break:break-all}
     <div id="t-apps">
       <div class="citytabs" id="aCohortTabs" style="margin-bottom:8px"></div>
       <div class="citytabs" id="aCityTabs"></div>
+      <div class="card hidden" id="capacityCard" style="margin-bottom:12px">
+        <h3 title="미처리와 송금확인 인원 기준. 빈칸은 제한 없음, 0명은 마감">모집 정원 <span class="muted">현재 / 정원</span></h3>
+        <div class="capacity-grid" id="capacityRows"></div>
+        <p id="capacityError" class="capacity-error" role="status"></p>
+      </div>
       <div class="tiles">
         <div class="tile"><div class="k" id="aTotalK">총 신청</div><div class="v num" id="aTotal">-</div><div class="s" id="aTotalS"></div></div>
         <div class="tile"><div class="k" id="aTodayK">오늘 신청</div><div class="v num" id="aToday">-</div><div class="s" id="aTodayS"></div></div>
@@ -317,7 +355,7 @@ dd{margin:0;word-break:break-all}
         <div class="tile"><div class="k" id="aDoneK">처리 현황</div><div class="v num" id="aDone">-</div><div class="s" id="aDoneS"></div></div>
       </div>
       <div class="card" style="margin-bottom:12px"><h3 id="aBySrcH">광고별 신청 <span class="muted">어느 광고에서 들어왔나</span></h3>
-        <table class="list" style="min-width:0"><thead id="aBySrcHead"><tr><th>유입경로</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인 이상</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
+        <table class="list" style="min-width:0"><thead id="aBySrcHead"><tr><th>유입경로</th><th class="r">신청</th><th class="r">여</th><th class="r">남</th><th class="r">오늘</th><th class="r">송금확인</th></tr></thead><tbody id="aBySrc"></tbody></table></div>
       <div class="strip" id="aStrip"></div>
       <div class="filters" style="margin-bottom:10px">
         <input id="q" placeholder="이름, 전화번호, 학교, 하는 일 검색" style="min-width:220px">
@@ -351,9 +389,9 @@ function isAlertR(r){return cohortOf(r)==='alert'}
 function stList(r){return isAlertR(r)?ALERT_ST:STATUSES}
 function stLabel(r,s){return s||(isAlertR(r)?'미연락':'미처리')}
 function ageOf(y){var n=Number(y);return n>1900?(new Date(Date.now()+9*3600e3).getUTCFullYear()-n):''}
-// 송금확인 안됨: 목록엔 남기고 신청자 관리 화면 집계(총 신청, 오늘, 성비, 처리 현황, 광고별)에서만 뺌
+// 신청자 관리 집계는 미처리·송금확인만 포함. 목록과 행동 지표는 유지한다.
 var UNPAID='송금확인 안됨';
-function counted(r){return r.status!==UNPAID}
+function counted(r){return !r.status||r.status==='송금확인'}
 var FL={gender:'성별',birth_year:'출생연도',school:'학교 / 하는 일',schedule_pref:'편한 진행 시기',source:'유입경로 응답',device:'기기',intent:'기대하는 것',intent_other:'기대(기타)',phone:'전화번호',consent:'개인정보 동의',marketing:'문자 수신 동의',name:'송금자 이름',buddy:'친구 전화번호',buddy_room:'친구와 방',pay_click:'송금 버튼',major:'학과',avoid_same_major:'같은 과 피하기',capture:'학생 인증 캡처'};
 var CH={meta:'메타 광고',insta:'인스타 오가닉',everytime:'에브리타임',direct:'직접 배포',sms:'문자',etc:'기타'};
 var S={tab:'apps',cohort:REG.CURRENT,track:'',today:null,range:'7d',path:'cohort:'+REG.CURRENT,src:'',an:null,links:[],visits:[],apps:[],vstate:'partial',linkView:'active',lastSub:null,lastAct:null,seenApps:null,newApps:{},timer:null,loadedAt:0};
@@ -425,6 +463,27 @@ function copy(t){navigator.clipboard.writeText(t).then(function(){toast('복사�
 function api(path,opt){return fetch('/api/admin/'+path,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},opt||{})).then(function(r){if(r.status===401){showLogin();throw new Error('401')}return r.json()})}
 function post(path,body){return api(path,{method:'POST',body:JSON.stringify(body)})}
 
+var capacityRows=null,capacityDrafts={},capacityError='';
+function loadCapacities(){return api('capacities').then(function(d){if(!d.rows)throw Error(d.error||'정원을 불러오지 못했어요');capacityRows=d.rows;capacityError='';renderCapacities()}).catch(function(e){capacityError=e.message==='401'?'':e.message;renderCapacities()})}
+function renderCapacities(){
+  var show=/^\d+$/.test(S.cohort);$('capacityCard').classList.toggle('hidden',!show);if(!show)return;
+  $('capacityError').textContent=capacityError;
+  if(!capacityRows){$('capacityRows').innerHTML='<span class="muted">'+(capacityError?'정원 정보를 확인할 수 없어요':'불러오는 중…')+'</span>';return}
+  $('capacityRows').innerHTML=capacityRows.filter(function(r){return r.cohort===S.cohort&&(!S.track||r.track===S.track)}).map(function(r){
+    var key=r.cohort+':'+r.track,d=capacityDrafts[key]||{},counts=r.counts,unknown=counts.unknown;
+    function field(g,label){var col=g==='m'?'male':'female',limit=r[col+'_limit'],value=d[g]!=null?d[g]:limit==null?'':limit,n=counts[col],full=limit!=null&&n>=limit;
+      return '<label>'+label+'성 <span class="capacity-count" aria-label="현재 '+n+'명">'+n+' /</span><input type="number" name="'+g+'" min="0" max="10000" step="1" inputmode="numeric" placeholder="∞" title="빈칸은 제한 없음, 0명은 마감" aria-label="'+esc(r.cohort+'기 '+r.label+' '+label+'성 정원')+'" value="'+esc(value)+'">명'+(full?'<span class="capacity-state">마감</span>':'')+'</label>'}
+    return '<form class="capacity-form" data-cohort="'+r.cohort+'" data-track="'+esc(r.track)+'"><h4>'+esc(r.label)+'</h4><div class="capacity-fields">'+field('m','남')+field('f','여')+'</div>'+(unknown?'<p class="capacity-error">성별 확인이 필요한 신청 '+unknown+'명</p>':'')+'<div class="acts"><button class="btn" type="submit" aria-label="정원 저장">저장</button><span class="capacity-error" role="status"></span></div></form>';
+  }).join('');
+}
+$('capacityRows').addEventListener('input',function(e){var f=e.target.closest('form');if(!f)return;var key=f.dataset.cohort+':'+f.dataset.track;capacityDrafts[key]={m:f.elements.m.value,f:f.elements.f.value}});
+$('capacityRows').addEventListener('submit',function(e){
+  e.preventDefault();var f=e.target,key=f.dataset.cohort+':'+f.dataset.track,button=f.querySelector('button'),message=f.querySelector('[role=status]');
+  var val=function(n){return f.elements[n].value===''?null:Number(f.elements[n].value)},body={cohort:f.dataset.cohort,track:f.dataset.track,male_limit:val('m'),female_limit:val('f')};
+  if(!f.reportValidity())return;button.disabled=true;message.textContent='';
+  post('capacities',body).then(function(d){if(!d.ok)throw Error(d.error||'정원을 저장하지 못했어요');delete capacityDrafts[key];toast('정원이 저장됐어요');return loadCapacities()}).catch(function(e){message.textContent=e.message;button.disabled=false});
+});
+
 function showLogin(){if(surveyGallery)surveyGallery.close();closeD();$('app').classList.add('hidden');$('login').classList.remove('hidden');stop()}
 function showApp(){$('login').classList.add('hidden');$('app').classList.remove('hidden')}
 $('loginForm').onsubmit=function(e){e.preventDefault();$('loginErr').textContent='';
@@ -467,7 +526,7 @@ $('nav').addEventListener('click',function(e){var b=e.target.closest('button');i
 function fail(e){if(e.message!=='401'){setLive(false);console.error(e)}}
 function loadApps(manual){
   // 오늘 폼 지표(analytics)는 서버가 15분 캐시로 돌려줌 → 매번 받아도 D1 은 안 읽음. 신청자 목록은 캐시 없이 항상 최신
-  return Promise.all([api('applicants'),api('analytics?from='+dayStart(0))]).then(function(r){
+  return Promise.all([api('applicants'),api('analytics?from='+dayStart(0)),loadCapacities()]).then(function(r){
     S.today=r[1];setApps(r[0].rows,manual);S.appsAt=S.loadedAt=Date.now();renderApps();setLive(true)}).catch(fail);
 }
 function loadStats(){
@@ -692,14 +751,14 @@ function renderAppSummary(){
   var dk=function(off){return new Date(dayStart(off)+9*3600e3).toISOString().slice(0,10)};
   var td=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(0)}).length,yd=all.filter(function(r){return (r.submitted_at||'').slice(0,10)===dk(-1)}).length;
   var f=all.filter(function(r){return r.gender==='여성'}).length,m=all.filter(function(r){return r.gender==='남성'}).length;
-  var done=all.filter(function(r){return r.status}).length,conf=all.filter(function(r){return r.status==='확정'}).length;
+  var done=all.filter(function(r){return r.status==='송금확인'}).length;
   var ca=S.apps.filter(function(r){return counted(r)&&cohortOf(r)===S.cohort}),byT={};ca.forEach(function(r){var t=trackOf(r);byT[t]=(byT[t]||0)+1});
   var tsum=trackList(S.cohort).map(function(t){return (TRACK_KO[t]||t)+' '+(byT[t]||0)}).join(' / ');
-  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(cohortKo(S.cohort)+(S.track?' '+(TRACK_KO[S.track]||S.track)+'만':' / '+tsum))+(ex?' <span class="nw">/ 송금확인 안됨 '+ex+'명 제외</span>':'');
+  $('aTotal').textContent=all.length;$('aTotalS').innerHTML=esc(cohortKo(S.cohort)+(S.track?' '+(TRACK_KO[S.track]||S.track)+'만':' / '+tsum))+(ex?' <span class="nw">/ 기타 상태 '+ex+'명 제외</span>':'');
   $('aToday').textContent=td;$('aTodayS').textContent='어제 '+yd;
   $('aGen').textContent=f+' : '+m;$('aGenS').textContent=all.length?('여성 '+pct(f,all.length)):'';
-  var paid=all.filter(function(r){return r.status==='송금확인'||r.status==='연락함'||r.status==='확정'}).length;$('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 이상 '+paid+' / 확정 '+conf+' / 미처리 '+(all.length-done);
-  var bs={};all.forEach(function(r){var k=r.src||'';var o=bs[k]||(bs[k]={k:k,n:0,f:0,m:0,t:0,p:0});o.n++;if(r.gender==='여성')o.f++;if(r.gender==='남성')o.m++;if((r.submitted_at||'').slice(0,10)===dk(0))o.t++;if(r.status==='송금확인'||r.status==='연락함'||r.status==='확정')o.p++});
+  $('aDone').textContent=done+' / '+all.length;$('aDoneS').textContent='송금확인 '+done+' / 미처리 '+(all.length-done);
+  var bs={};all.forEach(function(r){var k=r.src||'';var o=bs[k]||(bs[k]={k:k,n:0,f:0,m:0,t:0,p:0});o.n++;if(r.gender==='여성')o.f++;if(r.gender==='남성')o.m++;if((r.submitted_at||'').slice(0,10)===dk(0))o.t++;if(r.status==='송금확인')o.p++});
   var bl=Object.keys(bs).map(function(k){return bs[k]}).sort(function(a,b){return b.n-a.n});
   $('aBySrc').innerHTML=bl.length?bl.map(function(o){return '<tr><td>'+srcCell(o.k)+'</td><td class="r num"><b>'+o.n+'</b></td><td class="r num">'+o.f+'</td><td class="r num">'+o.m+'</td><td class="r num">'+o.t+'</td><td class="r num">'+o.p+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty" style="padding:18px">아직 신청이 없음</td></tr>';
   // 오늘 폼 퍼널 한 줄 (지역 탭 반영)
@@ -711,13 +770,17 @@ function renderAppSummary(){
   $('goStats').onclick=function(){document.querySelector('#nav [data-t=overview]').click()};
 }
 function appCell(label,content,cls){return '<td data-label="'+label+'"'+(cls?' class="'+cls+'"':'')+'><div class="cell-content">'+content+'</div></td>'}
+function smsInputValue(r){return (r.last_sms_sent_at||'').slice(0,16).replace(' ','T')}
+function smsNowValue(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,16)}
+function smsTimeControl(r){return '<label class="sms-time"><span>최근 문자 발송 (한국시간)</span><input type="datetime-local" class="alert-sms-at" data-id="'+esc(r.application_id)+'" value="'+esc(smsInputValue(r))+'" max="'+smsNowValue()+'" step="60" aria-label="'+esc(fmtPhone(r.phone_digits))+' 최근 문자 발송일시"></label>'}
 function statusCell(r){return appCell(isAlertR(r)?'상태':'상태 / 방','<select class="stsel" data-v="'+esc(r.status)+'" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name||fmtPhone(r.phone_digits)||'신청자')+' 상태">'+stList(r).map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
+  (isAlertR(r)&&(r.status==='문자 보냄'||r.last_sms_sent_at)?smsTimeControl(r):'')+
   (!isAlertR(r)&&r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40" aria-label="'+esc(r.name||'신청자')+' 방">':''),'st')}
 function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status==='제외'?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('알림 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('성별',esc(r.gender))+appCell('출생 (나이)',esc(r.birth_year)+(a?' <span class="muted">('+a+')</span>':''),'num')+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+appCell('이전 참여',joinedBefore(r)?'<span class="badge green">참여한 적 있음</span>':'<span class="muted">처음</span>')+
   appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button>')+'</tr>'}
-function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
+function renderApps(){renderAppSummary();renderCapacities();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
   if(S.cohort==='alert'){$('appRows').innerHTML=rs.map(alertRow).join('');return}
-  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(counted(r)?'':' excl')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
+  $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status===UNPAID?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
     appCell('이름','<b class="app-name">'+esc(r.name||(cohortOf(r)==='review'?'(후기만)':'(사전알림)'))+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.note?' <span class="badge blue">기타 사항</span>':'')+(r.memo?' <span class="badge amber">메모</span>':''))+appCell('성별',esc(r.gender))+appCell('출생',esc(r.birth_year))+appCell('학교 / 하는 일',esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':''))+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+
     appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="'+esc(r.name)+' 신청 삭제">삭제</button>')+'</tr>'}).join('')}
 // 친구: 적힌 번호를 신청자 전화번호와 맞춤 (불러온 목록 안에서만, DB 조회 없음)
@@ -749,9 +812,11 @@ function renderShare(){var cs=shareCohorts();
 renderShare();
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
-function saveMark(r,status,memo,room,bd){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}return post('mark',body).then(function(d){if(d.ok){r.status=status;r.memo=memo;r.room=room;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨')}})}
-$('appRows').addEventListener('change',function(e){var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim())}
-  var s=e.target.closest('select.stsel');if(!s)return;var r=appById(s.dataset.id);saveMark(r,s.value,r.memo).then(function(){if(s.value==='확정'){var i=document.querySelector('input.room[data-id="'+r.application_id+'"]');if(i)i.focus()}})});
+function saveMark(r,status,memo,room,bd,smsAt){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}if(isAlertR(r)&&smsAt!==undefined)body.last_sms_sent_at=smsAt;return post('mark',body).then(function(d){if(!d.ok)throw new Error(d.error||'저장하지 못했습니다. 다시 시도해 주세요.');r.status=status;r.memo=memo;r.room=room;r.status_updated_at=d.updated_at;if(Object.prototype.hasOwnProperty.call(d,'last_sms_sent_at'))r.last_sms_sent_at=d.last_sms_sent_at;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();loadCapacities();toast('저장됨');return d})}
+function markError(e){if(e.message!=='401')toast(e.message||'저장하지 못했습니다. 다시 시도해 주세요.')}
+$('appRows').addEventListener('change',function(e){var at=e.target.closest('input.alert-sms-at');if(at){if(!at.reportValidity())return;var ar=appById(at.dataset.id);return saveMark(ar,ar.status,ar.memo,undefined,undefined,at.value||null).catch(function(err){renderApps();markError(err)})}
+  var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim()).catch(markError)}
+  var s=e.target.closest('select.stsel');if(!s)return;var r=appById(s.dataset.id);saveMark(r,s.value,r.memo).then(function(){if(s.value==='확정'){var i=document.querySelector('input.room[data-id="'+r.application_id+'"]');if(i)i.focus()}}).catch(function(err){renderApps();markError(err)})});
 var deletingApp=false;
 function deleteApplicant(r,button){
   if(!r || deletingApp) return;
@@ -760,7 +825,7 @@ function deleteApplicant(r,button){
   api('applicants',{method:'DELETE',body:JSON.stringify({id:r.application_id,confirm:r.application_id})}).then(function(d){
     if(!d.ok) throw new Error(d.error||'삭제하지 못했습니다.');
     S.apps=S.apps.filter(function(x){return x.application_id!==r.application_id});
-    delete S.newApps[r.application_id];updateNew();closeD();renderApps();
+    delete S.newApps[r.application_id];updateNew();closeD();renderApps();loadCapacities();
     toast('신청자 한 명을 삭제했습니다');return loadAll(true);
   }).catch(function(e){if(e.message!=='401')alert(e.message);})
     .finally(function(){deletingApp=false;button.disabled=false;button.textContent='삭제';});
@@ -771,10 +836,13 @@ $('appRows').addEventListener('click',function(e){var del=e.target.closest('butt
     var ar=[['성별',r.gender],['출생연도',r.birth_year+(ag?' ('+ag+'세)':'')],['전화번호','<a href="tel:'+esc(r.phone_digits)+'">'+esc(fmtPhone(r.phone_digits))+'</a>'],['이전 참여',joinedBefore(r)?'참여한 적 있음 (3기 자체폼부터 같은 번호)':'처음'],['광고',srcName(r.src)],['광고 코드',r.src||'-'],['알림 남긴 폼',(r.path||'')]];
     $('panel').innerHTML='<h2>알림 신청</h2><div class="meta">'+esc(r.submitted_at)+(r.status_updated_at?' / 상태 수정 '+esc(r.status_updated_at):'')+'</div><dl>'+ar.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+(x[0]==='전화번호'?x[1]:esc(x[1]))+'</dd>'}).join('')+'</dl>'+
       '<h4>상태</h4><select class="stsel" id="dSt" style="padding:8px;width:100%">'+ALERT_ST.map(function(s){return '<option value="'+s+'"'+(s===r.status?' selected':'')+'>'+esc(stLabel(r,s))+'</option>'}).join('')+'</select>'+
+      '<h4><label for="dSmsAt">최근 문자 발송일시 (한국시간)</label></h4><input type="datetime-local" class="sms-time-detail" id="dSmsAt" value="'+esc(smsInputValue(r))+'" max="'+smsNowValue()+'" step="60">'+
       '<h4>메모</h4><textarea id="dMemo" placeholder="보낸 문자, 특이사항">'+esc(r.memo)+'</textarea>'+
       '<div class="acts"><button class="btn" id="dSave">저장</button><button class="btn ghost" id="dCopy">전화번호 복사</button><button class="btn ghost" id="dClose">닫기</button></div>';
     $('drawer').classList.remove('hidden');renderApps();
-    $('dSave').onclick=function(){saveMark(r,$('dSt').value,$('dMemo').value).then(closeD)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD;return;
+    var initialSmsInput=smsInputValue(r);
+    $('dSt').onchange=function(){if(this.value==='문자 보냄'&&r.status!=='문자 보냄'&&!$('dSmsAt').value)$('dSmsAt').value=smsNowValue()};
+    $('dSave').onclick=function(){if(!$('dSmsAt').reportValidity())return;var value=$('dSmsAt').value;saveMark(r,$('dSt').value,$('dMemo').value,undefined,undefined,value===initialSmsInput?undefined:(value||null)).then(closeD).catch(markError)};$('dCopy').onclick=function(){copy(r.phone_digits)};$('dClose').onclick=closeD;return;
   }
   var F=isFest(r);
   var RF=regOf(r.path);
@@ -794,7 +862,7 @@ $('svBtn').onclick=function(){surveyGallery.open(this)};
 $('csvBtn').onclick=function(){var rs=appsFiltered();
   if(S.cohort==='alert'){   // 알림 신청 CSV: 알림에 있는 칸만
     var ch=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-    var al=[['알림시각','성별','출생연도','나이','전화번호','광고','광고코드','이전참여','상태','메모','신청ID'].join(',')].concat(rs.map(function(r){return [r.submitted_at,r.gender,r.birth_year,ageOf(r.birth_year),fmtPhone(r.phone_digits),srcName(r.src),r.src,joinedBefore(r)?'Y':'N',stLabel(r,r.status),r.memo,r.application_id].map(ch).join(',')}));
+    var al=[['알림시각','성별','출생연도','나이','전화번호','광고','광고코드','이전참여','상태','메모','신청ID','최근문자발송일시'].join(',')].concat(rs.map(function(r){return [r.submitted_at,r.gender,r.birth_year,ageOf(r.birth_year),fmtPhone(r.phone_digits),srcName(r.src),r.src,joinedBefore(r)?'Y':'N',stLabel(r,r.status),r.memo,r.application_id,r.last_sms_sent_at||''].map(ch).join(',')}));
     var aa=document.createElement('a');aa.href=URL.createObjectURL(new Blob(['\ufeff'+al.join('\n')],{type:'text/csv;charset=utf-8'}));aa.download='하루하루_알림신청_'+new Date(Date.now()+9*3600e3).toISOString().slice(0,10)+'.csv';aa.click();return;
   }
   var head=['신청시각','지역','이름','성별','출생연도','학교/하는일','전화번호','기기','기대','기대_기타','응답유입경로','광고','광고코드','작성시간(초)','상태','방','메모','신청ID','참가비구분','친구전화번호','친구와방','친구신청여부','학과','같은과피하기','학생인증캡처','기수','트랙','편한진행시기','최근1년소개팅','재참여설문'];

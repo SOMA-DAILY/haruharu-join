@@ -915,12 +915,12 @@ __LD_ALERT__<div class="ld-gn">__LD_NOTES__<p>궁금한 점은 인스타그램 <
   openForm();
  }); });
  // 모집 중 딱지 (10/28 사용자: "실제 모집 중인 거랑 연결해서 동적으로"): 기수 카드(#pick .pk-c)는 기수 고르기 스크립트가 서버 시각으로 마감된 카드를 숨김
- //   → 숨지 않은 카드의 기수만 딱지(.ld-live 셋: 첫 화면, 신청서 로고 줄, 안내 카드)에 씀. 다 닫히면 딱지를 숨김.
+ //   정원이 차서 막힌 카드(disabled, #89 정원 마감)도 뺌 → 숨지도 막히지도 않은 카드의 기수만 딱지(.ld-live 셋: 첫 화면, 신청서 로고 줄, 안내 카드)에 씀. 다 닫히면 딱지를 숨김.
  //   글자 조각을 새로 만들어 넣음: 기수 고르기 스크립트가 처음에 기억해 둔 'N기' 조각을 기수를 고를 때 바꿔 쓰는데, 딱지는 그 대상에서 빠지게
  (function(){ var box=document.getElementById('pick'); if(!box) return; var cards=[].slice.call(box.querySelectorAll('.pk-c')); if(!cards.length) return;
-  function upd(){ var co=cards.filter(function(c){ return !c.hidden; }).map(function(c){ return c.getAttribute('data-cohort'); }), t=co.length?co.join(', ')+'기 모집 중':'';
+  function upd(){ var co=cards.filter(function(c){ return !c.hidden&&!c.disabled; }).map(function(c){ return c.getAttribute('data-cohort'); }), t=co.length?co.join(', ')+'기 모집 중':'';
    [].forEach.call(document.querySelectorAll('.ld-live'),function(b){ var dot=b.querySelector('i'); b.textContent=''; if(dot) b.appendChild(dot); b.appendChild(document.createTextNode(t)); b.style.display=t?'':'none'; }); }
-  function go(){ upd(); if(window.MutationObserver) new MutationObserver(upd).observe(box,{subtree:true,attributes:true,attributeFilter:['hidden']}); }
+  function go(){ upd(); if(window.MutationObserver) new MutationObserver(upd).observe(box,{subtree:true,attributes:true,attributeFilter:['hidden','disabled']}); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(go,0); }); else setTimeout(go,0);
  })();
  var viaLink=false;
