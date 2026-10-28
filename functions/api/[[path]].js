@@ -4,6 +4,7 @@ import { cohortStatus, formOf, formStatus, pickTarget, CURRENT_COHORT } from '..
 import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey, cleanOptionalWish } from '../../shared/rejoin-survey.mjs';
 import { genderCookie } from '../../shared/entry.mjs';
+import { parseAlertSmsTime } from '../../shared/alert-sms-time.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -351,10 +352,17 @@ export async function onRequest({ request, env, params, waitUntil }) {
         const p = normPath(b.path, h.city), sp = normPath(pagePath, h.city);   // sp: 방문 기록 경로 (재참여 후기 폼은 페이지 경로, 그 밖에는 p 와 같음)
         const noSess = !!(form && form.noPage) && !(page && page.joins);   // 알림 신청(화면 없음, 10/11): 방문 기록에 가짜 방문/제출을 만들지 않음. 신청 사본(submissions)만
         await env.DB.batch([
-          env.DB.prepare(`INSERT OR REPLACE INTO submissions (application_id, kv_key, path, city, cohort, src, channel, submitted_ts, submitted_at,
+          // Update the submitted fields without deleting/recreating the row;
+          // otherwise a retried submission would erase admin-only send metadata.
+          env.DB.prepare(`INSERT INTO submissions (application_id, kv_key, path, city, cohort, src, channel, submitted_ts, submitted_at,
               name, phone, phone_digits, gender, birth_year, school, source, device, intent, intent_other, consent, buddy, plan, status, memo, status_updated_at, room, buddy_room)
             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,
-              COALESCE((SELECT status FROM submissions WHERE application_id=?1),''), COALESCE((SELECT memo FROM submissions WHERE application_id=?1),''), (SELECT status_updated_at FROM submissions WHERE application_id=?1), COALESCE((SELECT room FROM submissions WHERE application_id=?1),''), ?23)`)
+              COALESCE((SELECT status FROM submissions WHERE application_id=?1),''), COALESCE((SELECT memo FROM submissions WHERE application_id=?1),''), (SELECT status_updated_at FROM submissions WHERE application_id=?1), COALESCE((SELECT room FROM submissions WHERE application_id=?1),''), ?23)
+            ON CONFLICT(application_id) DO UPDATE SET kv_key=excluded.kv_key,path=excluded.path,city=excluded.city,cohort=excluded.cohort,src=excluded.src,channel=excluded.channel,
+              submitted_ts=excluded.submitted_ts,submitted_at=excluded.submitted_at,name=excluded.name,phone=excluded.phone,phone_digits=excluded.phone_digits,
+              gender=excluded.gender,birth_year=excluded.birth_year,school=excluded.school,source=excluded.source,device=excluded.device,intent=excluded.intent,
+              intent_other=excluded.intent_other,consent=excluded.consent,buddy=excluded.buddy,plan=excluded.plan,status=excluded.status,memo=excluded.memo,
+              status_updated_at=excluded.status_updated_at,room=excluded.room,buddy_room=excluded.buddy_room`)
             .bind(id, kvKey, p, h.city || null, h.cohort || null, h.src || null, h.utm_content || h.src || 'direct', now, KST(now),
               f.name || '', f.phone || '', normPhone(f.phone), f.gender || '', f.birth_year || '', f.school || '', f.source || '', f.device || '', f.intent || '', f.intent_other || '', f.consent || '', buddyVal(f.buddy), h.plan || '', f.buddy_room || ''),
           // 방문 기록이 먼저 못 들어온 경우(비콘 유실 등)에도 제출이 지표에서 빠지지 않게 행을 먼저 만듦
@@ -736,12 +744,25 @@ async function admin(sub, request, env, kv, url) {
   if (request.method === 'POST' && sub === '/mark') {
     const b = await readBody(request);
     if (!b || typeof b.id !== 'string' || !/^[0-9a-z-]{8,64}$/i.test(b.id)) return json({ ok: false }, 400);
+    const row = await DB.prepare('SELECT application_id, cohort FROM submissions WHERE application_id = ?1').bind(b.id).first();
+    if (!row) return json({ ok: false, error: '신청 기록을 찾을 수 없습니다.' }, 404);
+    const hasSmsAt = Object.prototype.hasOwnProperty.call(b, 'last_sms_sent_at');
+    if (hasSmsAt && row.cohort !== 'alert') return json({ ok: false, error: '알림 신청에서만 발송일시를 입력할 수 있습니다.' }, 400);
+    const smsAt = hasSmsAt ? parseAlertSmsTime(b.last_sms_sent_at) : { ok: true, value: null };
+    if (!smsAt.ok) return json({ ok: false, error: smsAt.error }, 400);
     const now = KST(Date.now());
     // room: 확정한 사람의 방 기록 (예: 서울방1). 안 보내면 기존 값 유지
-    await DB.prepare('UPDATE submissions SET status = ?2, memo = ?3, status_updated_at = ?4, room = COALESCE(?5, room), buddy = COALESCE(?6, buddy), buddy_room = COALESCE(?7, buddy_room) WHERE application_id = ?1')
+    // CASE reads the old status atomically: only a first transition to sent gets
+    // now. Memo edits, repeat saves and legacy sent rows never fabricate a date.
+    await DB.prepare(`UPDATE submissions SET status = ?2, memo = ?3, status_updated_at = ?4, room = COALESCE(?5, room), buddy = COALESCE(?6, buddy), buddy_room = COALESCE(?7, buddy_room),
+      last_sms_sent_at = CASE WHEN ?8 = 1 THEN ?9
+        WHEN cohort = 'alert' AND COALESCE(status,'') != '문자 보냄' AND ?2 = '문자 보냄' AND COALESCE(last_sms_sent_at,'') = '' THEN ?4
+        ELSE last_sms_sent_at END WHERE application_id = ?1`)
       .bind(b.id, String(b.status || '').slice(0, 20), String(b.memo || '').slice(0, 500), now, typeof b.room === 'string' ? b.room.slice(0, 40) : null,
-        typeof b.buddy === 'string' ? buddyVal(b.buddy.slice(0, 40)) : null, typeof b.buddy_room === 'string' ? b.buddy_room.slice(0, 20) : null).run();
-    return json({ ok: true, updated_at: now });
+        typeof b.buddy === 'string' ? buddyVal(b.buddy.slice(0, 40)) : null, typeof b.buddy_room === 'string' ? b.buddy_room.slice(0, 20) : null,
+        hasSmsAt ? 1 : 0, smsAt.value).run();
+    const saved = row.cohort === 'alert' ? await DB.prepare('SELECT last_sms_sent_at FROM submissions WHERE application_id = ?1').bind(b.id).first() : null;
+    return json({ ok: true, updated_at: now, ...(saved ? { last_sms_sent_at: saved.last_sms_sent_at } : {}) });
   }
 
   // 폼 목록/이름 변경/보관
