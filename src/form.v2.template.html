@@ -435,7 +435,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  fetch(API+'/cohort?path='+encodeURIComponent(location.pathname),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
   if(s && s.deadline!=null&&isFinite(s.deadline)) deadline=Number(s.deadline);
   if(s && isFinite(s.serverNow)) clockOffset=Number(s.serverNow)-Date.now();
-  if(s && s.open===false) closeForm(); else checkClosed();
+  if(s && s.open===false && s.reason!=='capacity') closeForm(); else checkClosed();
  }).catch(function(){});
  setInterval(checkClosed,15000);
 
@@ -448,7 +448,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
   var d=data();
   var leadEid=eid('Lead'), payload=Object.assign({sid:sid,path:location.pathname,fields:d,hidden:hidden,ua:ua,ref:document.referrer,ts:Date.now(),active_ms:active(),lead_eid:leadEid,url:location.href},fbIds());
   fetch(API+'/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
-   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
+   .then(function(r){ return r.json().then(function(res){ if(!r.ok){ if(res.error==='cohort_full'||res.error==='gender_required'){ throw new Error(res.error); } if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); } if(res.error==='early_expired' && offerControl){ form.dataset.submitting='false'; offerControl.update(res.offer); throw new Error('early_expired'); } throw new Error(r.status); } return res; }); })
    .then(function(res){
      var appId=res.application_id||res.id; window.HH_APP_ID=appId;   // 완료 화면 선택 문항 저장용 (done-survey)
      try{ if(mp){ mp.identify(appId); mp.people.set({ application_id:appId, city:CITY, cohort:COHORT, track:TRACK, plan:PLAN, gender:d.gender, birth_year:d.birth_year, school:d.school, source_self_report:d.source, device_answer:d.device, intent:d.intent, channel:hidden.channel, applied_at:new Date().toISOString() }); } }catch(e){}
@@ -456,7 +456,7 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
      fb('Lead',{content_name:hidden.channel, content_category:PLAN==='prealert'?'prealert':'paid'},true,leadEid);
      show('done'); if(offerControl) document.getElementById('early-banner').hidden=true; try{sessionStorage.removeItem('hh_sid'); localStorage.removeItem(DKEY);}catch(e){}
    })
-   .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
+   .catch(function(err){ if(err.message==='cohort_closed'){ alert('신청이 마감됐어요. 이미 송금했다면 인스타그램 @haruharu.ting 으로 알려 주세요.'); return; } if(err.message==='cohort_full'||err.message==='gender_required'){ submitted=false; form.dataset.submitting='false'; saveDraft(); if(window.hhCapacityRejected) hhCapacityRejected(err.message); return; } if(err.message==='early_expired') return; submitted=false; form.dataset.submitting='false'; saveDraft(); ev('submit_error',{reason:String(err&&err.message||err)}); btn.disabled=false; btn.textContent='제출하기'; alert(err.message==='early_expired' ? '할인이 종료됐어요. 참가비와 송금 금액을 확인한 뒤 다시 제출해 주세요. 이미 송금했다면 인스타그램으로 문의해 주세요.' : '제출이 안 됐어요. 잠시 후 다시 눌러주세요. 계속 안 되면 인스타 @haruharu.ting 으로 알려주세요.'); });
  });
  function leave(){ if(submitted) return;
   // 한 번도 안 보인 미리 열기: D1 에 안 남기고 Mixpanel 에만 (임시저장 복원으로 started 여도 같음)
@@ -484,4 +484,5 @@ __EXTRA_Q__<div class="q" data-name="device"><p class="t">사용 기기<span cla
  console.log('[hh] city',CITY,'pixel',!!window.fbq,'mixpanel',!!mp,'sid',sid,'hidden',hidden);
 })();
 </script>
+<script src="/capacity.js" defer></script>
 </body></html>

@@ -13,6 +13,33 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+.card#capacityCard{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;padding:10px 14px;border-radius:10px}
+#capacityCard h3{margin:0;font-size:13px;white-space:nowrap}
+.capacity-grid{display:flex;flex:1;flex-direction:column;gap:10px;min-width:0}
+.capacity-form{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;padding:0;margin:0}
+.capacity-form+.capacity-form{padding-top:10px;border-top:1px solid var(--line)}
+.capacity-form h4{margin:0;font-size:12px;font-weight:500;color:var(--sub)}
+.capacity-fields{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px}
+.capacity-fields label{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.capacity-fields input{width:64px;height:32px;min-height:0;border:1px solid var(--line);border-radius:6px;padding:4px 6px;text-align:center;font-variant-numeric:tabular-nums}
+.capacity-count{font-weight:400;color:var(--sub);font-variant-numeric:tabular-nums}
+.capacity-state{font-size:11px;color:var(--red)}
+.capacity-form .acts{margin:0;display:flex;align-items:center;gap:8px}
+.capacity-form .btn{height:32px;padding:4px 11px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:12px}
+.capacity-form .btn:hover{border-color:var(--blue);color:var(--blue)}
+.capacity-error:empty{display:none}
+#capacityError{margin:0}
+@media(max-width:600px){
+  .card#capacityCard{display:block;padding:10px 12px}
+  #capacityCard h3{margin-bottom:8px}
+  .capacity-form{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .capacity-form h4{grid-column:1;grid-row:1}
+  .capacity-fields{grid-column:1 / -1;grid-row:2;gap:10px 14px}
+  .capacity-fields input{width:56px;height:36px;font-size:16px}
+  .capacity-form .acts{grid-column:2;grid-row:1}
+  .capacity-form>.capacity-error{grid-column:1 / -1;margin:0}
+}
+.capacity-error{color:var(--red);font-size:13px}
 .num{font-variant-numeric:tabular-nums}
 .muted{color:var(--sub)}
 
@@ -316,6 +343,11 @@ dd{margin:0;word-break:break-all}
     <div id="t-apps">
       <div class="citytabs" id="aCohortTabs" style="margin-bottom:8px"></div>
       <div class="citytabs" id="aCityTabs"></div>
+      <div class="card hidden" id="capacityCard" style="margin-bottom:12px">
+        <h3 title="미처리와 송금확인 인원 기준. 빈칸은 제한 없음, 0명은 마감">모집 정원 <span class="muted">현재 / 정원</span></h3>
+        <div class="capacity-grid" id="capacityRows"></div>
+        <p id="capacityError" class="capacity-error" role="status"></p>
+      </div>
       <div class="tiles">
         <div class="tile"><div class="k" id="aTotalK">총 신청</div><div class="v num" id="aTotal">-</div><div class="s" id="aTotalS"></div></div>
         <div class="tile"><div class="k" id="aTodayK">오늘 신청</div><div class="v num" id="aToday">-</div><div class="s" id="aTodayS"></div></div>
@@ -431,6 +463,27 @@ function copy(t){navigator.clipboard.writeText(t).then(function(){toast('복사�
 function api(path,opt){return fetch('/api/admin/'+path,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},opt||{})).then(function(r){if(r.status===401){showLogin();throw new Error('401')}return r.json()})}
 function post(path,body){return api(path,{method:'POST',body:JSON.stringify(body)})}
 
+var capacityRows=null,capacityDrafts={},capacityError='';
+function loadCapacities(){return api('capacities').then(function(d){if(!d.rows)throw Error(d.error||'정원을 불러오지 못했어요');capacityRows=d.rows;capacityError='';renderCapacities()}).catch(function(e){capacityError=e.message==='401'?'':e.message;renderCapacities()})}
+function renderCapacities(){
+  var show=/^\d+$/.test(S.cohort);$('capacityCard').classList.toggle('hidden',!show);if(!show)return;
+  $('capacityError').textContent=capacityError;
+  if(!capacityRows){$('capacityRows').innerHTML='<span class="muted">'+(capacityError?'정원 정보를 확인할 수 없어요':'불러오는 중…')+'</span>';return}
+  $('capacityRows').innerHTML=capacityRows.filter(function(r){return r.cohort===S.cohort&&(!S.track||r.track===S.track)}).map(function(r){
+    var key=r.cohort+':'+r.track,d=capacityDrafts[key]||{},counts=r.counts,unknown=counts.unknown;
+    function field(g,label){var col=g==='m'?'male':'female',limit=r[col+'_limit'],value=d[g]!=null?d[g]:limit==null?'':limit,n=counts[col],full=limit!=null&&n>=limit;
+      return '<label>'+label+'성 <span class="capacity-count" aria-label="현재 '+n+'명">'+n+' /</span><input type="number" name="'+g+'" min="0" max="10000" step="1" inputmode="numeric" placeholder="∞" title="빈칸은 제한 없음, 0명은 마감" aria-label="'+esc(r.cohort+'기 '+r.label+' '+label+'성 정원')+'" value="'+esc(value)+'">명'+(full?'<span class="capacity-state">마감</span>':'')+'</label>'}
+    return '<form class="capacity-form" data-cohort="'+r.cohort+'" data-track="'+esc(r.track)+'"><h4>'+esc(r.label)+'</h4><div class="capacity-fields">'+field('m','남')+field('f','여')+'</div>'+(unknown?'<p class="capacity-error">성별 확인이 필요한 신청 '+unknown+'명</p>':'')+'<div class="acts"><button class="btn" type="submit" aria-label="정원 저장">저장</button><span class="capacity-error" role="status"></span></div></form>';
+  }).join('');
+}
+$('capacityRows').addEventListener('input',function(e){var f=e.target.closest('form');if(!f)return;var key=f.dataset.cohort+':'+f.dataset.track;capacityDrafts[key]={m:f.elements.m.value,f:f.elements.f.value}});
+$('capacityRows').addEventListener('submit',function(e){
+  e.preventDefault();var f=e.target,key=f.dataset.cohort+':'+f.dataset.track,button=f.querySelector('button'),message=f.querySelector('[role=status]');
+  var val=function(n){return f.elements[n].value===''?null:Number(f.elements[n].value)},body={cohort:f.dataset.cohort,track:f.dataset.track,male_limit:val('m'),female_limit:val('f')};
+  if(!f.reportValidity())return;button.disabled=true;message.textContent='';
+  post('capacities',body).then(function(d){if(!d.ok)throw Error(d.error||'정원을 저장하지 못했어요');delete capacityDrafts[key];toast('정원이 저장됐어요');return loadCapacities()}).catch(function(e){message.textContent=e.message;button.disabled=false});
+});
+
 function showLogin(){if(surveyGallery)surveyGallery.close();closeD();$('app').classList.add('hidden');$('login').classList.remove('hidden');stop()}
 function showApp(){$('login').classList.add('hidden');$('app').classList.remove('hidden')}
 $('loginForm').onsubmit=function(e){e.preventDefault();$('loginErr').textContent='';
@@ -473,7 +526,7 @@ $('nav').addEventListener('click',function(e){var b=e.target.closest('button');i
 function fail(e){if(e.message!=='401'){setLive(false);console.error(e)}}
 function loadApps(manual){
   // 오늘 폼 지표(analytics)는 서버가 15분 캐시로 돌려줌 → 매번 받아도 D1 은 안 읽음. 신청자 목록은 캐시 없이 항상 최신
-  return Promise.all([api('applicants'),api('analytics?from='+dayStart(0))]).then(function(r){
+  return Promise.all([api('applicants'),api('analytics?from='+dayStart(0)),loadCapacities()]).then(function(r){
     S.today=r[1];setApps(r[0].rows,manual);S.appsAt=S.loadedAt=Date.now();renderApps();setLive(true)}).catch(fail);
 }
 function loadStats(){
@@ -725,7 +778,7 @@ function statusCell(r){return appCell(isAlertR(r)?'상태':'상태 / 방','<sele
   (!isAlertR(r)&&r.status==='확정'?'<input class="room" data-id="'+esc(r.application_id)+'" value="'+esc(r.room||'')+'" placeholder="서울방1" maxlength="40" aria-label="'+esc(r.name||'신청자')+' 방">':''),'st')}
 function alertRow(r){var a=ageOf(r.birth_year);return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status==='제외'?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('알림 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('성별',esc(r.gender))+appCell('출생 (나이)',esc(r.birth_year)+(a?' <span class="muted">('+a+')</span>':''),'num')+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+appCell('이전 참여',joinedBefore(r)?'<span class="badge green">참여한 적 있음</span>':'<span class="muted">처음</span>')+
   appCell('관리','<button type="button" class="btn ghost sm delete-app" style="color:#c43b37" data-id="'+esc(r.application_id)+'" aria-label="알림 신청 삭제">삭제</button>')+'</tr>'}
-function renderApps(){renderAppSummary();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
+function renderApps(){renderAppSummary();renderCapacities();var rs=appsFiltered();$('aCount').textContent=rs.length+'명';$('svBtn').hidden=!S.apps.some(svOf);$('appEmpty').classList.toggle('hidden',rs.length>0);
   if(S.cohort==='alert'){$('appRows').innerHTML=rs.map(alertRow).join('');return}
   $('appRows').innerHTML=rs.map(function(r){return '<tr class="click'+(S.newApps[r.application_id]?' new':'')+(r.status===UNPAID?' excl':'')+'" data-id="'+esc(r.application_id)+'">'+statusCell(r)+appCell('신청 시각',esc((r.submitted_at||'').slice(5,16)),'num')+appCell('폼',formBadge(r))+
     appCell('이름','<b class="app-name">'+esc(r.name||(cohortOf(r)==='review'?'(후기만)':'(사전알림)'))+'</b>'+feeBadge(r)+noPriorBadge(r)+friendBadge(r)+capCell(r)+buddyBadge(r)+avoidBadge(r)+(r.memo?' <span class="badge amber">메모</span>':''))+appCell('성별',esc(r.gender))+appCell('출생',esc(r.birth_year))+appCell('학교 / 하는 일',esc(isFest(r)?r.major:r.school)+(r.schedule_pref?' <span class="muted">/ '+esc(r.schedule_pref)+'</span>':''))+appCell('전화번호',esc(fmtPhone(r.phone_digits)),'num')+appCell('유입경로',srcCell(r.src))+
@@ -759,7 +812,7 @@ function renderShare(){var cs=shareCohorts();
 renderShare();
 $('shareLinks').addEventListener('click',function(e){var c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy)});
 function appById(id){return S.apps.filter(function(r){return r.application_id===id})[0]}
-function saveMark(r,status,memo,room,bd,smsAt){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}if(isAlertR(r)&&smsAt!==undefined)body.last_sms_sent_at=smsAt;return post('mark',body).then(function(d){if(!d.ok)throw new Error(d.error||'저장하지 못했습니다. 다시 시도해 주세요.');r.status=status;r.memo=memo;r.room=room;r.status_updated_at=d.updated_at;if(Object.prototype.hasOwnProperty.call(d,'last_sms_sent_at'))r.last_sms_sent_at=d.last_sms_sent_at;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();toast('저장됨');return d})}
+function saveMark(r,status,memo,room,bd,smsAt){if(room==null)room=r.room||'';var body={id:r.application_id,status:status,memo:memo,room:room};if(bd){body.buddy=bd.buddy;body.buddy_room=bd.buddy_room}if(isAlertR(r)&&smsAt!==undefined)body.last_sms_sent_at=smsAt;return post('mark',body).then(function(d){if(!d.ok)throw new Error(d.error||'저장하지 못했습니다. 다시 시도해 주세요.');r.status=status;r.memo=memo;r.room=room;r.status_updated_at=d.updated_at;if(Object.prototype.hasOwnProperty.call(d,'last_sms_sent_at'))r.last_sms_sent_at=d.last_sms_sent_at;if(bd){r.buddy=bd.buddy.replace(/\D/g,'')||bd.buddy;r.buddy_room=bd.buddy_room}delete S.newApps[r.application_id];updateNew();renderApps();loadCapacities();toast('저장됨');return d})}
 function markError(e){if(e.message!=='401')toast(e.message||'저장하지 못했습니다. 다시 시도해 주세요.')}
 $('appRows').addEventListener('change',function(e){var at=e.target.closest('input.alert-sms-at');if(at){if(!at.reportValidity())return;var ar=appById(at.dataset.id);return saveMark(ar,ar.status,ar.memo,undefined,undefined,at.value||null).catch(function(err){renderApps();markError(err)})}
   var rm=e.target.closest('input.room');if(rm){var r0=appById(rm.dataset.id);return saveMark(r0,r0.status,r0.memo,rm.value.trim()).catch(markError)}
@@ -772,7 +825,7 @@ function deleteApplicant(r,button){
   api('applicants',{method:'DELETE',body:JSON.stringify({id:r.application_id,confirm:r.application_id})}).then(function(d){
     if(!d.ok) throw new Error(d.error||'삭제하지 못했습니다.');
     S.apps=S.apps.filter(function(x){return x.application_id!==r.application_id});
-    delete S.newApps[r.application_id];updateNew();closeD();renderApps();
+    delete S.newApps[r.application_id];updateNew();closeD();renderApps();loadCapacities();
     toast('신청자 한 명을 삭제했습니다');return loadAll(true);
   }).catch(function(e){if(e.message!=='401')alert(e.message);})
     .finally(function(){deletingApp=false;button.disabled=false;button.textContent='삭제';});

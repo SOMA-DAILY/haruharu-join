@@ -5,6 +5,7 @@ import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey, cleanOptionalWish } from '../../shared/rejoin-survey.mjs';
 import { genderCookie } from '../../shared/entry.mjs';
 import { parseAlertSmsTime } from '../../shared/alert-sms-time.mjs';
+import { capacityGroups, capacityConfig, capacityCounts, capacityStatus } from '../../shared/capacity.mjs';
 
 // Cloudflare Pages Function — 신청폼 백엔드
 // POST /api/partial  : 방문/입력 상태 (랜딩, 입력 중, 이탈, 체류시간). D1 sessions 에 sid+path 1행으로 upsert
@@ -183,7 +184,20 @@ export async function onRequest({ request, env, params, waitUntil }) {
   if (request.method === 'GET' && path === '/festival') return json(festivalStatus(Date.now(), env));
   if (request.method === 'GET' && path === '/cohort') {
     const fp = url.searchParams.get('path'), g = url.searchParams.get('g');
-    return json(fp ? formStatus(fp, Date.now(), env, ['m','f'].includes(g) ? g : genderCookie(request)) : cohortStatus(Date.now(), env));
+    try { return json(fp ? await capacityStatus(env, fp, Date.now(), ['m','f'].includes(g) ? g : genderCookie(request)) : cohortStatus(Date.now(), env)); }
+    catch (e) { return json({ error: 'capacity_unavailable' }, 503); }
+  }
+  if (request.method === 'GET' && path === '/capacity') {
+    const paths = [...new Set((url.searchParams.get('paths') || '').split(','))].slice(0, 15);
+    if (!paths.length || paths.some(p => !formOf(p))) return json({ error: 'unknown_form' }, 400);
+    const g = url.searchParams.get('g');
+    // Explicitly unselected forms must not inherit the advertisement/previous-visit gender.
+    const selectedGender = g === 'all' ? '' : ['m','f'].includes(g) ? g : genderCookie(request);
+    try {
+      const states = {};
+      for (const p of paths) states[p] = await capacityStatus(env, p, Date.now(), selectedGender);
+      return json({ states });
+    } catch (e) { return json({ error: 'capacity_unavailable' }, 503); }
   }
   const kv = env.APPLY_KV;
   if (!kv) return json({ error: 'KV binding missing' }, 500);
@@ -298,10 +312,12 @@ export async function onRequest({ request, env, params, waitUntil }) {
     // 전화번호만 받는 재참여: 화면에 없는 문항 값은 버리고 지난 신청에서 채움. 기기는 지금 접속한 폰이 먼저
     let priorFrom = null;
     if (phoneOnly) {
+      const declaredGender = f.gender;
       for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'consent']) delete f[k];   // 동의 체크 문항 없음 (이용 안내만)
       if (reviewOnly) for (const k of ['phone', 'name', 'buddy', 'buddy_room']) delete f[k];   // 후기만 (10/18 운영자: 전화번호는 신청하는 사람만): 전화번호, 참가비, 친구 칸은 화면에서 숨겨짐. 익명 후기
       const prior = reviewOnly ? {} : await priorProfile(env, normPhone(f.phone));
       for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
+      if (!reviewOnly && !f.gender && ['남성', '여성'].includes(declaredGender)) f.gender = declaredGender;
       // 후기만 남겨도 남녀 링크 성별을 보관. 재신청은 이전 신청 성별이 우선.
       if (form.survey && !f.gender && linkedGender(h)) f.gender = linkedGender(h);
       const ua = String(b.ua || '');
@@ -342,11 +358,14 @@ export async function onRequest({ request, env, params, waitUntil }) {
     if (page && (page.joins || picked)) rec.from_page = page.path;   // 재참여 후기 폼, 기수 고르기(10/23)에서 고른 기수로 접수됨
     if (festival) { rec.student_card_key = cardKey; if (capture && capture.bytes && !cardKey) rec.capture_failed = true; }
     const kvKey = 's:' + KST(now).replace(/[^0-9]/g, '') + '-' + id.slice(0, 8);
-    // 정본은 KV. KV 가 실패해도(쓰기 한도 등) D1 에 남으면 접수 처리, 둘 다 실패해야 에러
-    let kvOk = true, dbOk = false;
-    try { await kv.put(kvKey, JSON.stringify(rec)); } catch (e) { kvOk = false; }
-    try { await kv.put('meta:last_submit', String(now)); } catch (e) {} // 관리 페이지 새 신청 감지용
-    // D1 사본 + 세션 제출 표시. 실패해도 제출은 성공 처리 (정본은 KV)
+    // 정원이 있는 모집은 D1의 원자적 검사/저장이 성공해야 접수한다. 거절된 신청은 KV에도 남기지 않는다.
+    let limited = false;
+    try {
+      const config = form && !reviewOnly ? await capacityConfig(env, b.path) : null;
+      limited = !!config && (config.male_limit != null || config.female_limit != null);
+    } catch (e) { return json({ ok: false, error: 'capacity_unavailable' }, 503); }
+    let kvOk = false, dbOk = false;
+    // D1 사본 + 세션 제출 표시. 정원 제한이 없는 모집만 기존 KV 대체 저장을 허용한다.
     try {
       if (env.DB) {
         const p = normPath(b.path, h.city), sp = normPath(pagePath, h.city);   // sp: 방문 기록 경로 (재참여 후기 폼은 페이지 경로, 그 밖에는 p 와 같음)
@@ -355,16 +374,16 @@ export async function onRequest({ request, env, params, waitUntil }) {
           // Update the submitted fields without deleting/recreating the row;
           // otherwise a retried submission would erase admin-only send metadata.
           env.DB.prepare(`INSERT INTO submissions (application_id, kv_key, path, city, cohort, src, channel, submitted_ts, submitted_at,
-              name, phone, phone_digits, gender, birth_year, school, source, device, intent, intent_other, consent, buddy, plan, status, memo, status_updated_at, room, buddy_room)
+              name, phone, phone_digits, gender, birth_year, school, source, device, intent, intent_other, consent, buddy, plan, status, memo, status_updated_at, room, buddy_room${limited ? ', track' : ''})
             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,
-              COALESCE((SELECT status FROM submissions WHERE application_id=?1),''), COALESCE((SELECT memo FROM submissions WHERE application_id=?1),''), (SELECT status_updated_at FROM submissions WHERE application_id=?1), COALESCE((SELECT room FROM submissions WHERE application_id=?1),''), ?23)
+              COALESCE((SELECT status FROM submissions WHERE application_id=?1),''), COALESCE((SELECT memo FROM submissions WHERE application_id=?1),''), (SELECT status_updated_at FROM submissions WHERE application_id=?1), COALESCE((SELECT room FROM submissions WHERE application_id=?1),''), ?23${limited ? ', ?24' : ''})
             ON CONFLICT(application_id) DO UPDATE SET kv_key=excluded.kv_key,path=excluded.path,city=excluded.city,cohort=excluded.cohort,src=excluded.src,channel=excluded.channel,
               submitted_ts=excluded.submitted_ts,submitted_at=excluded.submitted_at,name=excluded.name,phone=excluded.phone,phone_digits=excluded.phone_digits,
               gender=excluded.gender,birth_year=excluded.birth_year,school=excluded.school,source=excluded.source,device=excluded.device,intent=excluded.intent,
               intent_other=excluded.intent_other,consent=excluded.consent,buddy=excluded.buddy,plan=excluded.plan,status=excluded.status,memo=excluded.memo,
-              status_updated_at=excluded.status_updated_at,room=excluded.room,buddy_room=excluded.buddy_room`)
+              status_updated_at=excluded.status_updated_at,room=excluded.room,buddy_room=excluded.buddy_room${limited ? ',track=excluded.track' : ''}`)
             .bind(id, kvKey, p, h.city || null, h.cohort || null, h.src || null, h.utm_content || h.src || 'direct', now, KST(now),
-              f.name || '', f.phone || '', normPhone(f.phone), f.gender || '', f.birth_year || '', f.school || '', f.source || '', f.device || '', f.intent || '', f.intent_other || '', f.consent || '', buddyVal(f.buddy), h.plan || '', f.buddy_room || ''),
+              f.name || '', f.phone || '', normPhone(f.phone), f.gender || '', f.birth_year || '', f.school || '', f.source || '', f.device || '', f.intent || '', f.intent_other || '', f.consent || '', buddyVal(f.buddy), h.plan || '', f.buddy_room || '', ...(limited ? [form.track] : [])),
           // 방문 기록이 먼저 못 들어온 경우(비콘 유실 등)에도 제출이 지표에서 빠지지 않게 행을 먼저 만듦
           ...(noSess ? [] : [env.DB.prepare(`INSERT OR IGNORE INTO sessions (sid, path, city, src, channel, ua, device, in_app, is_bot, first_ts, last_ts, started, started_ts, max_page)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9, ?9, 1, ?9, 3)`)
@@ -378,7 +397,16 @@ export async function onRequest({ request, env, params, waitUntil }) {
           try { await env.DB.prepare('UPDATE sessions SET arm = COALESCE(arm, ?3) WHERE sid = ?1 AND path = ?2').bind(String(b.sid || id).slice(0, 64), sp, h.arm).run(); } catch (e) {}
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      if (/cohort_capacity_full/.test(String(e.message))) return json({ ok: false, error: 'cohort_full', reason: 'capacity', cohort: h.cohort }, 409);
+      if (/capacity_gender_required/.test(String(e.message))) return json({ ok: false, error: 'gender_required' }, 400);
+      if (limited) return json({ ok: false, error: 'capacity_unavailable' }, 503);
+      // A limit may have been enabled while this request was in flight. Do not bypass it via KV fallback.
+      try { const config = await capacityConfig(env, b.path); if (config && (config.male_limit != null || config.female_limit != null)) return json({ ok: false, error: 'capacity_unavailable' }, 503); }
+      catch (e) { return json({ ok: false, error: 'capacity_unavailable' }, 503); }
+    }
+    try { await kv.put(kvKey, JSON.stringify(rec)); kvOk = true; } catch (e) {}
+    if (kvOk || dbOk) { try { await kv.put('meta:last_submit', String(now)); } catch (e) {} }
     // 축제 폼 전용 열(migrations/0007)은 위 batch 밖에서 따로 채움: 원격에 0007 이 빠져도 신청자 행은 남고 이 세 값만 빠짐 (정본 KV 에는 다 있음)
     if (festival && dbOk) {
       try {
@@ -658,6 +686,36 @@ async function admin(sub, request, env, kv, url) {
   }
   const DB = env.DB;
   if (!DB) return json({ error: 'D1 binding missing' }, 500);
+
+  if (sub === '/capacities') {
+    if (request.method === 'POST') {
+      if (request.headers.get('origin') !== url.origin) return json({ error: 'forbidden' }, 403);
+      const b = await readBody(request);
+      const group = capacityGroups().find(x => x.cohort === b?.cohort && x.track === b?.track);
+      const valid = v => v === null || (Number.isInteger(v) && v >= 0 && v <= 10000);
+      if (!group || !valid(b?.male_limit) || !valid(b?.female_limit)) return json({ error: '정원은 0부터 10,000까지의 정수로 입력해 주세요.' }, 400);
+      try {
+        await DB.prepare(`INSERT INTO cohort_capacities(cohort, track, paths, male_limit, female_limit, updated_at)
+          VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(cohort,track) DO UPDATE SET paths=excluded.paths,
+          male_limit=excluded.male_limit, female_limit=excluded.female_limit, updated_at=excluded.updated_at`)
+          .bind(group.cohort, group.track, JSON.stringify(group.paths), b.male_limit, b.female_limit, Date.now()).run();
+        return json({ ok: true });
+      } catch (e) { return json({ error: '정원을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.' }, 503); }
+    }
+    if (request.method === 'GET') {
+      try {
+        const configs = (await DB.prepare('SELECT * FROM cohort_capacities').all()).results;
+        const rows = [];
+        for (const group of capacityGroups()) {
+          const config = configs.find(x => x.cohort === group.cohort && x.track === group.track);
+          rows.push({ cohort: group.cohort, track: group.track, label: group.label, male_limit: config?.male_limit ?? null,
+            female_limit: config?.female_limit ?? null, counts: await capacityCounts(DB, group) });
+        }
+        return json({ rows });
+      } catch (e) { return json({ error: '정원 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.' }, 503); }
+    }
+    return json({ error: 'method not allowed' }, 405);
+  }
 
   if (request.method === 'GET' && sub === '/ping') {
     const last = await DB.prepare('SELECT MAX(last_ts) t FROM sessions').first();
