@@ -8,7 +8,7 @@ const T = (iso) => Date.parse(iso);
 const page = (p) => readFileSync(new URL('../public' + p + 'index.html', import.meta.url), 'utf8');
 
 test('빌드 결과: 이야기판 신청서 3페이지 제출 버튼 바로 앞에 선택 글 칸, 다른 폼에는 없음', () => {
-  const html = page('/8/seoul/story/');
+  const html = page('/9/seoul/cvr/');
   const p3 = html.slice(html.indexOf('<section class="page" data-page="3">'), html.indexOf('<section class="page" data-page="done">'));
   assert.match(p3, /<div class="q" data-name="note"><p class="t">기타 사항<span class="opt-t">\(선택\)<\/span><\/p>\n <p class="qh">[^<]+<\/p>\n <textarea name="note" rows="3" maxlength="500"[^>]*><\/textarea><\/div>\n\n<div class="nav">[^\n]*id="submit"/);
   assert.ok(!/<textarea name="note"[^>]*required/.test(html), '필수 아님');
@@ -19,7 +19,7 @@ const submit = async (fields, db) => {
   const writes = [];
   const env = { APPLY_KV: { put: async (k, v) => writes.push([k, v]) } };
   if (db) env.DB = db;
-  const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path: '/8/seoul/story/', fields: { gender: '여성', birth_year: '2003', school: '시험대', consent: '동의합니다', phone: '01010000002', name: '기타검증', ...fields }, hidden: {} }) }), params: { path: ['submit'] }, env, waitUntil: () => {} });
+  const res = await onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify({ path: '/9/seoul/cvr/', fields: { gender: '여성', birth_year: '2003', school: '시험대', consent: '동의합니다', phone: '01010000002', name: '기타검증', ...fields }, hidden: {} }) }), params: { path: ['submit'] }, env, waitUntil: () => {} });
   const rec = writes.find(([k]) => k.startsWith('s:'));
   return { status: res.status, rec: rec ? JSON.parse(rec[1]) : null };
 };

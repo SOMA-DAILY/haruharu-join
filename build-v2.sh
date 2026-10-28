@@ -810,7 +810,7 @@ def gen(path, f):
         a0 = ge.group(0).find('<div class="ld-al">'); a1 = ge.group(0).find('<div class="ld-gn">', a0)
         assert 0 < a0 < a1, f'{path} 다음 기수 알림 자리를 못 찾음'
         alert = ge.group(0)[a0:a1]
-        cards = pk.group(0).rstrip('\n').replace('class="pk-c on" role="radio" aria-checked="true"', 'class="pk-c" role="radio" aria-checked="false"')
+        cards = pk.group(0).rstrip('\n').replace('class="pk-c on" role="radio" aria-checked="true"', 'class="pk-c" role="radio" aria-checked="false"').replace('<div class="pk" id="pick"', '<div class="pk" id="pick" data-free', 1)   # data-free: 둘 이상이면 미리 안 고름(src/cohort-pick.html)
         go = ('<button type="button" class="ld-btn ld-btn-ar is-off" data-cta="pick" id="ldPickGo"><span>기수를 골라 주세요</span>'
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>\n')
         pick_sec = ('<section class="ld-sec ld-only ld-pick" id="ldCohort" data-sec="pick">\n<p class="ld-k">기수 선택</p>\n<h2>참여할 기수를 골라 주세요</h2>\n'
