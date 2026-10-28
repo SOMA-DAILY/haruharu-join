@@ -301,7 +301,8 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    comeback = bool(f.get('comeback')); cohort_end = False   # 자정 마감 할인: 폼 자체 마감(deadline)이 기수 마감보다 이름
+    direct_rejoin = bool(f.get('directRejoin'))
+    comeback = bool(f.get('comeback')) or direct_rejoin; cohort_end = False   # 같은 짧은 한 페이지 화면을 재사용
     deadline_iso = None if f.get('noDeadline') else (f.get('deadline') or DL.get(cohort)); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = f.get('deadlineKo') or DLKO.get(cohort, '')
     # 일정 문구
@@ -330,6 +331,8 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
         if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
         if survey: done_body = ('다시 함께해 주셔서 고마워요!<br>방이 열리면 초대 코드를 문자로 보내드려요.' if f.get('wishOnly') else '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.')
+    if f.get('rejoin') and f.get('buddyOnly') and not survey:
+        fee_note = f'기존 남성 참가자 재참여 할인가 {fee}원이에요. 후기 작성 없이 신청할 수 있어요. 입금 확인 후 참가가 확정됩니다.'
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -365,6 +368,12 @@ def gen(path, f):
         assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
         cohort_end = (f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])) or cohort != CUR   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로. 다음 기수가 열렸으면(10/14) 기수 마감 안내 + 다음 기수 버튼
         next_link = next_link if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
+    if direct_rejoin:
+        cohort_end = True   # 할인 자체에는 마감이 없다. 실제 신청 기수의 마감만 유지.
+        rows_a = [('참여 대상', f'{area} 00~07년생 남성 대학생'), ('진행 기간', info.get('period', '추후 안내')),
+                  ('이번 기수 신청 마감', deadline_ko), ('참가비', f'재참여 할인 <s>{f["wasFee"]:,}원</s> → {fee}원'),
+                  ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
+        next_link = '<p style="margin-top:14px"><a class="btn" href="/rejoin/seoul/men/?g=m" style="display:inline-flex">모집 중인 기수 확인하기 →</a></p>'
     t = TPL
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
@@ -376,10 +385,22 @@ def gen(path, f):
     if comeback:
         og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
         assert t.count(og) == 1, f'{path} 미리보기 제목 자리를 못 찾음'
-        t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
+        title = f'하루하루 남성 재참여 신청 {fee}원' if direct_rejoin else f'아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원'
+        t = t.replace(og, f'<meta property="og:title" content="{title}">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V4 if f.get('landingV4') else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
+        if comeback and f.get('rejoin'):
+            t = t.replace('<p class="ld-eye">아직 고민 중이라면?</p>', f'<p class="ld-eye">서울 {cohort}기 남성 재참여 할인</p>', 1)
+        if direct_rejoin:
+            t = t.replace('body{padding-top:38px}', 'body{padding-top:0}', 1)
+            t = re.sub(r'<div class="cb-bar" id="cbBar".*?</div>\n', '', t, count=1, flags=re.S)
+            t = re.sub(r'<div class="cb-clock" id="cbClock".*?</div></div>\n', '', t, count=1, flags=re.S)
+            t = t.replace('<span class="ld-live"><i></i>__DEADLINE_KO__ 마감</span>', '<span class="ld-live"><i></i>기존 참가자 전용</span>')
+            t = t.replace('__CB_UNTIL__까지만<br>', '재참여 할인가로<br>')
+            t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left">후기 작성 없이, 기존 참가자는 8,000원에 신청하실 수 있어요.</p>')
+            t, timer_removed = re.subn(r' var end=DEADLINE, off=0, done=false;.*?(?= var cta=document.querySelector)', '', t, count=1, flags=re.S)
+            assert timer_removed == 1, f'{path} 상시 재참여에서 타이머를 못 뺌'
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
         if comeback and f.get('leftKo') == '':
             t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left" id="cbLeft" hidden></p>', 1)
@@ -457,6 +478,12 @@ def gen(path, f):
         for question in ('source', 'intent') + (('device',) if f.get('noDevice') and not phone_only else ()) + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
+    if f.get('fixedGender'):
+        assert f['fixedGender'] == '남성', f'{path} 지원하지 않는 고정 성별'
+        female = '<label class="opt"><span class="k">A</span><input type="radio" name="gender" value="여성" required>여성</label>'
+        male = '<label class="opt"><span class="k">B</span><input type="radio" name="gender" value="남성">남성</label>'
+        assert t.count(female) == 1 and t.count(male) == 1, f'{path} 성별 문항을 못 찾음'
+        t = t.replace(female, '', 1).replace(male, '<label class="opt on"><span class="k">A</span><input type="radio" name="gender" value="남성" required checked>남성</label>', 1)
     if phone_only:
         # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호, 설문 폼은 첫 설문 문항)으로
         assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
@@ -495,7 +522,7 @@ def gen(path, f):
                '- 이용 항목 : 전화번호\n- 보유 : 동의일로부터 6개월, 언제든 수신 거부할 수 있어요.\n- 동의하지 않아도 신청할 수 있어요.</p>\n'
                ' <p class="err">필수 항목에 동의가 필요해요</p></div>\n')
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
-        for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"',) if survey else ('data-cta="sticky"', 'data-engage')):
+        for need in (('data-cta="hero"',) if direct_rejoin else ('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"',) if survey else ('data-cta="sticky"', 'data-engage')):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
         if not prealert and f.get('twoPage'):   # 랜딩 3판(10/12): 템플릿의 2페이지(전화, 동의, 참가비) 그대로. 동의 전엔 임시 저장에 연락처를 안 넣는 것은 3페이지판과 같게
             pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
