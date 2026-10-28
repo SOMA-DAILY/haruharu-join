@@ -268,6 +268,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const form = festival ? null : formOf(b.path);
     if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
     if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
+    if (form?.fixedGender && f.gender !== form.fixedGender) return json({ ok: false, error: 'gender_not_allowed' }, 400);
     if (reviewOnly) h.plan = 'review';   // 후기만 (참가 신청 아님, 참가비 없음)
     // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
     const phoneOnly = !!(form && form.phoneOnly);
