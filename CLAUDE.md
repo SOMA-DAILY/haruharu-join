@@ -396,6 +396,14 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - 개선판 사전 알림 폼에는 없음(방 일정이 안 잡힌 단계라서)
 - 측정: Mixpanel `app_install_click`(`store` 가 `ios` / `android`)
 
+## 남성 재참여 전용 폼 (2026-10-28)
+
+- `/rejoin/seoul/returning-men/`은 7기 남성용 후기 폼이다. 7기 후기(필수 10자 이상), 바라는 점(선택)을 입력하고 후기만 익명 제출하거나 8기·9기를 선택해 재참여한다. 재참여할 때만 전화번호, 친구 방 요청, 송금자 이름을 받는다. 링크 추적은 `src=msg-seoul-returning-m&g=m`.
+- `RETURNING_MEN` 등록부의 정가 10,000원 → 재참여 8,000원 고정이다. 친구 방 요청으로 추가 할인하지 않는다. 송금은 `haruharu-pay`의 재참여 전용 `/mr/`.
+- 접수는 선택한 `/8/seoul/rejoin/returning-men/` 또는 `/9/seoul/rejoin/returning-men/` 경로로 저장하고 방문 출처는 `from_page`에 유지한다. 후기 출처는 서버가 7기로 고정한다. 기수별 마감·정원 검사는 기존 공통 처리를 따른다. 후기만 제출은 참가비·연락처 없이 별도 후기 접수로 저장하며 모집 마감 뒤에도 가능하다.
+- 기존 `/rejoin/seoul/returning/`와 7기 후기 폼의 5,900원은 별도다. 문구 금액은 등록부에서 계산하므로 템플릿에 새 금액을 직접 쓰지 않는다.
+- 검증: `tests/male-returning.test.mjs` 및 기존 `returning-wish`, `gender-fee`, `cohort7-review`, `capacity` 검사.
+
 ## 관리 페이지 (`/admin/`)
 
 - 알림 신청 상태의 `최근 문자 발송일시 (한국시간)`은 `submissions.last_sms_sent_at`에 별도 저장한다(migrations/0016). 첫 `문자 보냄` 전환에서만 현재 시각을 채우며 기존 발송 시각은 상태/메모 수정으로 덮어쓰지 않는다. 과거 시각 수정·비우기는 목록과 상세에서 가능하고 알림 CSV 맨 끝에도 붙는다. 이미 `문자 보냄`이지만 실제 시각이 없는 옛 기록은 현재 시각으로 추정하지 않는다. 원격 마이그레이션은 배포 전에 적용하고 실제 문자 근거가 있는 대상만 별도로 채운다.

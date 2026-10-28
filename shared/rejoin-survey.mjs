@@ -24,14 +24,15 @@ export function cleanOptionalWish(fields) {
 }
 
 // 제출된 값 → 저장할 설문 + 빠진(또는 너무 짧은) 문항
-export function cleanSurvey(fields, now = Date.now()) {
+export function cleanSurvey(fields, now = Date.now(), { wishOptional = false } = {}) {
   const raw = fields && typeof fields === 'object' ? fields : {};
   const out = {}, miss = [];
   for (const k of SURVEY_KEYS) {
     const q = SURVEY[k];
     const v = (typeof raw[k] === 'string' ? raw[k] : '').replace(/\r/g, '').trim().slice(0, q.max || 1000);
-    if (v.length >= (q.min || 1)) out[k] = v;
-    else if (!q.optional) miss.push(k);
+    const optional = q.optional || (wishOptional && k === 'sv_wish');
+    if (v.length >= (optional ? 1 : q.min || 1)) out[k] = v;
+    else if (!optional) miss.push(k);
   }
   // Optional on the API so an already-open form can still submit after deployment.
   // The new form asks explicitly; metadata shares the existing survey JSON column.
