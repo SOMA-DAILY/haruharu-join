@@ -920,7 +920,7 @@ __LD_ALERT__<div class="ld-gn">__LD_NOTES__<p>궁금한 점은 인스타그램 <
  (function(){ var box=document.getElementById('pick'); if(!box) return; var cards=[].slice.call(box.querySelectorAll('.pk-c')); if(!cards.length) return;
   function upd(){ var co=cards.filter(function(c){ return !c.hidden&&!c.disabled; }).map(function(c){ return c.getAttribute('data-cohort'); }), t=co.length?co.join(', ')+'기 모집 중':'';
    [].forEach.call(document.querySelectorAll('.ld-live'),function(b){ var dot=b.querySelector('i'); b.textContent=''; if(dot) b.appendChild(dot); b.appendChild(document.createTextNode(t)); b.style.display=t?'':'none'; }); }
-  function go(){ upd(); if(window.MutationObserver) new MutationObserver(upd).observe(box,{subtree:true,attributes:true,attributeFilter:['hidden','disabled']}); }
+  function go(){ upd(); syncGo(); if(window.MutationObserver) new MutationObserver(function(){ upd(); syncGo(); }).observe(box,{subtree:true,attributes:true,attributeFilter:['hidden','disabled','class']}); }   // 기수가 하나만 남아 저절로 골라지면 버튼도 'N기 신청하기'
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(go,0); }); else setTimeout(go,0);
  })();
  var viaLink=false;

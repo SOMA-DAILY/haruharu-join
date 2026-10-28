@@ -477,7 +477,10 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 - 테스트 `tests/cohort-pick.test.mjs`
 
 
-## 랜딩 이야기판 (10/22, `/8/seoul/story/`, `src/landing.v4.html`)
+## 랜딩 이야기판 (10/22, 처음 `/8/seoul/story/` → 10/28 `/9/seoul/cvr/` CVR 개선판, `src/landing.v4.html`)
+
+**(10/28) 주소를 `/9/seoul/cvr/` 로 옮김** (사용자: "story 말고 cvr 개선 같은 이름", 광고 연결은 광고 책임자가 함). 등록부 줄은 9기(...S9), 라벨 `9기 서울 학생 - CVR 개선판`, 나머지 값(landingV4, pickFrom, noSource, noDevice, payV3)은 그대로. `/8/seoul/story/` 줄과 빌드 파일은 지움. 고정 링크, 지역 선택, 50/50 에는 안 나옴(광고 URL 에 직접 `/9/seoul/cvr/?src=ad-...` 를 씀). 아래 글의 `/8/seoul/story/` 는 그 전 기록.
+- **기수 카드 미리 고르기 (10/28)**: #89 뒤 `src/cohort-pick.html` 이 늘 페이지 기수를 골라 두게 바뀌어 이야기판의 "기수를 직접 고르게"(10/26)가 깨짐 → 이야기판 기수 상자에만 `data-free`(build-v2.sh): 고를 수 있는 기수가 둘 이상이면 미리 고르지 않고, 하나만 남으면(8기 마감 뒤) 그 기수를 골라 둠. 신청하기 버튼 글자는 카드가 골라질 때 따라감(`N기 신청하기`). 다른 폼은 data-free 가 없어 그대로
 
 사용자가 ucling.co.kr 신청 페이지를 보고 "우리 신청 페이지에도 적용해 봐"라고 해서 만든 판. **색, 글꼴, 가명/프로필(성별 판), 진행 과정, 걱정 문답, 신청 안내 칸, 신청서는 3판 그대로**이고 구성과 몇 가지 장치만 가져옴. 아직 미리보기 경로에만 있음(사용자 확인 전).
 

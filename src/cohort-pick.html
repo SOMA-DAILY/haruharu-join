@@ -73,9 +73,10 @@
    if(full){b.textContent='정원 마감';b.classList.remove('soon');return;}
    var d=day(dl)-day(now); b.textContent=d<=0?'오늘 마감':'마감 D-'+d; b.classList.toggle('soon',d<=3);
   });
-  var current=card(cur);
+  var current=card(cur), selectable=cards.filter(function(a){return !a.hidden&&!a.disabled});
+  var free=box.hasAttribute('data-free')&&selectable.length>1;   // 이야기판(data-free, 10/26 사용자: 기수를 직접 고르게): 고를 수 있는 기수가 둘 이상이면 미리 고르지 않음, 하나면 그 기수를 골라 둠
   if(current.hidden||current.disabled){var next=cards.filter(function(a){return !a.hidden&&!a.disabled})[0];if(next)select(next.getAttribute('data-cohort'),false);else cards.forEach(function(a){a.classList.remove('on');a.setAttribute('aria-checked','false')});}
-  else if(!current.classList.contains('on'))select(cur,false);
+  else if(!current.classList.contains('on')&&!free)select(cur,false);
   box.hidden=open<1;
  }
  paint();
