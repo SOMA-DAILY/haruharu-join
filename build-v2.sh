@@ -898,17 +898,13 @@ def gen(path, f):
         assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
     if f.get('phonePaymentOnly'):
         t = t.replace('<head>', '<head>\n<script>window.HH_G="m";</script>', 1)
-        # 화면에서는 전화번호만 입력. 기존 정보 조회는 서버에서만 하고 이름/친구 입력도 받지 않는다.
-        t, removed = re.subn(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', '', t, count=1, flags=re.S)
-        assert removed == 1, f'{path} 친구 문항을 못 뺌'
-        t, removed = re.subn(r' <p class="note">송금 후 송금자 이름을 적어주세요.</p>\n <input type="text" name="name".*?<p class="err">송금자 이름을 입력해 주세요</p>', '', t, count=1, flags=re.S)
-        assert removed == 1, f'{path} 송금자 이름 문항을 못 뺌'
-        t = t.replace('data-name="name"', 'data-name="payment"')
-        t = t.replace('참가비 안내<span class="req">*</span>', '참가비 안내')
-        t = re.sub(r'<p class="rj-privacy">.*?</p>', '<p class="rj-privacy">신청 확인과 방 배정, 입금 확인을 위해 전화번호와 이전 신청 정보를 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>', t, count=1, flags=re.S)
+        # 기본 정보는 지난 신청에서 복원. 이번 송금자명과 혼자/친구 신청·방 희망은 직접 받는다.
+        t = t.replace('placeholder="실명을 입력해 주세요"', 'placeholder="송금자명을 입력해 주세요"', 1)
+        t = re.sub(r'<p class="rj-privacy">.*?</p>', '<p class="rj-privacy">신청 확인과 방 배정, 입금 확인을 위해 전화번호·송금자명·이전 신청 정보를 이용해요. 친구와 함께 신청하면 친구 전화번호도 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>', t, count=1, flags=re.S)
         t = t.replace('id="submit">제출하기</button>', 'id="submit">송금 후 신청 완료</button>')
         t = t.replace("btn.textContent='제출하기'", "btn.textContent='송금 후 신청 완료'")
-        assert all(not re.search(r'<input\b[^>]*name="' + k + '"', t) for k in ('gender', 'birth_year', 'school', 'device', 'consent', 'name', 'buddy', 'buddy_room')), f'{path} 전화번호 외 입력이 남음'
+        assert all(not re.search(r'<input\b[^>]*name="' + k + '"', t) for k in ('gender', 'birth_year', 'school', 'device', 'consent')), f'{path} 기본 정보 입력이 남음'
+        assert re.search(r'<input\b[^>]*name="name"[^>]*required', t) and 'name="buddy_room" value="혼자"' in t and 'name="buddy"' in t, f'{path} 송금자명·친구 문항이 빠짐'
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 

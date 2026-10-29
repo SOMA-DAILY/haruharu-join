@@ -50,14 +50,14 @@ function normPhone(p) { return (p || '').replace(/\D/g, ''); }
 // 전화번호만 받는 재참여 폼(등록부 phoneOnly): 같은 번호의 지난 신청에서 성별/출생년도/학교/기기를 가져옴 (칸마다 가장 최근에 적은 값).
 //   못 찾아도 접수는 받음(번호가 등록돼 있는지 화면으로 알 수 없게). 그때는 칸이 빈 채로 남고 관리 화면에 [이전 기록 없음]
 const PRIOR_FIELDS = ['gender', 'birth_year', 'school', 'device'];
-async function priorProfile(env, digits, includeName = false) {
+async function priorProfile(env, digits) {
   const out = {};
   if (!env.DB || !digits) return out;
   try {
-    const rows = await env.DB.prepare('SELECT application_id, gender, birth_year, school, device' + (includeName ? ', name' : '') + ' FROM submissions WHERE phone_digits = ?1 ORDER BY submitted_ts DESC LIMIT 20').bind(digits).all();
+    const rows = await env.DB.prepare('SELECT application_id, gender, birth_year, school, device FROM submissions WHERE phone_digits = ?1 ORDER BY submitted_ts DESC LIMIT 20').bind(digits).all();
     for (const r of rows.results || []) {
       if (!out.from) out.from = r.application_id;
-      for (const k of includeName ? [...PRIOR_FIELDS, 'name'] : PRIOR_FIELDS) if (!out[k] && r[k]) out[k] = r[k];
+      for (const k of PRIOR_FIELDS) if (!out[k] && r[k]) out[k] = r[k];
     }
   } catch (e) {}
   return out;
@@ -282,7 +282,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
-    const required = phoneOnly ? (reviewOnly ? [] : form.phonePaymentOnly ? ['phone'] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
+    if (form?.phonePaymentOnly && typeof f.name === 'string') f.name = f.name.trim();
+    const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
       if (!form.noDevice) required.push('device');   // noDevice (10/23 이야기판): 기기 문항 없음, 아래에서 접속 기기로 채움
@@ -319,10 +320,8 @@ export async function onRequest({ request, env, params, waitUntil }) {
       const declaredGender = f.gender;
       for (const k of ['gender', 'birth_year', 'school', 'source', 'device', 'intent', 'intent_other', 'consent']) delete f[k];   // 동의 체크 문항 없음 (이용 안내만)
       if (reviewOnly) for (const k of ['phone', 'name', 'buddy', 'buddy_room']) delete f[k];   // 후기만 (10/18 운영자: 전화번호는 신청하는 사람만): 전화번호, 참가비, 친구 칸은 화면에서 숨겨짐. 익명 후기
-      if (form.phonePaymentOnly) for (const k of ['name', 'buddy', 'buddy_room']) delete f[k];
-      const prior = reviewOnly ? {} : await priorProfile(env, normPhone(f.phone), !!form.phonePaymentOnly);
+      const prior = reviewOnly ? {} : await priorProfile(env, normPhone(f.phone));
       for (const k of PRIOR_FIELDS) if (prior[k]) f[k] = prior[k];
-      if (form.phonePaymentOnly && prior.name) f.name = prior.name;
       if (!reviewOnly && !f.gender && ['남성', '여성'].includes(declaredGender)) f.gender = declaredGender;
       // 후기만 남겨도 남녀 링크 성별을 보관. 재신청은 이전 신청 성별이 우선.
       if (form.survey && !f.gender && linkedGender(h)) f.gender = linkedGender(h);

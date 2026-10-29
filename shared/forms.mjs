@@ -43,7 +43,7 @@ const REVIEW7 = { ...REVIEW6, reviewCohort: '7' };
 const RETURNING_WISH = { ...REVIEW6, reviewCohort: null, wishOnly: true };
 // 남성 재참여 전용(10/28): 8/9기 정가 10,000원에서 2,000원 할인. 친구 동반 시에도 8,000원 고정.
 const RETURNING_MEN = { ...REVIEW7, fee: 8000, wasFee: 10000, pay: PAY + '/mr/', wishOptional: true };
-// 상시 남성 재참여: 전화번호 입력·송금 후 제출. 기존 정보와 이름은 서버가 같은 번호의 이전 신청에서 가져온다.
+// 상시 남성 재참여: 기수·전화번호·혼자/친구·송금자명 입력 후 제출. 기본 프로필만 같은 번호의 이전 신청에서 복원한다.
 const MEN_REJOIN = { plan: 'discount', fee: 8000, pay: PAY + '/mr/', wasFee: 10000, feeFirst: true, landing: true, variant: 'v2', onePage: true, phoneOnly: true, phonePaymentOnly: true, directRejoin: true, pick: true, rejoin: true, buddyOnly: true, noSource: true, remind: true, fixedGender: '남성', closedFor: ['f'], entry: '/rejoin/seoul/men/' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
