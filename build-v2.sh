@@ -727,7 +727,8 @@ def gen(path, f):
     if f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
         # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
         #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
-        g_open = '<div class="q" data-name="gender">'
+        qname = 'phone' if phone_only else 'gender'
+        g_open = '<div class="q" data-name="' + qname + '">'
         assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
         rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
         assert len(rows) >= 2 and any(g['cohort'] == cohort for _, g in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
@@ -738,12 +739,27 @@ def gen(path, f):
                     f' data-path="{p}" data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
                     f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
                     f'<span class="pk-chips"><span class="pk-chip p">🗓️ {pk_short(per)}</span><span class="pk-chip d">⏰ {pk_short(dko)} 신청 마감</span></span></button>')
-        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
+        only_gender = ' data-gender="m"' if f.get('fixedGender') == '남성' else ''
+        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"{only_gender}><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
                       + '\n'.join(pk_card(p, g) for p, g in rows) + '\n</div>\n\n' + g_open, 1)
         # 아래 고정 신청 버튼은 카드 구역이 보이면 숨김 (기준이 성별 문항이던 것을 카드 구역으로)
-        tgt = "function target(){ return document.querySelector('.q[data-name=\"gender\"]'); }"
-        assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
-        t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
+        tgt = "function target(){ return document.querySelector('.q[data-name=\"" + qname + "\"]'); }"
+        if not direct_rejoin:
+            assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+            t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"" + qname + "\"]'); }", 1)
+        if direct_rejoin:
+            t = t.replace("var q=document.querySelector('.q[data-name=\"phone\"]');", "var q=document.getElementById('pick')||document.querySelector('.q[data-name=\"phone\"]');", 1)
+            # 다른 기수 선택 후 원래 페이지 기수의 시간 마감만으로 전체 폼을 닫지 않는다.
+            close_check = 'function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }'
+            assert t.count(close_check) == 1
+            t = t.replace(close_check, "function checkClosed(){ var cards=document.querySelectorAll('#pick .pk-c'); if(cards.length && ![].some.call(cards,function(c){return Date.now()+clockOffset<Number(c.getAttribute('data-deadline'));})) closeForm(); }", 1)
+            t = t.replace("if(s && s.open===false && s.reason!=='capacity') closeForm(); else checkClosed();", 'checkClosed();', 1)
+            old_closed = "if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); }"
+            assert t.count(old_closed) == 1
+            t = t.replace(old_closed, "if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; saveDraft(); document.dispatchEvent(new Event('hh-capacity-change')); btn.disabled=false; btn.textContent='송금 후 신청 완료'; checkClosed(); alert('선택한 기수의 신청이 마감됐어요. 다른 기수를 확인해 주세요.'); throw new Error('cohort_pick_closed'); }", 1)
+            catch_hook = ".catch(function(err){ if(err.message==='cohort_closed')"
+            assert t.count(catch_hook) == 1
+            t = t.replace(catch_hook, ".catch(function(err){ if(err.message==='cohort_pick_closed') return; if(err.message==='cohort_closed')", 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PICK_TAIL + foot, 1)
     checked_text = t.replace('받은 질문 · 1', '')
@@ -881,6 +897,7 @@ def gen(path, f):
         t, nfee = re.subn(r'<dt>참가비</dt><dd><bdi data-price="full">[^<]*</bdi>원', f'<dt>참가비</dt><dd>남성 {f["maleFee"]:,}원 / 여성 {f["fee"]:,}원', t)
         assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
     if f.get('phonePaymentOnly'):
+        t = t.replace('<head>', '<head>\n<script>window.HH_G="m";</script>', 1)
         # 화면에서는 전화번호만 입력. 기존 정보 조회는 서버에서만 하고 이름/친구 입력도 받지 않는다.
         t, removed = re.subn(r'<div class="q" data-name="buddy_room">.*?<p class="err">친구 전화번호를 확인해 주세요</p></div>\n*', '', t, count=1, flags=re.S)
         assert removed == 1, f'{path} 친구 문항을 못 뺌'
