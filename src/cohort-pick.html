@@ -66,7 +66,8 @@
    var available=st&&(st.available||(st.open?{m:true,f:true}:null));
    if(available){
     b.classList.add('by-gender');b.classList.remove('soon');
-    b.innerHTML=['m','f'].map(function(g){return '<span class="pk-gender'+(available[g]?'':' pk-gender-full')+'">'+(g==='m'?'남성':'여성')+' '+(available[g]?'모집 중':'마감')+'</span>'}).join(' ');
+    var genders=box.getAttribute('data-gender')?[box.getAttribute('data-gender')]:['m','f'];
+    b.innerHTML=genders.map(function(g){return '<span class="pk-gender'+(available[g]?'':' pk-gender-full')+'">'+(g==='m'?'남성':'여성')+' '+(available[g]?'모집 중':'마감')+'</span>'}).join(' ');
     return;
    }
    b.classList.remove('by-gender');

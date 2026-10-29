@@ -31,14 +31,15 @@ test('male rejoin route has fixed 8000 fee with phone and payment only', () => {
   assert.deepEqual(feeFor(f, '남성'), { fee: 8000, pay: 'https://haruharu-pay.pages.dev/mr/', friendFee: undefined, friendPay: undefined });
   assert.equal(friendFee(f, { ...FIELDS, buddy_room: '같은 방', buddy: '01000000002' }), 0);
   assert.equal(f.phoneOnly, true); assert.equal(f.phonePaymentOnly, true);
-  for (const k of ['survey', 'joins', 'pick', 'listed', 'friendFee']) assert.equal(f[k], undefined, k);
+  assert.equal(f.pick,true);
+  for (const k of ['survey', 'joins', 'listed', 'friendFee']) assert.equal(f[k], undefined, k);
   assert.equal(f.deadline, undefined); assert.equal(f.comeback, undefined);
   assert.equal(formOf('/rejoin/seoul/returning-men/').reviewCohort, '7');
   assert.equal(formOf('/rejoin/seoul/returning/').fee, 5900);
 });
 
 test('no review or previous submission is needed; server stores cohort8 discount and campaign source', async () => {
-  const { res, rec } = await submit({ cohort_pick: '9', sv_join: '9기' });
+  const { res, rec } = await submit({ sv_join: '9기' });
   assert.equal(res.status, 200);
   assert.equal(rec.hidden.cohort, '8'); assert.equal(rec.hidden.plan, 'discount');
   assert.equal(rec.hidden.city, 'seoul'); assert.equal(rec.hidden.src, 'h8-msg-seoul-rejoin-m');
@@ -46,6 +47,16 @@ test('no review or previous submission is needed; server stores cohort8 discount
   assert.equal(rec.fields.school, undefined); assert.equal(rec.fields.phone, FIELDS.phone);
   assert.equal(rec.survey, undefined); assert.equal(rec.prior_from, '');
   assert.equal(rec.friend_fee, undefined);
+});
+
+test('cohort choice uses the matching discounted route, preserves source and accepts 9 after 8 closes', async () => {
+  for(const [page,choice,cohort,time] of [[PATH,'9','9',END-1],['/9/seoul/rejoin/men/','8','8',END-1],[PATH,'9','9',END+1]]){
+    const {res,rec}=await submit({cohort_pick:choice},time,page);
+    assert.equal(res.status,200);assert.equal(rec.hidden.cohort,cohort);
+    assert.equal(rec.hidden.plan,'discount');assert.equal(rec.from_page,page);
+    assert.equal(formOf(`/${cohort}/seoul/rejoin/men/`).fee,8000);
+  }
+  const bad=await submit({cohort_pick:'7'});assert.equal(bad.res.status,400);assert.equal(bad.writes.length,0);
 });
 
 test('unrequested friend fields never add a discount; actual previous gender is verified', async () => {
@@ -102,7 +113,11 @@ test('built page contains phone and payment only without the removed sentence or
   assert.match(html, /<input type="tel" name="phone"/);
   for(const key of ['gender','birth_year','school','device','name','buddy','buddy_room','consent'])
     assert.doesNotMatch(html,new RegExp('<input[^>]*name="'+key+'"'));
-  assert.doesNotMatch(html, /후기 작성 없이|송금 후 송금자 이름을 적어|name="sv_|name="cohort_pick"|후기를 남겨|7기 참가자 전용|친구도.*8,000원/);
+  assert.match(html,/id="pick"[^>]*data-gender="m"/);
+  assert.match(html,/name="cohort_pick"/);
+  assert.match(html,/data-path="\/8\/seoul\/rejoin\/men\/"/);
+  assert.match(html,/data-path="\/9\/seoul\/rejoin\/men\/"/);
+  assert.doesNotMatch(html, /후기 작성 없이|송금 후 송금자 이름을 적어|name="sv_|후기를 남겨|7기 참가자 전용|친구도.*8,000원/);
   assert.match(html,/송금 후 신청 완료/);
   assert.match(html, /<s>10,000원<\/s> <b>8,000원<\/b>/);
   assert.match(html, /id="pay" href="https:\/\/haruharu-pay\.pages\.dev\/mr\/"/);
