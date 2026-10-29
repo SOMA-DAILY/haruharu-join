@@ -41,6 +41,10 @@ const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, p
 // 7기 참가자 전용: 같은 화면/고정 참가비를 재사용하되 후기 출처는 7기, 재신청은 8/9기로 분리한다.
 const REVIEW7 = { ...REVIEW6, reviewCohort: '7' };
 const RETURNING_WISH = { ...REVIEW6, reviewCohort: null, wishOnly: true };
+// 남성 재참여 전용(10/28): 8/9기 정가 10,000원에서 2,000원 할인. 친구 동반 시에도 8,000원 고정.
+const RETURNING_MEN = { ...REVIEW7, fee: 8000, wasFee: 10000, pay: PAY + '/mr/', wishOptional: true };
+// 상시 남성 재참여: 기수·전화번호·혼자/친구·송금자명 입력 후 제출. 기본 프로필만 같은 번호의 이전 신청에서 복원한다.
+const MEN_REJOIN = { plan: 'discount', fee: 8000, pay: PAY + '/mr/', wasFee: 10000, feeFirst: true, landing: true, variant: 'v2', onePage: true, phoneOnly: true, phonePaymentOnly: true, directRejoin: true, pick: true, rejoin: true, buddyOnly: true, noSource: true, remind: true, fixedGender: '남성', closedFor: ['f'], entry: '/rejoin/seoul/men/' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
@@ -115,7 +119,9 @@ export const FORMS = {
   //   abTest: 7기 50/50(랜딩 v3b + 결제 v3)의 판정은 8기까지 팔당 LPV 2,000 원칙이라 8기만 이어감 (functions/8/seoul/). 9기는 없음
   //   pick (10/23 사용자): 신청서의 신청 안내 바로 아래(성별 앞)에 8기, 9기 일정 카드. 지금 폼 기수가 골라진 채로 나오고, 다른 기수를 누르면 그 자리에서 골라짐(페이지 이동, 스크롤 없음).
   //   다른 기수를 고르면 숨은 칸 cohort_pick 에 그 기수가 담겨 서버가 그 기수 줄로 접수(pickTarget). build-v2.sh 가 pick 줄끼리 카드를 만듦(src/cohort-pick.html). 끄려면 두 줄에서 pick 만 빼고 build
-  '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', alert: '/alert/seoul/', abTest: true, pick: true },
+  '/8/seoul/':              { ...S8, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '8기 서울 학생', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', entryFirst: 'm', entryEnd: '2026-10-29T00:00:00+09:00', alert: '/alert/seoul/', abTest: true, pick: true },
+  '/8/seoul/rejoin/men/':   { ...S8, ...MEN_REJOIN, label: '8기 서울 남성 재참여 (후기 없음)' },
+  '/9/seoul/rejoin/men/':   { ...S9, ...MEN_REJOIN, label: '9기 서울 남성 재참여 (후기 없음)' },
   // 이야기판 미리보기 (10/22): 8기 서울 폼과 같은 값, 랜딩만 landing.v4.html (ucling.co.kr 구성 참고). 고정 링크, 지역 선택, 광고에는 안 나옴 → 보고 정하면 /8/seoul/ 줄에 landingV4 와 아래 셋을 붙이고 이 줄은 지움
   //   10/23 사용자: 유입경로, 사용 기기, 신청 마음 문항 없음(noSource, noDevice. 기기는 서버가 접속 기기로 채움), 결제 구역은 B 팔과 같은 v3(payV3). 8기/9기 카드는 pickFrom 으로 고정 링크의 pick 폼 카드를 빌려 씀(이 줄엔 pick 없음)
   //   10/28 사용자: 9기 메인은 아래 CVR 개선판. 이 기존판은 직접 링크(문자, 수동 안내)로만 살려 둠 → listed/entry/pick 을 CVR 줄로 옮기고 카드는 pickFrom 으로 빌려 씀
@@ -146,6 +152,11 @@ export const FORMS = {
                               joins: { '8기': '/8/seoul/rejoin/returning/', '9기': '/9/seoul/rejoin/returning/' } },
   '/8/seoul/rejoin/returning/': { ...S8, ...RETURNING_WISH, rejoin: true, label: '기존 참가자 8기 재신청 (바라는 점 선택)' },
   '/9/seoul/rejoin/returning/': { ...S9, ...RETURNING_WISH, rejoin: true, label: '기존 참가자 9기 재신청 (바라는 점 선택)' },
+  '/rejoin/seoul/returning-men/': { ...S8, cohort: 'review', ...RETURNING_MEN, noPage: false, noDeadline: true,
+                                  label: '7기 남성 후기 및 8/9기 재참여', landing: true, variant: 'v2', landingV3: true, noSource: true,
+                                  joins: { '8기': '/8/seoul/rejoin/returning-men/', '9기': '/9/seoul/rejoin/returning-men/', '후기만': '/rejoin/seoul/returning-men/' } },
+  '/8/seoul/rejoin/returning-men/': { ...S8, ...RETURNING_MEN, rejoin: true, label: '기존 남성 참가자 8기 재신청 (8,000원)' },
+  '/9/seoul/rejoin/returning-men/': { ...S9, ...RETURNING_MEN, rejoin: true, label: '기존 남성 참가자 9기 재신청 (8,000원)' },
   // ---- 다음 기수 알림 (10/11~): 기수 폼의 [다음 기수 알림만] 칸이 이 경로로 제출함 (성별, 출생년도, 번호, 동의만 = lite).
   // 기수별로 안 나누고 한 통(cohort 'alert')으로 관리 (10/11 사용자), 관리 페이지 이름은 [알림 신청]. 경로 고정, 마감 없음, 화면 없음(build 대상 아님)
   '/alert/seoul/':          { ...S3, cohort: 'alert', plan: 'prealert', fee: 0, pay: '', label: '알림 신청 (서울 학생)', period: '추후 안내', noDeadline: true, noPage: true, lite: true },
@@ -153,7 +164,7 @@ export const FORMS = {
 
 // 고정 링크 (10/10~): 광고와 바이오는 이 주소만 씀. 서버(functions/{경로}/index.js)가 그때 열려 있는 기수 폼으로 302 (쿼리 그대로).
 //   어느 폼으로 갈지는 등록부의 entry 값. 새 기수는 폼 줄에 같은 entry 를 달면 끝 → 앞 기수 마감 시각에 저절로 넘어감 (광고 수정 없음)
-export const ENTRIES = ['/seoul/student/', '/gwangju/student/', '/seoul/work/'];
+export const ENTRIES = ['/seoul/student/', '/gwangju/student/', '/seoul/work/', '/rejoin/seoul/men/'];
 
 // 기수별 안내 (폼 안내 카드와 일정 문구. 금액은 등록부 fee 에서, 날짜는 여기서)
 export const COHORT_INFO = {

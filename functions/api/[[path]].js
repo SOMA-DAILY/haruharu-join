@@ -268,6 +268,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const form = festival ? null : formOf(b.path);
     if (!festival && !form) return json({ ok: false, error: 'unknown_form' }, 404);
     if (form) { h.plan = form.plan; h.cohort = form.cohort; h.city = form.city; }
+    if (form?.fixedGender && !form.phoneOnly && f.gender !== form.fixedGender) return json({ ok: false, error: 'gender_not_allowed' }, 400);
     if (reviewOnly) h.plan = 'review';   // 후기만 (참가 신청 아님, 참가비 없음)
     // 기수 마감(그 기수 폼 전부): 화면만 막으면 우회 가능하니 서버에서도 거부. 저장 전에 끊어서 KV/D1 에 안 남음
     const phoneOnly = !!(form && form.phoneOnly);
@@ -281,6 +282,7 @@ export async function onRequest({ request, env, params, waitUntil }) {
     const prealert = form && form.plan === 'prealert';
     // 필수: 사전알림(무료)은 송금자 이름/기기 없음. 직장인 폼의 school 칸은 [하시는 일]
     // lite: [다음 기수 알림만] 칸 (10/11). 성별, 출생년도, 번호, 동의만 받음
+    if (form?.phonePaymentOnly && typeof f.name === 'string') f.name = f.name.trim();
     const required = phoneOnly ? (reviewOnly ? [] : ['phone', 'name']) : festival ? ['gender', 'birth_year', 'major', 'phone', 'consent', 'name'] : (prealert && form.lite) ? ['gender', 'birth_year', 'phone', 'consent'] : prealert ? ['gender', 'birth_year', 'school', 'source', 'phone', 'consent'] : ['gender', 'birth_year', 'school', 'phone', 'consent', 'name'];
     if (!preRegistration && !festival && !prealert && !phoneOnly) {
       if (!form.rejoin && !form.noSource) required.push('source'); // 재참여 폼은 유입 경로 문항 없음
@@ -288,10 +290,11 @@ export async function onRequest({ request, env, params, waitUntil }) {
     }
     if (form && form.occupation) required.push('schedule_pref');
     const miss = required.filter((k) => !f[k]);
+    if (form?.phonePaymentOnly && !/^010\d{8}$/.test(normPhone(f.phone)) && !miss.includes('phone')) miss.push('phone');
     // 재참여 설문 폼(등록부 survey): 설문을 다 해야 할인이라 빠진 문항이 있으면 받지 않음. 값은 선택지에 있는 것만 남김
     // 전용 폼의 후기 기수는 서버 등록부가 확정한다. 신청 기수/클라이언트 응답으로 덮어쓰지 않음.
     const reviewCohort = page?.reviewCohort || form?.reviewCohort;
-    const sv = form?.wishOnly ? cleanOptionalWish(b.fields) : form && form.survey ? cleanSurvey(reviewCohort ? { ...b.fields, sv_cohorts: [reviewCohort] } : b.fields) : null;
+    const sv = form?.wishOnly ? cleanOptionalWish(b.fields) : form && form.survey ? cleanSurvey(reviewCohort ? { ...b.fields, sv_cohorts: [reviewCohort] } : b.fields, now, { wishOptional: !!form.wishOptional }) : null;
     if (sv) miss.push(...sv.miss);
     if (form && form.buddyOnly && !reviewOnly) {
       const room = f.buddy_room || '혼자';
@@ -328,6 +331,10 @@ export async function onRequest({ request, env, params, waitUntil }) {
       priorFrom = reviewOnly ? null : prior.from || '';   // 후기만은 번호가 없어 지난 신청을 안 찾음
     }
     if (form && !reviewOnly) {
+      if (form.fixedGender) {
+        if (f.gender && f.gender !== form.fixedGender) return json({ ok: false, error: 'gender_not_allowed' }, 400);
+        f.gender = form.fixedGender;
+      }
       // 링크 g를 바꿔도 이전 신청의 실제 성별이 남성이면 7기에 접수하지 않는다. 저장 전에 종료.
       const g = f.gender === '남성' ? 'm' : f.gender === '여성' ? 'f' : h.g;
       const st = formStatus(b.path, now, env, g);

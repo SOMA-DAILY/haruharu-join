@@ -36,13 +36,13 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
   assert.equal(entryTarget('/seoul/student/', after6), '/7/seoul/');
   assert.equal(entryTarget('/seoul/student/', after6, undefined, 'f'), '/7/seoul/');
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-21T18:01:00+09:00'), undefined, 'm'), '/8/seoul/');   // 남자는 8기 먼저 (10/22)
-  // 8기, 9기 미리 올려 둠 (10/21): 7기 마감(10/22 18:00) 전엔 7기, 뒤엔 8기, 8기 마감(10/29 18:00) 뒤엔 9기 CVR 개선판(10/28), 9기 마감(11/5 18:00) 뒤엔 9기 마감 안내. 남녀 같음
+  // 8기, 9기 미리 올려 둠 (10/21): 7기 마감(10/22 18:00) 전엔 7기, 뒤엔 8기, 10/29 머지 뒤 광고와 바이오는 즉시 9기 CVR 개선판, 9기 마감(11/5 18:00) 뒤엔 9기 마감 안내. 남녀 같음
   assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T14:00:00+09:00'), undefined, 'm'), '/8/seoul/');   // 10/22 14시 사용자: 남자는 지금부터 8기
   for (const g of ['', 'f']) {
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T16:59:59+09:00'), undefined, g), '/7/seoul/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T17:00:00+09:00'), undefined, g), '/8/seoul/', g);   // 10/22 17시 사용자: 여자/바이오도 8기 (entryEnd)
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T18:00:00+09:00'), undefined, g), '/8/seoul/', g);
-    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/8/seoul/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/9/seoul/cvr/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T18:00:00+09:00'), undefined, g), '/9/seoul/cvr/', g);   // 10/28: 9기 메인은 CVR 개선판
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/9/seoul/cvr/', g);
   }
@@ -95,4 +95,19 @@ test('성별 쿠키 (10/22): 광고로 지나간 남자는 바이오(g 없음)�
     assert.deepEqual((await mw('/5/seoul/?src=h5-seoul-insta-bio', 'hh_g=m')).slice(0, 2), [302, '/8/seoul/?src=h5-seoul-insta-bio&g=m']);   // 마감된 옛 폼 주소도 쿠키로 남자 → 열린 8기(entryFirst)
     assert.match((await mw('/5/seoul/?src=ad-seoul-m-film-2137'))[2], /^hh_g=m; /);   // 옛 광고 주소로 지나가도 쿠키 심음
   } finally { Date.now = o; }
+});
+
+
+test('9기 전환 PR: 광고와 바이오는 즉시 9기, 8기 직접 폼은 마감까지 유지', async () => {
+  const original = Date.now; Date.now = () => Date.parse('2026-10-29T16:48:00+09:00');
+  try {
+    for (const [src, gender] of [['ad-seoul-m-exhibitexam-2137', 'm'], ['ad-seoul-f-movie72-2137', 'f'], ['ad-seoul-f-ieum-2137', 'f']]) {
+      assert.equal((await go('/seoul/student/', '?src=' + src)).loc, '/9/seoul/cvr/?src=' + src + '&g=' + gender);
+    }
+    assert.equal((await go('/seoul/student/', '?src=h-seoul-insta-bio')).loc, '/9/seoul/cvr/?src=h-seoul-insta-bio');
+    const { onRequest } = await import('../functions/_middleware.js');
+    const response = await onRequest({ request: new Request('https://join.haruharu.co.kr/8/seoul/'), env: {}, next: async () => new Response('8기') });
+    assert.equal(response.status, 200);
+    assert.equal(formStatus('/8/seoul/', Date.now()).open, true);
+  } finally { Date.now = original; }
 });

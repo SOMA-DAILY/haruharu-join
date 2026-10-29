@@ -85,6 +85,20 @@ test('zero closes immediately, null removes the limit, existing counts are prese
   await f.set(null, null); assert.equal((await f.submit()).status, 200);
   assert.equal(f.sql.prepare('SELECT COUNT(*) n FROM submissions').get().n, 3);
 });
+
+test('male phone-only rejoin shares capacity and can select the other cohort at the same discount', async () => {
+  const f=fixture();await f.set(0,null);
+  const path='/8/seoul/rejoin/men/';
+  const blocked=await f.submit('남성',{path,fields:{phone:'01000000001',name:'이번 송금자'}});
+  assert.equal(blocked.status,409);assert.equal((await blocked.json()).error,'cohort_full');
+  assert.equal(f.sql.prepare('SELECT COUNT(*) n FROM submissions').get().n,0);
+  const next=await f.submit('남성',{path,fields:{phone:'01000000001',name:'이번 송금자',cohort_pick:'9',buddy_room:'같은 방',buddy:'01000000002'}});
+  assert.equal(next.status,200);
+  const saved=f.sql.prepare('SELECT cohort,path,plan,gender,name,buddy,buddy_room FROM submissions').get();
+  assert.equal(saved.cohort,'9');assert.equal(saved.path,'/9/seoul/rejoin/men/');
+  assert.equal(saved.plan,'discount');assert.equal(saved.gender,'남성');
+  assert.equal(saved.name,'이번 송금자');assert.equal(saved.buddy,'01000000002');assert.equal(saved.buddy_room,'같은 방');
+});
 test('only pending/payment-confirmed applications count and public responses omit counts and limits', async () => {
   const f = fixture(); await f.set(20, 20);
   for (const status of ['', '송금확인', '송금확인 안됨', '확정', '취소', '연락함', '보류']) { await f.submit(); f.sql.prepare('UPDATE submissions SET status = ? WHERE application_id = (SELECT application_id FROM submissions ORDER BY rowid DESC LIMIT 1)').run(status); }

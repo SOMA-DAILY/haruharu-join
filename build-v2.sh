@@ -50,7 +50,7 @@ def survey_html(f):
     for k in [k for sec in SV['SECTIONS'] for k in sec['keys']]:
         if f.get('wishOnly') and k != 'sv_wish': continue
         q = SV['Q'][k]; assert q['type'] == 'text', f'{k} 주관식만 찍음'
-        optional = bool(f.get('wishOnly')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
+        optional = bool(f.get('wishOnly') or (f.get('wishOptional') and k == 'sv_wish')); mark = '<span class="sv-hint"> (선택)</span>' if optional else '<span class="req">*</span>'
         minimum = 1 if optional else q.get('min', 1)
         required = '' if optional else ' required'
         placeholder = '' if optional else f' placeholder="{E(q["placeholder"])}"'
@@ -301,7 +301,8 @@ def gen(path, f):
     info = dict(INFO.get(cohort, {}), **({'period': f['period']} if f.get('period') else {}))   # 트랙별 일정이 따로 있으면 그걸로 (직장인 10월 중순)
     target_ko = f['cityKo'] + (' 직장인' if work else ' 대학생')
     region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 랜딩 표기: 서울 트랙은 수도권 (10/7)
-    comeback = bool(f.get('comeback')); cohort_end = False   # 자정 마감 할인: 폼 자체 마감(deadline)이 기수 마감보다 이름
+    direct_rejoin = bool(f.get('directRejoin'))
+    comeback = bool(f.get('comeback')) or direct_rejoin; cohort_end = False   # 같은 짧은 한 페이지 화면을 재사용
     deadline_iso = None if f.get('noDeadline') else (f.get('deadline') or DL.get(cohort)); deadline_ms = ms(deadline_iso) if deadline_iso else '9e15'
     deadline_ko = f.get('deadlineKo') or DLKO.get(cohort, '')
     # 일정 문구
@@ -330,6 +331,8 @@ def gen(path, f):
                    else '성별, 출생년도, 전화번호, 학교, 신청자 확인용 이름, 함께 신청한 친구의 전화번호')
         if phone_only: consent = '전화번호, 신청자 확인용 이름, 함께 신청한 친구의 전화번호'
         if survey: done_body = ('다시 함께해 주셔서 고마워요!<br>방이 열리면 초대 코드를 문자로 보내드려요.' if f.get('wishOnly') else '후기 남겨 주셔서 고마워요. 다음 방 구성과 진행에 반영할게요.<br>방이 열리면 초대 코드를 문자로 보내드려요.')
+    if f.get('rejoin') and f.get('buddyOnly') and not survey:
+        fee_note = f'참가비는 {fee}원이에요. 입금 확인 후 참가가 확정됩니다.' if f.get('phonePaymentOnly') else f'기존 남성 참가자 재참여 할인가 {fee}원이에요. 후기 작성 없이 신청할 수 있어요. 입금 확인 후 참가가 확정됩니다.'
     nxt = next_path(f)
     next_link = (f'<p style="margin-top:14px"><a class="btn" href="{nxt}?src=h{CUR}-{f.get("track","")}-from{cohort}" style="display:inline-flex">{CUR}기 신청하러 가기 →</a></p>' if nxt else '')
     p1 = f'P1_{f["city"]}_work_4gi.png' if work else (f'P1_{f["city"]}_4gi.png' if NEWGEN(cohort) else f'P1_{f["city"]}_3gi.png')   # 4기부터 실적 220명/매칭률 34% 판(10/6). 3기 이미지는 그대로
@@ -365,6 +368,12 @@ def gen(path, f):
         assert reg, f'{path} 할인이 끝난 뒤 안내할 정가 폼이 없음'
         cohort_end = (f.get('deadline') and DL.get(cohort) and ms(f['deadline']) >= ms(DL[cohort])) or cohort != CUR   # 할인 마감 = 기수 마감이면 정가 폼도 닫혀 있으니 기수 마감 안내 그대로. 다음 기수가 열렸으면(10/14) 기수 마감 안내 + 다음 기수 버튼
         next_link = next_link if cohort_end else f'<p style="margin-top:14px"><a class="btn" href="{reg}?src=h{cohort}-{f.get("track","")}-comeback-closed" style="display:inline-flex">{cohort}기 신청하러 가기 →</a></p>'
+    if direct_rejoin:
+        cohort_end = True   # 할인 자체에는 마감이 없다. 실제 신청 기수의 마감만 유지.
+        rows_a = [('참여 대상', f'{area} 00~07년생 남성 대학생'), ('진행 기간', info.get('period', '추후 안내')),
+                  ('이번 기수 신청 마감', deadline_ko), ('참가비', f'재참여 할인 <s>{f["wasFee"]:,}원</s> → {fee}원'),
+                  ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
+        next_link = '<p style="margin-top:14px"><a class="btn" href="/rejoin/seoul/men/?g=m" style="display:inline-flex">모집 중인 기수 확인하기 →</a></p>'
     t = TPL
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
@@ -376,10 +385,22 @@ def gen(path, f):
     if comeback:
         og = '<meta property="og:title" content="하루하루 소개팅 __COHORT__기 신청폼 💕">'
         assert t.count(og) == 1, f'{path} 미리보기 제목 자리를 못 찾음'
-        t = t.replace(og, f'<meta property="og:title" content="아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원">', 1)
+        title = f'하루하루 남성 재참여 신청 {fee}원' if direct_rejoin else f'아직 고민 중이라면? {f.get("untilKo", "오늘 자정")}까지 {fee}원'
+        t = t.replace(og, f'<meta property="og:title" content="{title}">', 1)
     # 랜딩판(10/7 Figma F1): 옛 머리말 + P1~P4 + 소개 문단 자리를 통째로 교체
     if f.get('landing'):
         t = re.sub(r'<!--TOP_START-->.*?<!--TOP_END-->', lambda m: (V3_STYLE + COMEBACK if comeback else LANDING_V4 if f.get('landingV4') else LANDING_V3 if f.get('landingV3') else LANDING), t, flags=re.S)
+        if comeback and f.get('rejoin'):
+            t = t.replace('<p class="ld-eye">아직 고민 중이라면?</p>', f'<p class="ld-eye">서울 {cohort}기 남성 재참여 할인</p>', 1)
+        if direct_rejoin:
+            t = t.replace('body{padding-top:38px}', 'body{padding-top:0}', 1)
+            t = re.sub(r'<div class="cb-bar" id="cbBar".*?</div>\n', '', t, count=1, flags=re.S)
+            t = re.sub(r'<div class="cb-clock" id="cbClock".*?</div></div>\n', '', t, count=1, flags=re.S)
+            t = t.replace('<span class="ld-live"><i></i>__DEADLINE_KO__ 마감</span>', '<span class="ld-live"><i></i>기존 참가자 전용</span>')
+            t = t.replace('__CB_UNTIL__까지만<br>', '재참여 할인가로<br>')
+            t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '' if f.get('phonePaymentOnly') else '<p class="cb-left">후기 작성 없이, 기존 참가자는 8,000원에 신청하실 수 있어요.</p>')
+            t, timer_removed = re.subn(r' var end=DEADLINE, off=0, done=false;.*?(?= var cta=document.querySelector)', '', t, count=1, flags=re.S)
+            assert timer_removed == 1, f'{path} 상시 재참여에서 타이머를 못 뺌'
         # leftKo가 빈 문자열이면 시계 아래 안내 줄을 숨김. 타이머가 참조하는 요소는 유지한다.
         if comeback and f.get('leftKo') == '':
             t = t.replace('<p class="cb-left" id="cbLeft">__CB_LEFT__</p>', '<p class="cb-left" id="cbLeft" hidden></p>', 1)
@@ -457,9 +478,15 @@ def gen(path, f):
         for question in ('source', 'intent') + (('device',) if f.get('noDevice') and not phone_only else ()) + (('gender', 'birth_year', 'device') if phone_only else ()):
             t, removed = re.subn(r'<div class="q" data-name="' + question + r'">.*?</div>\n\n', '', t, count=1, flags=re.S)
             assert removed == 1, f'{path} 재참여에서 뺄 문항을 못 찾음: {question}'
+    if f.get('fixedGender') and not phone_only:
+        assert f['fixedGender'] == '남성', f'{path} 지원하지 않는 고정 성별'
+        female = '<label class="opt"><span class="k">A</span><input type="radio" name="gender" value="여성" required>여성</label>'
+        male = '<label class="opt"><span class="k">B</span><input type="radio" name="gender" value="남성">남성</label>'
+        assert t.count(female) == 1 and t.count(male) == 1, f'{path} 성별 문항을 못 찾음'
+        t = t.replace(female, '', 1).replace(male, '<label class="opt on"><span class="k">A</span><input type="radio" name="gender" value="남성" required checked>남성</label>', 1)
     if phone_only:
         # 랜딩의 신청 버튼과 여백 기준을 첫 문항(전화번호, 설문 폼은 첫 설문 문항)으로
-        assert t.count('.q[data-name="gender"]') == 2, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+        assert t.count('.q[data-name="gender"]') == (3 if direct_rejoin else 2), f'{path} 랜딩 신청 버튼 기준을 못 찾음'
         t = t.replace('.q[data-name="gender"]', '.q[data-name="sv_join"]' if f.get('wishOnly') else '.q[data-name="sv_review"]' if survey else '.q[data-name="phone"]')
     if plan == 'early':
         # 3기 사전알림 할인판: 유입경로 문항 없음, 송금 버튼은 /early-offer.js 가 켬
@@ -495,7 +522,7 @@ def gen(path, f):
                '- 이용 항목 : 전화번호\n- 보유 : 동의일로부터 6개월, 언제든 수신 거부할 수 있어요.\n- 동의하지 않아도 신청할 수 있어요.</p>\n'
                ' <p class="err">필수 항목에 동의가 필요해요</p></div>\n')
     if f.get('landing'):   # 랜딩의 측정/이동 고리 (아래 고정 버튼, LandingEngaged 기준 요소) + 성별 판 사진
-        for need in (('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"',) if survey else ('data-cta="sticky"', 'data-engage')):
+        for need in (('data-cta="hero"',) if direct_rejoin else ('id="cbClock"', 'id="cbBar"', 'data-cta="hero"') if comeback else ('data-cta="sticky"',) if survey else ('data-cta="sticky"', 'data-engage')):
             assert need in t, f'{path} 랜딩 필수 요소 없음: {need}'
         if not prealert and f.get('twoPage'):   # 랜딩 3판(10/12): 템플릿의 2페이지(전화, 동의, 참가비) 그대로. 동의 전엔 임시 저장에 연락처를 안 넣는 것은 3페이지판과 같게
             pf = "function partial(beacon){ if(submitted) return; post('/partial',{sid:sid,path:location.pathname,page:curPage,last_field:lastField,fields:data(),"
@@ -700,7 +727,8 @@ def gen(path, f):
     if f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
         # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
         #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
-        g_open = '<div class="q" data-name="gender">'
+        qname = 'phone' if phone_only else 'gender'
+        g_open = '<div class="q" data-name="' + qname + '">'
         assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
         rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
         assert len(rows) >= 2 and any(g['cohort'] == cohort for _, g in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
@@ -711,12 +739,27 @@ def gen(path, f):
                     f' data-path="{p}" data-period="{per}" data-dl="{dko}" data-ps="{pk_short(per)}" data-ds="{pk_short(dko)}">'
                     f'<span class="pk-top"><span class="pk-k" aria-hidden="true"></span><b class="pk-no">{c}기</b><span class="pk-badge">모집 중</span></span>'
                     f'<span class="pk-chips"><span class="pk-chip p">🗓️ {pk_short(per)}</span><span class="pk-chip d">⏰ {pk_short(dko)} 신청 마감</span></span></button>')
-        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
+        only_gender = ' data-gender="m"' if f.get('fixedGender') == '남성' else ''
+        t = t.replace(g_open, f'<div class="pk" id="pick" role="radiogroup" aria-label="참여할 기수" data-own="{cohort}"{only_gender}><p class="pk-t">참여할 기수</p>\n<input type="hidden" name="cohort_pick" value="">\n'
                       + '\n'.join(pk_card(p, g) for p, g in rows) + '\n</div>\n\n' + g_open, 1)
         # 아래 고정 신청 버튼은 카드 구역이 보이면 숨김 (기준이 성별 문항이던 것을 카드 구역으로)
-        tgt = "function target(){ return document.querySelector('.q[data-name=\"gender\"]'); }"
-        assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
-        t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"gender\"]'); }", 1)
+        tgt = "function target(){ return document.querySelector('.q[data-name=\"" + qname + "\"]'); }"
+        if not direct_rejoin:
+            assert t.count(tgt) == 1, f'{path} 랜딩 신청 버튼 기준을 못 찾음'
+            t = t.replace(tgt, "function target(){ return document.getElementById('pick')||document.querySelector('.q[data-name=\"" + qname + "\"]'); }", 1)
+        if direct_rejoin:
+            t = t.replace("var q=document.querySelector('.q[data-name=\"phone\"]');", "var q=document.getElementById('pick')||document.querySelector('.q[data-name=\"phone\"]');", 1)
+            # 다른 기수 선택 후 원래 페이지 기수의 시간 마감만으로 전체 폼을 닫지 않는다.
+            close_check = 'function checkClosed(){ if(Date.now()+clockOffset>=deadline) closeForm(); }'
+            assert t.count(close_check) == 1
+            t = t.replace(close_check, "function checkClosed(){ var cards=document.querySelectorAll('#pick .pk-c'); if(cards.length && ![].some.call(cards,function(c){return Date.now()+clockOffset<Number(c.getAttribute('data-deadline'));})) closeForm(); }", 1)
+            t = t.replace("if(s && s.open===false && s.reason!=='capacity') closeForm(); else checkClosed();", 'checkClosed();', 1)
+            old_closed = "if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; closeForm(); throw new Error('cohort_closed'); }"
+            assert t.count(old_closed) == 1
+            t = t.replace(old_closed, "if(res.error==='cohort_closed'){ submitted=false; form.dataset.submitting='false'; saveDraft(); document.dispatchEvent(new Event('hh-capacity-change')); btn.disabled=false; btn.textContent='송금 후 신청 완료'; checkClosed(); alert('선택한 기수의 신청이 마감됐어요. 다른 기수를 확인해 주세요.'); throw new Error('cohort_pick_closed'); }", 1)
+            catch_hook = ".catch(function(err){ if(err.message==='cohort_closed')"
+            assert t.count(catch_hook) == 1
+            t = t.replace(catch_hook, ".catch(function(err){ if(err.message==='cohort_pick_closed') return; if(err.message==='cohort_closed')", 1)
         foot = '<p class="foot">'; assert t.count(foot) == 1
         t = t.replace(foot, PICK_TAIL + foot, 1)
     checked_text = t.replace('받은 질문 · 1', '')
@@ -853,6 +896,15 @@ def gen(path, f):
         # 이야기판 신청 안내의 참가비 칸은 성별과 상관없이 남녀 금액을 다 적음 (10/23 사용자: 기존 폼처럼 명시). 3페이지 참가비 안내와 송금은 고른 성별 금액 그대로
         t, nfee = re.subn(r'<dt>참가비</dt><dd><bdi data-price="full">[^<]*</bdi>원', f'<dt>참가비</dt><dd>남성 {f["maleFee"]:,}원 / 여성 {f["fee"]:,}원', t)
         assert nfee == 2, f'{path} 신청 안내 참가비 칸 {nfee}곳'
+    if f.get('phonePaymentOnly'):
+        t = t.replace('<head>', '<head>\n<script>window.HH_G="m";</script>', 1)
+        # 기본 정보는 지난 신청에서 복원. 이번 송금자명과 혼자/친구 신청·방 희망은 직접 받는다.
+        t = t.replace('placeholder="실명을 입력해 주세요"', 'placeholder="송금자명을 입력해 주세요"', 1)
+        t = re.sub(r'<p class="rj-privacy">.*?</p>', '<p class="rj-privacy">신청 확인과 방 배정, 입금 확인을 위해 전화번호·송금자명·이전 신청 정보를 이용해요. 친구와 함께 신청하면 친구 전화번호도 이용해요. 기수 종료 6개월 뒤 파기합니다.</p>', t, count=1, flags=re.S)
+        t = t.replace('id="submit">제출하기</button>', 'id="submit">송금 후 신청 완료</button>')
+        t = t.replace("btn.textContent='제출하기'", "btn.textContent='송금 후 신청 완료'")
+        assert all(not re.search(r'<input\b[^>]*name="' + k + '"', t) for k in ('gender', 'birth_year', 'school', 'device', 'consent')), f'{path} 기본 정보 입력이 남음'
+        assert re.search(r'<input\b[^>]*name="name"[^>]*required', t) and 'name="buddy_room" value="혼자"' in t and 'name="buddy"' in t, f'{path} 송금자명·친구 문항이 빠짐'
     open(outdir + 'index.html', 'w', encoding='utf-8').write(t)
     print('built', path, cohort, plan, fee, len(t))
 
