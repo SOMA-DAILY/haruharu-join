@@ -8,7 +8,7 @@ import { onRequest } from '../functions/api/[[path]].js';
 
 const PATH = '/8/seoul/rejoin/men/';
 const END = Date.parse(COHORT_DEADLINES['8']);
-const FIELDS = { phone: '01000000001' };
+const FIELDS = { phone: '01000000001', name: '이번 송금자' };
 async function submit(fields = {}, now = END - 1, path = PATH, priorRows = []) {
   const old = Date.now, writes = [];
   Date.now = () => now;
@@ -24,7 +24,7 @@ async function submit(fields = {}, now = END - 1, path = PATH, priorRows = []) {
   } finally { Date.now = old; }
 }
 
-test('male rejoin route has fixed 8000 fee with phone and payment only', () => {
+test('male rejoin route has fixed 8000 fee with remitter name and friend choice', () => {
   const f = formOf(PATH);
   assert.equal(f.cohort, '8'); assert.equal(f.fixedGender, '남성');
   assert.equal(feeLabel(f), '재참여 8,000원');
@@ -59,16 +59,27 @@ test('cohort choice uses the matching discounted route, preserves source and acc
   const bad=await submit({cohort_pick:'7'});assert.equal(bad.res.status,400);assert.equal(bad.writes.length,0);
 });
 
-test('unrequested friend fields never add a discount; actual previous gender is verified', async () => {
+test('friend choice is saved without an additional discount; actual previous gender is verified', async () => {
   const friend = await submit({ buddy_room: '같은 방', buddy: '01000000002' });
   assert.equal(friend.res.status, 200); assert.equal(friend.rec.friend_fee, undefined);
-  assert.equal(friend.rec.fields.buddy, undefined);
+  assert.equal(friend.rec.fields.buddy, '01000000002');
+  assert.equal(friend.rec.fields.buddy_room, '같은 방');
+  const alone = await submit({ buddy_room:'혼자',buddy:'01000000002' });
+  assert.equal(alone.rec.fields.buddy_room,'혼자');assert.equal(alone.rec.fields.buddy,undefined);
+  for(const room of ['같은 방','다른 방','상관없음']){
+    const valid=await submit({buddy_room:room,buddy:'010-0000-0002'});
+    assert.equal(valid.res.status,200);assert.equal(valid.rec.fields.buddy_room,room);assert.equal(valid.rec.fields.buddy,'01000000002');
+    for(const buddy of ['','invalid',FIELDS.phone]){
+      const invalid=await submit({buddy_room:room,buddy});
+      assert.equal(invalid.res.status,400);assert.ok((await invalid.res.json()).miss.includes('buddy'));assert.equal(invalid.writes.length,0);
+    }
+  }
   const bad = await submit({}, END - 1, PATH, [{application_id:'prior-f',gender:'여성',name:'이전 신청'}]);
   assert.equal(bad.res.status, 400); assert.equal((await bad.res.json()).error, 'gender_not_allowed');
   assert.equal(bad.writes.length, 0);
 });
 
-test('only a valid phone is required; previous profile and remitter name are restored server-side', async () => {
+test('valid phone and current remitter name are required; only previous profile is restored', async () => {
   for (const phone of ['', 'abc', '010123', '8.21012345678E+11']) {
     const result = await submit({ phone });
     assert.equal(result.res.status, 400, phone);
@@ -76,9 +87,13 @@ test('only a valid phone is required; previous profile and remitter name are res
     assert.equal(result.writes.length, 0);
   }
   const previous=[{application_id:'previous',name:'지난 송금자',gender:'남성',birth_year:'2003',school:'이전 대학',device:'Android'}];
-  const result=await submit({name:'untrusted',birth_year:'2099',school:'untrusted'},END-1,PATH,previous);
+  for(const path of [PATH,'/9/seoul/rejoin/men/'])for(const name of ['', '   ']){
+    const missing=await submit({name},END-1,path,previous);
+    assert.equal(missing.res.status,400);assert.ok((await missing.res.json()).miss.includes('name'));assert.equal(missing.writes.length,0);
+  }
+  const result=await submit({name:' 이번 송금자 ',birth_year:'2099',school:'untrusted'},END-1,PATH,previous);
   assert.equal(result.res.status,200);
-  assert.equal(result.rec.fields.name,'지난 송금자');
+  assert.equal(result.rec.fields.name,'이번 송금자');
   assert.equal(result.rec.fields.birth_year,'2003');assert.equal(result.rec.fields.school,'이전 대학');
   assert.equal(result.rec.fields.device,'iPhone');assert.equal(result.rec.prior_from,'previous');
 });
@@ -105,19 +120,25 @@ test('permanent discount link moves from cohort8 to9 without an expiring discoun
   assert.equal(formOf('/9/seoul/rejoin/men/').fee, 8000);
 });
 
-test('built page contains phone and payment only without the removed sentence or other questions', () => {
+test('built page keeps remitter name and friend choice without review or demographic questions', () => {
   const html = readFileSync(new URL('../public' + PATH + 'index.html', import.meta.url), 'utf8');
   assert.match(html, /10월 30일\(금\) ~ 11월 1일\(일\)/);
   assert.match(html, /재참여 할인가로/);
   assert.doesNotMatch(html, /오늘 오후 6시까지만|id="cbBar"|id="cbClock"|할인이 끝났어요/);
   assert.match(html, /<input type="tel" name="phone"/);
-  for(const key of ['gender','birth_year','school','device','name','buddy','buddy_room','consent'])
+  assert.match(html,/<input type="text" name="name"[^>]*required/);
+  assert.match(html,/name="buddy_room" value="혼자"/);
+  assert.match(html,/name="buddy_room" value="같은 방"/);
+  assert.match(html,/name="buddy_room" value="다른 방"/);
+  assert.match(html,/name="buddy_room" value="상관없음"/);
+  assert.match(html,/name="buddy"/);
+  for(const key of ['gender','birth_year','school','device','consent'])
     assert.doesNotMatch(html,new RegExp('<input[^>]*name="'+key+'"'));
   assert.match(html,/id="pick"[^>]*data-gender="m"/);
   assert.match(html,/name="cohort_pick"/);
   assert.match(html,/data-path="\/8\/seoul\/rejoin\/men\/"/);
   assert.match(html,/data-path="\/9\/seoul\/rejoin\/men\/"/);
-  assert.doesNotMatch(html, /후기 작성 없이|송금 후 송금자 이름을 적어|name="sv_|후기를 남겨|7기 참가자 전용|친구도.*8,000원/);
+  assert.doesNotMatch(html, /후기 작성 없이|name="sv_|후기를 남겨|7기 참가자 전용|친구도.*8,000원/);
   assert.match(html,/송금 후 신청 완료/);
   assert.match(html, /<s>10,000원<\/s> <b>8,000원<\/b>/);
   assert.match(html, /id="pay" href="https:\/\/haruharu-pay\.pages\.dev\/mr\/"/);
