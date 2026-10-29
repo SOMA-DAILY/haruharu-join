@@ -29,11 +29,11 @@ def ms(iso): return str(int(datetime.fromisoformat(iso).timestamp()*1000))
 
 def next_path(f):
     if f['cohort']==CUR: return None
-    for p,g in FORMS.items():
-        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular': return p
-    # 기존판이 없는 기수(6기~ 개선판만)는 고정 링크가 가리키는 폼으로 (10/14)
+    # 고정 링크가 가리키는 폼(entry)이 먼저 (10/28: 9기는 기존판 /9/seoul/ 과 CVR 개선판이 같이 있어 entry 가 있는 CVR 로). shared/forms.mjs nextFormPath 와 같은 규칙
     for p,g in ALL_FORMS.items():
         if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular' and g.get('entry'): return p
+    for p,g in FORMS.items():
+        if g['cohort']==CUR and g.get('track')==f.get('track') and g['plan']=='regular': return p
     return '/'
 
 # 트랙별 문구
@@ -153,7 +153,8 @@ listed.sort(key=lambda x: x[1].get('plan') == 'prealert')   # 학생 먼저, 직
 def btn(p, f):   # 10/6: 직장인 사전알림도 선택 화면에. 금액 표기 없음
     if f.get('plan') == 'prealert':
         return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 직장인 사전 알림</b><span>사전 알림 신청하면 참가비 할인 혜택</span></span><span class="ar">→</span></a>'
-    return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{f["cityKo"]} 대학생 소개팅 신청</b><span>{f["cityKo"]} 대학생</span></span><span class="ar">→</span></a>'
+    region = '수도권' if f['city'] == 'seoul' else f['cityKo']   # 서울 트랙 표기는 수도권 (10/7 랜딩과 같음, 10/28 사용자 "서울->수도권")
+    return f' <a class="b" href="{p}" data-city="{f["city"]}"><span class="t"><b>{region} 대학생 소개팅 신청</b><span>{region} 대학생</span></span><span class="ar">→</span></a>'
 btns = '\n'.join(btn(p, f) for p, f in listed)
 sel = (sel.replace('__MP__', MP).replace('__COHORT__', CUR).replace('__DEADLINE_MS__', (ms(DL[CUR]) if DL.get(CUR) else '9e15')).replace('__DEADLINE_KO__', DLKO[CUR]).replace('__BUTTONS__', btns))
 left = re.findall(r'__[A-Z0-9_]+__', sel); assert not left, 'select placeholder 남음: ' + str(left)

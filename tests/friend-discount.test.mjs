@@ -71,7 +71,7 @@ test('개선판은 새 주소 세 곳이고 이름은 기존 이름 뒤에 - 개
   // 5기부터는 개선판(B) 하나로 감 (10/10) → 지역 선택 버튼은 5기 개선판, 4기 개선판은 여전히 안 나옴
   const select = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.equal(select.includes('/4/seoul/v2/'), false, '지역 선택 화면');
-  assert.ok(select.includes('href="/8/seoul/"') && !select.includes('href="/7/') && !select.includes('href="/6/') && !select.includes('href="/5/'), '8기 버튼 (10/22: 8기 서울만, 광주 없음)');
+  assert.ok(select.includes('href="/9/seoul/cvr/"') && !select.includes('href="/8/') && !select.includes('href="/7/') && !select.includes('href="/6/') && !select.includes('href="/5/'), '9기 CVR 버튼 (10/28: 9기 수도권 학생만, 광주 없음)');
 });
 
 test('기존 4기 폼에는 개선판 요소가 하나도 없다 (2페이지 구성 그대로)', () => {
