@@ -398,6 +398,8 @@ npx wrangler pages dev public            # http://localhost:8788, KV/D1 은 로�
 
 ## 남성 재참여 전용 폼 (2026-10-28)
 
+- 8기 후기(2026-11-03): 여성 `/rejoin/8/seoul/`, 남성 `/rejoin/8/seoul/men/`. 후기 필수, 바라는 점 선택, 후기만은 익명이며 마감 후에도 접수한다. 9기 재신청은 각각 `/9/seoul/rejoin/from-8/`(5,900원), `/9/seoul/rejoin/from-8-men/`(8,000원)으로 저장하고 친구 동반 추가 할인은 없다. 후기 출처는 서버가 8기로 고정한다. 테스트 `tests/cohort8-review.test.mjs`.
+
 - `/rejoin/seoul/returning-men/`은 7기 남성용 후기 폼이다. 7기 후기(필수 10자 이상), 바라는 점(선택)을 입력하고 후기만 익명 제출하거나 8기·9기를 선택해 재참여한다. 재참여할 때만 전화번호, 친구 방 요청, 송금자 이름을 받는다. 링크 추적은 `src=msg-seoul-returning-m&g=m`.
 - `RETURNING_MEN` 등록부의 정가 10,000원 → 재참여 8,000원 고정이다. 친구 방 요청으로 추가 할인하지 않는다. 송금은 `haruharu-pay`의 재참여 전용 `/mr/`.
 - 접수는 선택한 `/8/seoul/rejoin/returning-men/` 또는 `/9/seoul/rejoin/returning-men/` 경로로 저장하고 방문 출처는 `from_page`에 유지한다. 후기 출처는 서버가 7기로 고정한다. 기수별 마감·정원 검사는 기존 공통 처리를 따른다. 후기만 제출은 참가비·연락처 없이 별도 후기 접수로 저장하며 모집 마감 뒤에도 가능하다.

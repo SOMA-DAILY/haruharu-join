@@ -40,6 +40,9 @@ const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900,
 const REVIEW6 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, phoneOnly: true, survey: true, noPage: true, buddyOnly: true, reviewCohort: '6' };
 // 7기 참가자 전용: 같은 화면/고정 참가비를 재사용하되 후기 출처는 7기, 재신청은 8/9기로 분리한다.
 const REVIEW7 = { ...REVIEW6, reviewCohort: '7' };
+// 8기 후기와 9기 재신청: 후기만 익명 접수 가능, 바라는 점은 선택. 성별별 고정 재참여 요금.
+const REVIEW8 = { ...REVIEW6, reviewCohort: '8', wishOptional: true, fixedGender: '여성' };
+const REVIEW8_MEN = { ...REVIEW8, fixedGender: '남성', fee: 8000, wasFee: 10000, pay: PAY + '/mr/' };
 const RETURNING_WISH = { ...REVIEW6, reviewCohort: null, wishOnly: true };
 // 남성 재참여 전용(10/28): 8/9기 정가 10,000원에서 2,000원 할인. 친구 동반 시에도 8,000원 고정.
 const RETURNING_MEN = { ...REVIEW7, fee: 8000, wasFee: 10000, pay: PAY + '/mr/', wishOptional: true };
@@ -147,6 +150,12 @@ export const FORMS = {
                               joins: { '8기': '/8/seoul/rejoin/from-7/', '9기': '/9/seoul/rejoin/from-7/', '후기만': '/rejoin/7/seoul/' } },
   '/8/seoul/rejoin/from-7/': { ...S8, ...REVIEW7, rejoin: true, label: '7기 참가자 8기 재신청 (후기 폼)' },
   '/9/seoul/rejoin/from-7/': { ...S9, ...REVIEW7, rejoin: true, label: '7기 참가자 9기 재신청 (후기 폼)' },
+  '/rejoin/8/seoul/':       { ...S8, cohort: 'review', ...REVIEW8, noPage: false, label: '8기 여성 후기 및 9기 재참여', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
+                              joins: { '9기': '/9/seoul/rejoin/from-8/', '후기만': '/rejoin/8/seoul/' } },
+  '/9/seoul/rejoin/from-8/': { ...S9, ...REVIEW8, rejoin: true, label: '8기 여성 참가자 9기 재신청 (5,900원)' },
+  '/rejoin/8/seoul/men/':   { ...S8, cohort: 'review', ...REVIEW8_MEN, noPage: false, label: '8기 남성 후기 및 9기 재참여', noDeadline: true, landing: true, variant: 'v2', landingV3: true, noSource: true,
+                              joins: { '9기': '/9/seoul/rejoin/from-8-men/', '후기만': '/rejoin/8/seoul/men/' } },
+  '/9/seoul/rejoin/from-8-men/': { ...S9, ...REVIEW8_MEN, rejoin: true, label: '8기 남성 참가자 9기 재신청 (8,000원)' },
   '/rejoin/seoul/returning/': { ...S8, cohort: 'review', ...RETURNING_WISH, noPage: false, noDeadline: true,
                               label: '기존 참가자 8/9기 재참여', landing: true, variant: 'v2', landingV3: true, noSource: true, joinRequired: true,
                               joins: { '8기': '/8/seoul/rejoin/returning/', '9기': '/9/seoul/rejoin/returning/' } },
