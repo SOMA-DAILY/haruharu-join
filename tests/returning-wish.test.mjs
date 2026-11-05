@@ -107,7 +107,7 @@ test('재참여 모집 폼의 선택 입력에는 예시가 없고 기존 후기
 
 test('재참여 모집은 승인된 담백한 문구와 신청 버튼을 표시', () => {
   const html = readFileSync(new URL('../public' + PAGE + 'index.html', import.meta.url), 'utf8');
-  assert.match(html, /<h1 class="sv-h1">서울 8·9기 재참여 신청<\/h1>/);
+  assert.match(html, /<h1 class="sv-h1">서울 9기 재참여 신청<\/h1>/);
   assert.match(html, /기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다\./);
   assert.match(html, /참여할 일정을 선택해 주세요\./);
   assert.match(html, /id="submit">재참여 신청하기<\/button>/);

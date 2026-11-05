@@ -18,7 +18,7 @@ fs.mkdirSync(out, { recursive: true });
         await context.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
         const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
         await page.goto(origin + path);
-        await page.getByRole('heading', { name: '서울 8·9기 재참여 신청' }).waitFor();
+        await page.getByRole('heading', { name: '서울 9기 재참여 신청' }).waitFor();
         assert.equal(await page.locator('[name=sv_wish]').getAttribute('placeholder'), null);
         assert.match(await page.locator('.sv-lead').innerText(), /기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다\./);
         assert.equal(await page.locator('#submit').innerText(), '참여할 일정을 선택해 주세요.');
