@@ -44,7 +44,8 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-22T18:00:00+09:00'), undefined, g), '/8/seoul/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/9/seoul/cvr/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T18:00:00+09:00'), undefined, g), '/9/seoul/cvr/', g);   // 10/28: 9기 메인은 CVR 개선판
-    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/9/seoul/cvr/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T17:59:59+09:00'), undefined, g), '/9/seoul/cvr/', g);
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/10/seoul/pre/', g);   // 9기 마감 뒤 고정 링크는 10기 사전알림
   }
 });
 
@@ -110,4 +111,16 @@ test('9기 전환 PR: 광고와 바이오는 즉시 9기, 8기 직접 폼은 마
     assert.equal(response.status, 200);
     assert.equal(formStatus('/8/seoul/', Date.now()).open, true);
   } finally { Date.now = original; }
+});
+
+test('10기 사전알림 (11/5): 9기 마감 뒤 고정 링크와 마감된 서울 학생 정가 폼은 /10/seoul/pre/, 직장인/광주/재참여는 그대로', async () => {
+  const { onRequest } = await import('../functions/_middleware.js');
+  const o = Date.now; Date.now = () => Date.parse('2026-11-05T18:30:00+09:00');
+  const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
+  try {
+    assert.equal((await go('/seoul/student/', '?src=bio-seoul-student')).loc, '/10/seoul/pre/?src=bio-seoul-student');
+    assert.deepEqual(await hit('/9/seoul/cvr/?src=ad-seoul-f-ieum-2137'), [302, '/10/seoul/pre/?src=ad-seoul-f-ieum-2137&g=f']);
+    assert.deepEqual(await hit('/8/seoul/?src=x'), [302, '/10/seoul/pre/?src=x']);
+    for (const u of ['/4/seoul-work/', '/5/gwangju/', '/9/seoul/rejoin/men/', '/10/seoul/pre/']) assert.equal((await hit(u))[0], 200, u);
+  } finally { Date.now = o; }
 });
