@@ -684,11 +684,12 @@ def gen(path, f):
                 t = t.replace('지난 기수, 어땠어요?', title).replace('지난 참가자 전용', f'{f["reviewCohort"]}기 참가자 전용')
                 t = t.replace('하루하루 지난 기수 후기', f'하루하루 {f["reviewCohort"]}기 후기').replace('지난 기수 어땠어요? 후기를 들려주세요', title + ' 후기를 들려주세요')
             if f.get('wishOnly'):
-                t = t.replace('지난 기수, 어땠어요?', '서울 8·9기 재참여 신청')
+                wish_title = f.get('pageTitle', '서울 8·9기 재참여 신청')
+                t = t.replace('지난 기수, 어땠어요?', wish_title)
                 t = t.replace('남겨 주신 이야기는 다음 방 구성과 진행에 반영할게요.', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
                 t = t.replace('지난 참가자 전용', '기존 참가자 전용')
-                t = t.replace('하루하루 지난 기수 후기 💌', '서울 8·9기 재참여 신청 | 하루하루')
-                t = t.replace('지난 기수 어땠어요? 후기를 들려주세요 💌', '서울 8·9기 재참여 신청')
+                t = t.replace('하루하루 지난 기수 후기 💌', wish_title + ' | 하루하루')
+                t = t.replace('지난 기수 어땠어요? 후기를 들려주세요 💌', wish_title)
                 t = t.replace('후기를 남겨 주세요. 다음 기수에 다시 참여하면 2,000원 할인돼요', '기존 참가자는 2,000원 할인된 5,900원으로 신청하실 수 있습니다.')
                 t = t.replace('id="submit">제출하기</button>', 'id="submit">재참여 신청하기</button>')
                 t = t.replace("btn.textContent='제출하기'", "btn.textContent='재참여 신청하기'")
@@ -765,7 +766,7 @@ def gen(path, f):
     checked_text = t.replace('받은 질문 · 1', '')
     if f.get('wishOnly'):
         # 사용자 확정 제목의 가운데점만 허용하고 다른 금지 문자 검사는 유지.
-        checked_text = checked_text.replace('서울 8·9기 재참여 신청', '')
+        checked_text = checked_text.replace(f.get('pageTitle', '서울 8·9기 재참여 신청'), '')
     bad = [c for c in BAD if c in checked_text]
     assert not bad, f'{path} 금지 문자: {bad}'
     for img in re.findall(r'src="/img/([^"]+)"', t):
