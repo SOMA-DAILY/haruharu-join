@@ -34,6 +34,7 @@ const S6 = { ...S3, cohort: '6' };
 const S7 = { ...S3, cohort: '7', closedFor: ['m'] }; // 10/22 운영자: 남성 7기 접수 종료, 8기만 신청
 const S8 = { ...S3, cohort: '8' };
 const S9 = { ...S3, cohort: '9' };
+const S10 = { ...S3, cohort: '10' };
 // 재참여 후기 폼(10/17~)의 기수 줄 공통값: 후기 할인 5,900(줄 긋는 값 7,900), 친구랑 3,900(/k/). 화면은 /rejoin/seoul/ 한 장(아래)
 const REJOIN_SV = { plan: 'discount', fee: 5900, pay: PAY + '/b/', wasFee: 7900, friendFee: 3900, friendPay: PAY + '/k/', phoneOnly: true, survey: true, noPage: true };
 // 6기 참가자 전용 후기: 재신청 5,900원 고정, 친구 동반/방 배정 문항만 받음(추가 할인 없음). 후기 기수와 신청 기수는 별도.
@@ -132,6 +133,9 @@ export const FORMS = {
   // CVR 개선판 (10/28 사용자: 주소 /8/seoul/story/ → 9기 /9/seoul/cvr/. "story 말고 cvr 개선 같은 이름", 광고 연결은 광고 책임자가 함).
   //   값과 화면은 위 이야기판 설명 그대로(landingV4). 10/28 사용자: 9기 메인 폼 → 고정 링크(entry), 지역 선택(listed), 기수 카드(pick) 전부 이 줄. 광고/바이오 URL 은 안 바꾸고 고정 링크 302 목적지만 바뀜 (메타 학습 유지). 50/50 없음
   '/9/seoul/cvr/':          { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 - CVR 개선판', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pick: true },
+  // ---- 10기 사전알림 (무료). 고정 링크 /seoul/student/ (바이오, 광고)는 9기 마감 뒤 여기로.
+  //   4기 직장인 사전알림 개선판과 같은 구성(랜딩 v2 + 2페이지, 송금/친구/기기 없음). 마감 없음. 10기 정가 폼을 열 때 이 줄의 entry 를 그 폼으로 옮김
+  '/10/seoul/pre/':         { ...S10, plan: 'prealert', fee: 0, pay: '', label: '10기 서울 학생 사전알림 (무료)', landing: true, variant: 'v2', landingV3: true, landingV4: true, noRecord: true, noSource: true, noDevice: true, period: '추후 안내', noDeadline: true, entry: '/seoul/student/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
   //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),

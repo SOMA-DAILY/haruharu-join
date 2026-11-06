@@ -42,7 +42,7 @@ test('재참여 후기 폼: 한 장(/rejoin/seoul/)에서 6기/7기/후기만, �
   for (const key of ['period', 'deadline', 'deadlineKo']) assert.equal(formOf(J7)[key], undefined, key + '는 기수 공통 설정을 따름');
   assert.ok(![PAGE, J6, J7].some((p) => listedForms().some((x) => x.path === p)));
   // 친구는 고정 링크가 가리키는 정가 폼에서 친구 할인 5,900원
-  assert.ok(Object.values(FORMS).filter((f) => f.entry === page.friendForm).every((f) => f.friendFee === 5900));
+  assert.ok(Object.values(FORMS).filter((f) => f.entry === page.friendForm && f.plan !== 'prealert').every((f) => f.friendFee === 5900));
   // 6기 마감(오늘 18:00) 뒤에도 페이지와 7기는 열려 있음
   const after = Date.parse('2026-10-18T18:30:00+09:00');
   assert.equal(formStatus(J6, after).open, false); assert.equal(formStatus(J7, after).open, true); assert.equal(formStatus(PAGE, after).open, true);

@@ -294,7 +294,7 @@ def gen(path, f):
         assert f.get('buddyOnly') or (f.get('friendFee') and f.get('friendForm')), f'{path} 친구 할인 폼 설정 없음'
     lastp = '1' if (phone_only or one_page) else ('2' if f.get('twoPage') else '3')      # 참가비 페이지 번호 (전화번호만 받는 폼은 한 페이지, 랜딩 3판은 2페이지)
     # 친구가 내는 금액: 친구는 정가 폼(고정 링크 friendForm 이 가리키는 폼들)에서 친구 할인으로 신청
-    pals = {g.get('friendFee') for g in FORMS.values() if g.get('entry') == f.get('friendForm')} if survey and not f.get('buddyOnly') else set()
+    pals = {g.get('friendFee') for g in FORMS.values() if g.get('entry') == f.get('friendForm') and g.get('plan') != 'prealert'} if survey and not f.get('buddyOnly') else set()
     pal_fee = next(iter(pals), None) if survey else None
     if survey and not f.get('buddyOnly'): assert pals == {f['fee']}, f'{path} 친구가 받는 할인 금액이 이 폼 금액과 다름: {pals}'
     fee = f"{f['fee']:,}"
@@ -316,7 +316,7 @@ def gen(path, f):
         fee_note = '사전 알림은 무료예요. 일정이 확정되면 문자로 할인 신청 링크를 보내드려요.'
         flow = '1. 이 폼을 작성하고 제출해요.\n2. 일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.\n3. 참가비 송금 후 신청하면 방이 열릴 때 초대 코드를 받아요.'
         done_title, done_body = '사전 알림이 접수됐어요 💌', '일정이 확정되면 문자로 안내와 할인 신청 링크를 보내드려요.'
-        consent = '성별, 출생연도, 전화번호, 하시는 일'
+        consent = '성별, 출생연도, 전화번호, 하시는 일' if work else '성별, 출생년도, 전화번호, 학교'   # 학생 사전알림(10기, 11/5)은 학교
     else:
         fee_note = (f'{deadline_ko}까지 신청하면 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if comeback
                     else f'할인된 참가비는 {fee}원이에요. 송금까지 마쳐야 신청이 완료돼요.' if survey
@@ -359,6 +359,8 @@ def gen(path, f):
     short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
     rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 기간', info.get('period', '추후 안내')), ('신청 마감', deadline_ko + '<small>참가 확정 문자는 마감일까지 보내드려요</small>'),
               ('참가비', f'{fee}원<small>인원이 안 맞아 방이 안 열리면 <b>전액 환불</b></small>'), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5<small>신청이 많으면 <b>먼저 신청한 순서대로</b> 구성해요</small>')]
+    if prealert and f.get('landingV4'):   # 10기 사전알림: 9기 이야기판 기반, 참가비/마감 칸 없음
+        rows_a = [('참여 대상', f'{area} 00~07년생 대학생'), ('진행 일정', info.get('period', '추후 안내')), ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
     # B 팔 1페이지는 A 와 같게 (10/21 사용자): 변수는 송금 페이지(결제 구역)만. B 전용 랜딩/안내 카드는 안 씀
     if comeback:
         confirm_by = re.sub(r'\s*\d+:\d+$', '', DLKO.get(cohort, ''))   # 참가 확정 문자는 기수 마감일까지
@@ -497,8 +499,9 @@ def gen(path, f):
     if prealert:
         # 무료 사전알림: 참가비 블록 + 친구 블록 제거, 기기 문항도 제거
         t = re.sub(r'<!--PAY_START-->.*?<!--PAY_END-->', '', t, flags=re.S)
-        start = t.index('<div class="q" data-name="device">'); end = t.index('<div class="q" data-name="intent">', start)
-        t = t[:start] + t[end:]
+        if '<div class="q" data-name="device">' in t:   # noDevice/noSource 폼(10기 사전알림, 11/5)은 위에서 이미 빠짐
+            start = t.index('<div class="q" data-name="device">'); end = t.index('<div class="q" data-name="intent">', start)
+            t = t[:start] + t[end:]
         t = t.replace('<script src="/early-offer.js"></script>', '')
     else:
         t = t.replace('<!--PAY_START-->', '').replace('<!--PAY_END-->', '')
@@ -796,6 +799,15 @@ def gen(path, f):
             arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
             assert arm_line, f'{path} ARM 줄을 못 찾음'
             t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if f.get('landingV4') and prealert:
+        for x, y, n in ((f'{cohort}기 모집 중</span>', f'{cohort}기 사전 알림</span>', 1),
+                        ('data-cta="hero">신청하기<svg', 'data-cta="hero">사전 알림 신청하기<svg', 1),
+                        ('data-cta="sticky">신청하기<svg', 'data-cta="sticky">사전 알림 신청하기<svg', 1),
+                        ('<i data-n="300">300</i>', '<i data-n="350">350</i>', 1)):   # 누적 350명+
+            assert t.count(x) == n, f'{path} 사전알림 글자 자리를 못 찾음: {x}'
+            t = t.replace(x, y)
+        t, n = re.subn(r'<div class="ld-pp-fr ld-fx">.*?</div></div>\n', '', t, count=1, flags=re.S)   # 무료라 친구 할인 줄 없음
+        assert n == 1, f'{path} 친구 할인 줄을 못 찾음'
     if f.get('landingV4') and f.get('phonePage') and not survey and not phone_only and not prealert:
         # 이야기판 폼 (10/23 사용자: 붙여 준 폼 UX 분석 적용). 1) 전화번호 칸에 받는 까닭과 공개 범위, 2) 동의는 핵심 한 줄 + [자세히 보기] 로 접은 전문,
         #   3) 페이지마다 '2/3 연락처 확인' 식 단계 표시와 '다음: 참가비 확인' 버튼, 4) 전화번호/이름/출생년도 자동완성, 5) 출생년도/전화번호는 칸을 떠날 때 바로 오류 표시
