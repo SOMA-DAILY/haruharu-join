@@ -53,7 +53,9 @@ const MEN_REJOIN = { plan: 'discount', fee: 8000, pay: PAY + '/mr/', wasFee: 100
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
 
-const STUDENT_REGULAR_V4 = { plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true };
+const STUDENT_V4 = { ...FEE_DISPLAY, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true };
+const REGULAR_STUDENT = { plan: 'regular', fee: 7900, pay: PAY + '/j/', ...FRIEND, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', listed: true, entry: '/seoul/student/' };
+const S10_FORM = { ...S10, ...STUDENT_V4, singleCohort: true, participantCount: 400 };
 
 export const FORMS = {
   // ---- 3기 (마감됨. 링크는 살아 있고 마감 안내 + 4기 폼 버튼) ----
@@ -135,10 +137,10 @@ export const FORMS = {
   '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 (기존판)', feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', pickFrom: '/seoul/student/' },
   // CVR 개선판 (10/28 사용자: 주소 /8/seoul/story/ → 9기 /9/seoul/cvr/. "story 말고 cvr 개선 같은 이름", 광고 연결은 광고 책임자가 함).
   //   값과 화면은 위 이야기판 설명 그대로(landingV4). 10/28 사용자: 9기 메인 폼 → 고정 링크(entry), 지역 선택(listed), 기수 카드(pick) 전부 이 줄. 광고/바이오 URL 은 안 바꾸고 고정 링크 302 목적지만 바뀜 (메타 학습 유지). 50/50 없음
-  '/9/seoul/cvr/':          { ...S9, ...STUDENT_REGULAR_V4, label: '9기 서울 학생 - CVR 개선판', pick: true },
-  '/10/seoul/':             { ...S10, ...STUDENT_REGULAR_V4, label: '10기 서울 학생', singleCohort: true, participantCount: 400 },
-  '/10/seoul/pre-offer/':   { ...S10, plan: 'discount', fee: 5900, pay: PAY + '/b/', maleFee: 8000, malePay: PAY + '/mf/',
-                              label: '10기 서울 학생 사전알림 할인', variant: 'v2', prealertDiscount: true, noSource: true, noDevice: true },
+  '/9/seoul/cvr/':          { ...S9, ...STUDENT_V4, ...REGULAR_STUDENT, label: '9기 서울 학생 - CVR 개선판', pick: true },
+  '/10/seoul/':             { ...S10_FORM, ...REGULAR_STUDENT, label: '10기 서울 학생' },
+  '/10/seoul/pre-offer/':   { ...S10_FORM, plan: 'discount', fee: 5900, pay: PAY + '/b/', maleFee: 8000, malePay: PAY + '/mf/',
+                              label: '10기 서울 학생 사전알림 할인', prealertDiscount: true },
   // 기존 사전알림은 별도 요금제로 보존하고 직접 방문만 정식 신청으로 연결한다.
   '/10/seoul/pre/':         { ...S10, plan: 'prealert', fee: 0, pay: '', label: '10기 서울 학생 사전알림 (무료)', landing: true, variant: 'v2', landingV3: true, landingV4: true, noRecord: true, noSource: true, noDevice: true, period: '추후 안내', deadline: '2026-11-20T00:00:00+09:00', redirectTo: '/10/seoul/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
