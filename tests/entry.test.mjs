@@ -9,7 +9,8 @@ async function go(entry, qs = '') {
   return { status: res.status, loc: res.headers.get('location') || '' };
 }
 
-test('고정 링크: 서울/광주 학생은 지금 기수 개선판으로, 쿼리 그대로 + 광고 성별', async () => {
+test('고정 링크: 서울/광주 학생은 지금 기수 개선판으로, 쿼리 그대로 + 광고 성별', async (t) => {
+  t.mock.method(Date, 'now', () => Date.parse('2026-10-16T12:00:00+09:00'));
   const s = await go('/seoul/student/', '?src=h5-stu-f-ieum&fbclid=abc');
   assert.equal(s.status, 302);
   assert.match(s.loc, /^\/6\/seoul\/\?/);   // 10/14: 6기로 넘김
@@ -45,7 +46,7 @@ test('다음 기수를 미리 올려도 앞 기수 마감 전까진 앞 기수, 
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T17:59:59+09:00'), undefined, g), '/9/seoul/cvr/', g);
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-10-29T18:00:00+09:00'), undefined, g), '/9/seoul/cvr/', g);   // 10/28: 9기 메인은 CVR 개선판
     assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T17:59:59+09:00'), undefined, g), '/9/seoul/cvr/', g);
-    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/10/seoul/pre/', g);   // 9기 마감 뒤 고정 링크는 10기 사전알림
+    assert.equal(entryTarget('/seoul/student/', Date.parse('2026-11-05T18:00:00+09:00'), undefined, g), '/10/seoul/', g);
   }
 });
 
@@ -59,7 +60,7 @@ test('고정 링크: 6기 마감 전 남자 광고(src 의 m 또는 g=m)는 7기
     const { onRequest } = await import('../functions/_middleware.js');
     const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
     assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-m-film-2137'), [302, '/8/seoul/?src=ad-seoul-m-film-2137&g=m']);   // 옛 기수 남자 광고 주소: 10/18 시점엔 entryFirst 'm' 8기가 열려 있어 8기
-    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/9/seoul/cvr/?src=ad-seoul-f-film-1360&g=f']);   // 지금 기수 9기 CVR (8기 마감 뒤 병합)
+    assert.deepEqual(await hit('/5/seoul/?src=ad-seoul-f-film-1360'), [302, '/10/seoul/?src=ad-seoul-f-film-1360&g=f']);   // 현재 모집 기수
     assert.equal((await hit('/6/seoul/?g=m'))[0], 200);   // 열린 6기 폼에 직접 온 건 그대로
   } finally { Date.now = o; }
 });
@@ -70,9 +71,9 @@ test('마감된 앞 기수 정가 폼은 지금 기수(6기) 서울 폼으로 30
   const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
   try {
     assert.deepEqual(await hit('/4/seoul/?src=h4t-stu-m-bike'), [302, '/8/seoul/?src=h4t-stu-m-bike&g=m']);   // 10/22: 남자는 열린 8기(entryFirst) 먼저
-    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/9/seoul/cvr/?src=h4t-stu-f-ieum&g=f']);   // 지금 기수 9기 CVR
+    assert.deepEqual(await hit('/4/seoul/v2/?src=h4t-stu-f-ieum'), [302, '/10/seoul/?src=h4t-stu-f-ieum&g=f']);   // 현재 모집 기수
     assert.equal((await hit('/4/gwangju/'))[0], 200);
-    assert.deepEqual(await hit('/seoul/'), [302, '/9/seoul/cvr/']);
+    assert.deepEqual(await hit('/seoul/'), [302, '/10/seoul/']);
     assert.equal((await hit('/4/seoul/x7q2/'))[0], 200);
     assert.equal((await hit('/4/seoul/rejoin/'))[0], 200);
     assert.equal((await hit('/4/seoul-work/pre/'))[0], 200);
@@ -113,14 +114,17 @@ test('9기 전환 PR: 광고와 바이오는 즉시 9기, 8기 직접 폼은 마
   } finally { Date.now = original; }
 });
 
-test('10기 사전알림 (11/5): 9기 마감 뒤 고정 링크와 마감된 서울 학생 정가 폼은 /10/seoul/pre/, 직장인/광주/재참여는 그대로', async () => {
+test('10기 정식 신청: 인스타와 사전알림 직접 링크, 지난 기수 링크는 10기 신청폼, 직장인/광주/재참여는 그대로', async () => {
   const { onRequest } = await import('../functions/_middleware.js');
-  const o = Date.now; Date.now = () => Date.parse('2026-11-05T18:30:00+09:00');
+  const o = Date.now; Date.now = () => Date.parse('2026-11-20T18:30:00+09:00');
   const hit = async (u) => { const r = await onRequest({ request: new Request('https://join.haruharu.co.kr' + u), env: {}, next: async () => new Response('page') }); return [r.status, r.headers.get('location')]; };
   try {
-    assert.equal((await go('/seoul/student/', '?src=bio-seoul-student')).loc, '/10/seoul/pre/?src=bio-seoul-student');
-    assert.deepEqual(await hit('/9/seoul/cvr/?src=ad-seoul-f-ieum-2137'), [302, '/10/seoul/pre/?src=ad-seoul-f-ieum-2137&g=f']);
-    assert.deepEqual(await hit('/8/seoul/?src=x'), [302, '/10/seoul/pre/?src=x']);
-    for (const u of ['/4/seoul-work/', '/5/gwangju/', '/9/seoul/rejoin/men/', '/10/seoul/pre/']) assert.equal((await hit(u))[0], 200, u);
+    assert.equal((await go('/seoul/student/', '?src=bio-seoul-student')).loc, '/10/seoul/?src=bio-seoul-student');
+    assert.deepEqual(await hit('/9/seoul/cvr/?src=ad-seoul-f-ieum-2137'), [302, '/10/seoul/?src=ad-seoul-f-ieum-2137&g=f']);
+    assert.deepEqual(await hit('/8/seoul/?src=x'), [302, '/10/seoul/?src=x']);
+    assert.deepEqual(await hit('/10/seoul/pre?src=ig&fbclid=abc&g=f'), [302, '/10/seoul/?src=ig&fbclid=abc&g=f']);
+    assert.deepEqual(await hit('/10/seoul/pre/'), [302, '/10/seoul/']);
+    assert.equal(formStatus('/10/seoul/pre/').open, false);
+    for (const u of ['/4/seoul-work/', '/5/gwangju/', '/9/seoul/rejoin/men/', '/10/seoul/']) assert.equal((await hit(u))[0], 200, u);
   } finally { Date.now = o; }
 });

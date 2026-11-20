@@ -6,7 +6,7 @@ import { FESTIVAL_DEADLINE } from '../shared/jnu-festival.mjs';
 
 const deadline = Date.parse(COHORT_DEADLINE);
 const fields = Object.fromEntries(['gender', 'birth_year', 'school', 'source', 'device', 'phone', 'consent', 'name'].map((k) => [k, 'test']));
-const submit = (env, body) => onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify(body) }), params: { path: ['submit'] }, env });
+const submit = (env, body) => onRequest({ request: new Request('http://localhost/api/submit', { method: 'POST', body: JSON.stringify(body) }), params: { path: ['submit'] }, env, waitUntil() {} });
 async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { return await fn(); } finally { Date.now = o; } }
 
 test('3기 deadline is 2026-10-06 00:00 KST and env COHORT_DEADLINE overrides it', () => {
@@ -52,4 +52,23 @@ test('festival form keeps its own (earlier) deadline: still festival_closed, not
   assert.equal(res.status, 409);
   assert.equal((await res.json()).error, 'festival_closed');
   assert.ok(Date.parse(FESTIVAL_DEADLINE) < deadline);
+});
+
+test('10기 정식 신청은 마감 직전까지 별도로 저장하고 기존 사전알림 제출과 마감 후 신청을 거절한다', async () => {
+  const close = Date.parse('2026-11-22T18:00:00+09:00');
+  const writes = [];
+  const env = { APPLY_KV: { put: async (k, v) => writes.push([k, v]) } };
+  const body = { path: '/10/seoul/', fields: { ...fields, gender: '여성' } };
+  const accepted = await at(close - 1, () => submit(env, body));
+  assert.equal(accepted.status, 200);
+  const record = JSON.parse(writes.find(([k]) => k.startsWith('s:'))[1]);
+  assert.equal(record.hidden.cohort, '10');
+  assert.equal(record.hidden.plan, 'regular');
+  const count = writes.length;
+  for (const [path, ts] of [['/10/seoul/', close], ['/10/seoul/pre/', close - 1]]) {
+    const res = await at(ts, () => submit(env, { ...body, path }));
+    assert.equal(res.status, 409);
+    assert.equal((await res.json()).error, 'cohort_closed');
+    assert.equal(writes.length, count);
+  }
 });

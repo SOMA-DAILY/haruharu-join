@@ -3,7 +3,7 @@
 // 경로 규칙 /{기수}/{트랙}/{요금제}/ (3기는 옛 경로 그대로 둠). 요금제(plan) 4값: regular 정가 / discount 할인(메시지로만 보냄) / prealert 무료 사전알림 / early(3기 전용, 시간 제한 할인)
 // 성별은 트랙이 아니라 문항. 세트는 광고에서 나뉨.
 
-export const CURRENT_COHORT = '9';   // 10/29 18:00 8기 마감 뒤 병합: 지역 선택, 마감된 8기 폼의 다음 기수 버튼과 302 를 9기 CVR 개선판으로. 9기 마감(11/5 18:00) 뒤엔 '10'
+export const CURRENT_COHORT = '10';
 
 // 기수 마감 (KST). 지나면 그 기수 폼 전부 + 지역 선택이 마감 안내로 바뀌고 /api/submit 도 409 cohort_closed 로 거부
 export const COHORT_DEADLINES = {
@@ -14,8 +14,9 @@ export const COHORT_DEADLINES = {
   '7': '2026-10-22T18:00:00+09:00', // 10/20 사용자: 7기 마감 10/22(목) 18:00 로 연장 (진행 10/23~25 그대로)
   '8': '2026-10-29T18:00:00+09:00', // 10/21 사용자: 진행 10/30(금)~11/1(일), 마감은 시작 전날 18:00
   '9': '2026-11-05T18:00:00+09:00', // 10/21 사용자: 진행 11/6(금)~11/8(일), 마감은 시작 전날 18:00
+  '10': '2026-11-22T18:00:00+09:00',
 };
-export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 22일(목) 18:00', '8': '10월 29일(목) 18:00', '9': '11월 5일(목) 18:00' };
+export const COHORT_DEADLINE_KO = { '3': '10월 5일(월)', '4': '10월 10일(토)', '5': '10월 14일(수) 18:00', '6': '10월 18일(일) 18:00', '7': '10월 22일(목) 18:00', '8': '10월 29일(목) 18:00', '9': '11월 5일(목) 18:00', '10': '11월 22일(일) 18:00' };
 
 const PAY = 'https://haruharu-pay.pages.dev';
 // 친구 할인 (10/8~, 개선판 정가 폼): 친구와 서로 번호를 적고 신청하면 둘 다 2,000원 할인. friendFee 는 할인된 금액, friendPay 는 그 금액의 송금 페이지(haruharu-pay /b/).
@@ -51,6 +52,8 @@ const RETURNING_MEN = { ...REVIEW7, fee: 8000, wasFee: 10000, pay: PAY + '/mr/',
 const MEN_REJOIN = { plan: 'discount', fee: 8000, pay: PAY + '/mr/', wasFee: 10000, feeFirst: true, landing: true, variant: 'v2', onePage: true, phoneOnly: true, phonePaymentOnly: true, directRejoin: true, pick: true, rejoin: true, buddyOnly: true, noSource: true, remind: true, fixedGender: '남성', closedFor: ['f'], entry: '/rejoin/seoul/men/' };
 const REJOIN5 = { plan: 'discount', fee: 5900, pay: PAY + '/b/', ...FEE_DISPLAY, landing: true, variant: 'v2', rejoin: true };
 const W4 = { cohort: '4', city: 'seoul', track: 'seoul-work', trackKo: '수도권 직장인', cityKo: '수도권', occupation: true };  // city 키는 seoul 유지, 표기만 수도권 (10/6)
+
+const STUDENT_REGULAR_V4 = { plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true };
 
 export const FORMS = {
   // ---- 3기 (마감됨. 링크는 살아 있고 마감 안내 + 4기 폼 버튼) ----
@@ -132,10 +135,10 @@ export const FORMS = {
   '/9/seoul/':              { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 (기존판)', feeFirst: true, landing: true, variant: 'v2', landingV3: true, phonePage: true, remind: true, noRecord: true, alert: '/alert/seoul/', pickFrom: '/seoul/student/' },
   // CVR 개선판 (10/28 사용자: 주소 /8/seoul/story/ → 9기 /9/seoul/cvr/. "story 말고 cvr 개선 같은 이름", 광고 연결은 광고 책임자가 함).
   //   값과 화면은 위 이야기판 설명 그대로(landingV4). 10/28 사용자: 9기 메인 폼 → 고정 링크(entry), 지역 선택(listed), 기수 카드(pick) 전부 이 줄. 광고/바이오 URL 은 안 바꾸고 고정 링크 302 목적지만 바뀜 (메타 학습 유지). 50/50 없음
-  '/9/seoul/cvr/':          { ...S9, plan: 'regular',  fee: 7900, pay: PAY + '/j/', ...FRIEND, ...FEE_DISPLAY, maleFee: 10000, malePay: PAY + '/m/', maleFriendFee: 8000, maleFriendPay: PAY + '/mf/', label: '9기 서울 학생 - CVR 개선판', listed: true, feeFirst: true, landing: true, variant: 'v2', landingV3: true, landingV4: true, phonePage: true, remind: true, noRecord: true, entry: '/seoul/student/', alert: '/alert/seoul/', noSource: true, noDevice: true, payV3: true, pick: true },
-  // ---- 10기 사전알림 (무료). 고정 링크 /seoul/student/ (바이오, 광고)는 9기 마감 뒤 여기로.
-  //   4기 직장인 사전알림 개선판과 같은 구성(랜딩 v2 + 2페이지, 송금/친구/기기 없음). 마감 없음. 10기 정가 폼을 열 때 이 줄의 entry 를 그 폼으로 옮김
-  '/10/seoul/pre/':         { ...S10, plan: 'prealert', fee: 0, pay: '', label: '10기 서울 학생 사전알림 (무료)', landing: true, variant: 'v2', landingV3: true, landingV4: true, noRecord: true, noSource: true, noDevice: true, period: '추후 안내', noDeadline: true, entry: '/seoul/student/' },
+  '/9/seoul/cvr/':          { ...S9, ...STUDENT_REGULAR_V4, label: '9기 서울 학생 - CVR 개선판', pick: true },
+  '/10/seoul/':             { ...S10, ...STUDENT_REGULAR_V4, label: '10기 서울 학생', singleCohort: true, participantCount: 350 },
+  // 기존 사전알림은 별도 요금제로 보존하고 직접 방문만 정식 신청으로 연결한다.
+  '/10/seoul/pre/':         { ...S10, plan: 'prealert', fee: 0, pay: '', label: '10기 서울 학생 사전알림 (무료)', landing: true, variant: 'v2', landingV3: true, landingV4: true, noRecord: true, noSource: true, noDevice: true, period: '추후 안내', deadline: '2026-11-20T00:00:00+09:00', redirectTo: '/10/seoul/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----
   // 한 장(/rejoin/seoul/)에서 지난 기수 후기와 다음 기수에 바라는 점(shared/rejoin-survey.mjs)을 받고 [6기 참여 / 7기 참여 / 이번엔 후기만] 중 고름(sv_join).
   //   서버가 고른 값(joins)으로 아래 기수 줄에 접수함. 후기만이면 이 줄(cohort 'review', 무료). 참여하면 후기 할인 7,900 → 5,900원(wasFee 는 줄 긋는 값),
@@ -188,6 +191,7 @@ export const COHORT_INFO = {
   '7': { period: '10월 23일(금) ~ 10월 25일(일), 3일', deadlineKo: '10월 22일(목) 18:00' },
   '8': { period: '10월 30일(금) ~ 11월 1일(일), 3일', deadlineKo: '10월 29일(목) 18:00' },
   '9': { period: '11월 6일(금) ~ 11월 8일(일), 3일', deadlineKo: '11월 5일(목) 18:00' },
+  '10': { period: '11월 23일(월) ~ 11월 25일(수), 3일', deadlineKo: COHORT_DEADLINE_KO['10'] },
 };
 
 export function normalizePath(p) {

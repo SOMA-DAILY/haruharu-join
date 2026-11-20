@@ -15,8 +15,13 @@ export async function onRequest(context) {
       location: '/rejoin/6/seoul/?' + q.toString(), 'cache-control': 'no-store',
     } });
   }
-  if (request.method !== 'GET') return context.next();
   const f = formOf(url.pathname);
+  if (f?.redirectTo && ['GET', 'HEAD'].includes(request.method)) {
+    return new Response(null, { status: 302, headers: {
+      location: f.redirectTo + url.search, 'cache-control': 'no-store',
+    } });
+  }
+  if (request.method !== 'GET') return context.next();
   if (!f || f.plan !== 'regular' || f.festival) return context.next();
   const q = new URLSearchParams(url.search);
   const m = /^(?:h\d+[a-z]*|ad)-[a-z0-9]+-(m|f)(?:-|$)/i.exec(q.get('src') || '');

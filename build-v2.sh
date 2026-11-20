@@ -728,14 +728,14 @@ def gen(path, f):
         assert t.count(mkt[0]) == 1 and t.count(foot) == 1, f'{path} 동의 문항 자리가 조립 중에 달라짐'
         t = t.replace(mkt[0], mkt[1], 1).replace(foot, AGREE_TAIL + foot, 1)
         assert t.count('type="checkbox" name="consent"') == 1 and t.count('type="checkbox" name="marketing"') == 1 and 'name="marketing" value="동의합니다" required' not in t
-    if f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
+    if f.get('singleCohort') or f.get('pick') or f.get('pickFrom'):   # pickFrom (10/23 이야기판): entry 없는 폼이 그 고정 링크의 pick 폼 카드를 빌려 씀. 자기 기수 카드가 골라진 채
         # 기수 고르기 (10/23 사용자): 신청 안내 바로 아래(성별 문항 앞)에 같은 고정 링크의 pick 폼 카드, 마감 이른 순. 지금 폼 기수가 골라진 채, 누르면 그 자리에서 골라짐.
         #   카드의 data-period/-dl(신청 안내 글자) data-ps/-ds(칩 글자)는 고른 기수에 맞춰 화면 글자를 바꿔 쓸 때 씀. 동작과 모양은 src/cohort-pick.html
         qname = 'phone' if phone_only else 'gender'
         g_open = '<div class="q" data-name="' + qname + '">'
         assert t.count(g_open) == 1, f'{path} 성별 문항을 못 찾음'
-        rows = sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
-        assert len(rows) >= 2 and any(g['cohort'] == cohort for _, g in rows), f'{path} pick 카드는 같은 고정 링크 폼 둘 이상'
+        rows = [(path, f)] if f.get('singleCohort') else sorted([(p, g) for p, g in FORMS.items() if g.get('pick') and g.get('entry') == (f.get('pickFrom') or f.get('entry'))], key=lambda x: int(ms(DL[x[1]['cohort']])))
+        assert any(g['cohort'] == cohort for _, g in rows), f'{path} 신청 기수 카드가 빠짐'
         pk_short = lambda x: re.sub(r'(\d+)월 (\d+)일\((.)\)', r'\1/\2(\3)', x).replace(', 3일', '')
         def pk_card(p, g):
             c = g['cohort']; on = (p == path) or (bool(f.get('pickFrom')) and c == cohort); per, dko = INFO[c]['period'], DLKO[c]
@@ -799,6 +799,9 @@ def gen(path, f):
             arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
             assert arm_line, f'{path} ARM 줄을 못 찾음'
             t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if f.get('participantCount'):
+        count = f['participantCount']
+        t = t.replace('<i data-n="300">300</i>', f'<i data-n="{count}">{count}</i>')
     if f.get('landingV4') and prealert:
         for x, y, n in ((f'{cohort}기 모집 중</span>', f'{cohort}기 사전 알림</span>', 1),
                         ('data-cta="hero">신청하기<svg', 'data-cta="hero">사전 알림 신청하기<svg', 1),
