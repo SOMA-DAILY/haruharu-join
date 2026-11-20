@@ -1,6 +1,6 @@
 import { earlyOffer } from '../../shared/early-offer.mjs';
 import { FESTIVAL_PLAN, AVOID_MAJOR_VALUES, isFestival, festivalStatus, decodeCapture, sniffImage, captureExpiration } from '../../shared/jnu-festival.mjs';
-import { cohortStatus, formOf, formStatus, pickTarget, CURRENT_COHORT } from '../../shared/forms.mjs';
+import { cohortStatus, formOf, formStatus, pickTarget, CURRENT_COHORT, FORMS } from '../../shared/forms.mjs';
 import { friendFee } from '../../shared/friend-discount.mjs';
 import { cleanSurvey, cleanOptionalWish } from '../../shared/rejoin-survey.mjs';
 import { genderCookie } from '../../shared/entry.mjs';
@@ -785,7 +785,7 @@ async function admin(sub, request, env, kv, url) {
     let rows;
     try { rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app, x.arm FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all(); }
     catch (e) { rows = await DB.prepare(`SELECT s.*, x.active_ms, x.device ua_device, x.in_app FROM submissions s LEFT JOIN sessions x ON x.application_id = s.application_id ORDER BY s.submitted_ts DESC`).all(); }
-    return json({ rows: rows.results, last_submit: Number(await kv.get('meta:last_submit')) || 0 });
+    return json({ rows: rows.results, forms: FORMS, last_submit: Number(await kv.get('meta:last_submit')) || 0 });
   }
   if (request.method === 'DELETE' && sub === '/applicants') {
     if (request.headers.get('origin') !== url.origin) return json({ error: 'forbidden' }, 403);
