@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { formOf, FORMS } from '../shared/forms.mjs';
+import { formOf, formStatus, entryTarget, FORMS } from '../shared/forms.mjs';
 import { feeFor, friendFee } from '../shared/friend-discount.mjs';
 import { onRequest } from '../functions/api/[[path]].js';
 
@@ -21,6 +21,23 @@ test('8~10기 일반 신청 남성 10,000 / 친구 8,000, 여성 및 재참여 �
   }
   assert.equal(feeFor(formOf('/7/seoul/'), '남성').fee, 7900);
   assert.equal(feeFor(formOf('/8/seoul/rejoin/from-6/'), '남성').fee, 5900);
+});
+
+test('10기 사전알림 할인은 전용 링크에서만 열리고 동반 여부와 상관없이 같은 할인 금액을 적용한다', () => {
+  const path = '/10/seoul/pre-offer/';
+  const offer = formOf(path);
+  const deadline = Date.parse('2026-11-22T18:00:00+09:00');
+  assert.equal(offer.plan, 'discount');
+  assert.ok(!offer.listed && !offer.entry);
+  assert.equal(formStatus(path, deadline - 1).open, true);
+  assert.equal(formStatus(path, deadline).open, false);
+  assert.equal(entryTarget('/seoul/student/', deadline - 1), '/10/seoul/');
+  for (const [gender, amount, pay] of [['여성', 5900, '/b/'], ['남성', 8000, '/mf/']]) {
+    const price = feeFor(offer, gender);
+    assert.equal(price.fee, amount);
+    assert.equal(new URL(price.pay).pathname, pay);
+    assert.equal(friendFee(offer, { ...buddy, gender }), 0);
+  }
 });
 
 test('서버는 링크/클라이언트 할인 금액이 아닌 선택 성별로 8,000/5,900을 저장', async () => {

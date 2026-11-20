@@ -137,6 +137,8 @@ export const FORMS = {
   //   값과 화면은 위 이야기판 설명 그대로(landingV4). 10/28 사용자: 9기 메인 폼 → 고정 링크(entry), 지역 선택(listed), 기수 카드(pick) 전부 이 줄. 광고/바이오 URL 은 안 바꾸고 고정 링크 302 목적지만 바뀜 (메타 학습 유지). 50/50 없음
   '/9/seoul/cvr/':          { ...S9, ...STUDENT_REGULAR_V4, label: '9기 서울 학생 - CVR 개선판', pick: true },
   '/10/seoul/':             { ...S10, ...STUDENT_REGULAR_V4, label: '10기 서울 학생', singleCohort: true, participantCount: 400 },
+  '/10/seoul/pre-offer/':   { ...S10, plan: 'discount', fee: 5900, pay: PAY + '/b/', maleFee: 8000, malePay: PAY + '/mf/',
+                              label: '10기 서울 학생 사전알림 할인', variant: 'v2', prealertDiscount: true, noSource: true, noDevice: true },
   // 기존 사전알림은 별도 요금제로 보존하고 직접 방문만 정식 신청으로 연결한다.
   '/10/seoul/pre/':         { ...S10, plan: 'prealert', fee: 0, pay: '', label: '10기 서울 학생 사전알림 (무료)', landing: true, variant: 'v2', landingV3: true, landingV4: true, noRecord: true, noSource: true, noDevice: true, period: '추후 안내', deadline: '2026-11-20T00:00:00+09:00', redirectTo: '/10/seoul/' },
   // ---- 재참여 후기 폼 (10/17~, 메시지로만 보냄. 재참여하지 않을 사람에게도 보냄) ----

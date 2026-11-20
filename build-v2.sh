@@ -377,6 +377,21 @@ def gen(path, f):
                   ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
         next_link = '<p style="margin-top:14px"><a class="btn" href="/rejoin/seoul/men/?g=m" style="display:inline-flex">모집 중인 기수 확인하기 →</a></p>'
     t = TPL
+    if f.get('prealertDiscount'):
+        title = f'하루하루 {cohort}기 사전알림 할인 신청'
+        notice = '사전알림 신청자는 일반 참가비에서 2,000원 할인돼요. 친구와 함께 신청해도 같은 금액이에요.'
+        header = (f'<h1>{title}</h1>\n<p class="sec">{notice}</p>\n'
+                  f'<p class="note">참가비 {fee}원<br>진행 기간 {info["period"]}<br>신청 마감 {deadline_ko}</p><hr>')
+        t = re.sub(r'<!--TOP_START-->.*?<!--INFO_END-->', lambda _: header, t, count=1, flags=re.S)
+        t = t.replace('하루하루 소개팅 __COHORT__기 신청폼 💕', title)
+        t = t.replace('지금까지 300명+ 참여 🎉', notice)
+        # 정식 폼과 동일하게 선택한 성별의 금액으로 토스를 열고, 직접 입금도 제공한다.
+        account = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t)[1]
+        pay_open = '<a class="pay" id="pay" href="__PAY_URL__" target="_blank" rel="noopener">▶ 토스로 __FEE__원 송금하기</a>'
+        assert t.count(pay_open) == 1
+        t = t.replace(pay_open, f'<a class="pay" id="pay" href="__PAY_URL__" data-acct-raw="{account.replace("-", "")}">토스로 <span class="fr-fee">__FEE__</span>원 송금하기</a>\n'
+                      f'<button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{account}"><span>입금 계좌 복사</span></button>')
+        t = t.replace('<p class="foot">', FOLD_TAIL + PAY_V3_TAIL + '<p class="foot">', 1)
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
         c0 = '<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>'
@@ -900,12 +915,15 @@ def gen(path, f):
     if f.get('maleFee'):
         # 화면 금액에만 표시를 달고 링크/실제 선택 성별로 갱신. 스크립트와 속성은 제외.
         chunks = re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]*>)', t, flags=re.S|re.I)
+        amounts = [('full', f['fee'], f['maleFee'])]
+        if f.get('friendFee'):
+            amounts.append(('friend', f['friendFee'], f['maleFriendFee']))
         for i in range(0, len(chunks), 2):
-            for key, amount, upper in [('full', f['fee'], f['maleFee']), ('friend', f['friendFee'], f['maleFriendFee'])]:
+            for key, amount, upper in amounts:
                 chunks[i] = re.sub(r'(?<![\d,])' + f'{amount:,}' + r'(?![\d,])', f'<bdi data-price="{key}">남성 {upper:,}원 / 여성 {amount:,}</bdi>', chunks[i])
         t = ''.join(chunks).replace('둘 다 <b><bdi data-price=', '1인 <b><bdi data-price=').replace('둘 다 <bdi data-price=', '1인 <bdi data-price=')
-        assert 'data-price="full"' in t and 'data-price="friend"' in t
-        prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay')})
+        assert all(f'data-price="{key}"' in t for key, _, _ in amounts)
+        prices = json.dumps({k:f[k] for k in ('fee','pay','friendFee','friendPay','maleFee','malePay','maleFriendFee','maleFriendPay') if k in f})
         tail = open('src/gender-fee.html',encoding='utf-8').read().replace('__GENDER_PRICES__',prices)
         t = t.replace('<p class="foot">', tail + '<p class="foot">', 1)
     if f.get('landingV4') and f.get('maleFee'):
