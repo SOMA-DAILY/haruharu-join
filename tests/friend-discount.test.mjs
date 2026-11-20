@@ -14,7 +14,7 @@ async function at(ms, fn) { const o = Date.now; Date.now = () => ms; try { retur
 
 test('친구 할인은 개선판 정가 폼에만 있고 금액은 정가보다 2,000원 낮다', () => {
   const on = Object.keys(FORMS).filter((p) => FORMS[p].friendFee && !FORMS[p].survey);   // 재참여 설문 폼(설문 할인 + 친구 할인)은 rejoin-survey.test.mjs 에서 따로
-  assert.deepEqual(on.sort(), ['/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/', '/6/seoul/', '/7/seoul/', '/8/seoul/', '/9/seoul/', '/9/seoul/cvr/']);
+  assert.deepEqual(on.sort(), ['/10/seoul/', '/4/gwangju/v2/', '/4/seoul/v2/', '/5/gwangju/', '/5/seoul/', '/6/seoul/', '/7/seoul/', '/8/seoul/', '/9/seoul/', '/9/seoul/cvr/']);
   for (const p of on) {
     assert.equal(FORMS[p].plan, 'regular', p);
     assert.equal(FORMS[p].fee - FORMS[p].friendFee, 2000, p);
@@ -71,7 +71,7 @@ test('개선판은 새 주소 세 곳이고 이름은 기존 이름 뒤에 - 개
   // 5기부터는 개선판(B) 하나로 감 (10/10) → 지역 선택 버튼은 5기 개선판, 4기 개선판은 여전히 안 나옴
   const select = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.equal(select.includes('/4/seoul/v2/'), false, '지역 선택 화면');
-  assert.ok(select.includes('href="/9/seoul/cvr/"') && !select.includes('href="/8/') && !select.includes('href="/7/') && !select.includes('href="/6/') && !select.includes('href="/5/'), '9기 CVR 버튼 (10/28: 9기 수도권 학생만, 광주 없음)');
+  assert.ok(select.includes('href="/10/seoul/"') && !select.includes('href="/9/') && !select.includes('href="/8/') && !select.includes('href="/7/') && !select.includes('href="/6/') && !select.includes('href="/5/'), '10기 서울 학생 신청 버튼');
 });
 
 test('기존 4기 폼에는 개선판 요소가 하나도 없다 (2페이지 구성 그대로)', () => {

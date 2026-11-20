@@ -7,8 +7,8 @@ import { feeFor, friendFee } from '../shared/friend-discount.mjs';
 import { onRequest } from '../functions/api/[[path]].js';
 
 const buddy = { phone: '01010000001', buddy: '01010000002', buddy_room: '같은 방' };
-test('8/9기 일반 신청만 남성 10,000 / 친구 8,000, 여성 및 재참여 요금 유지', () => {
-  for (const path of ['/8/seoul/', '/9/seoul/']) {
+test('8~10기 일반 신청 남성 10,000 / 친구 8,000, 여성 및 재참여 요금 유지', () => {
+  for (const path of ['/8/seoul/', '/9/seoul/', '/10/seoul/']) {
     const f = formOf(path);
     assert.equal(feeFor(f, '남성').fee, 10000);
     assert.equal(feeFor(f, '여성').fee, 7900);
@@ -25,7 +25,7 @@ test('8/9기 일반 신청만 남성 10,000 / 친구 8,000, 여성 및 재참여
 
 test('서버는 링크/클라이언트 할인 금액이 아닌 선택 성별로 8,000/5,900을 저장', async () => {
   const now=Date.now; Date.now=()=>Date.parse('2026-10-23T12:00:00+09:00');
-  try { for (const path of ['/8/seoul/', '/9/seoul/']) for (const gender of ['남성','여성']) {
+  try { for (const path of ['/8/seoul/', '/9/seoul/', '/10/seoul/']) for (const gender of ['남성','여성']) {
     const writes=[];
     const res=await onRequest({request:new Request('http://localhost/api/submit',{method:'POST',body:JSON.stringify({path,fields:{...buddy,gender,birth_year:'2003',school:'시험대',source:'인스타그램 광고',device:'아이폰',consent:'동의합니다',name:'가격검증'},hidden:{g:gender==='남성'?'f':'m',friend_fee:1},friend_fee:1})}), params:{path:['submit']},env:{APPLY_KV:{put:async(k,v)=>writes.push([k,v])}},waitUntil:()=>{}});
     assert.equal(res.status,200);
