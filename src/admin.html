@@ -416,9 +416,9 @@ function cohortKo(c){return c==='jnu-festival'?'전남대 축제':c==='alert'?'�
 function cohortList(){var out=[];Object.keys(REG.FORMS).forEach(function(p){var c=REG.FORMS[p].cohort;if(out.indexOf(c)<0)out.push(c)});return out.sort(function(a,b){var x=Number(a),y=Number(b);if(isNaN(x)&&isNaN(y))return 0;if(isNaN(x))return 1;if(isNaN(y))return -1;return y-x})}   // 최근 기수부터, 축제 같은 이벤트는 맨 뒤 (10/10)
 function trackList(c){var out=[];Object.keys(REG.FORMS).forEach(function(p){var f=REG.FORMS[p];if(f.cohort===c&&out.indexOf(f.track)<0)out.push(f.track)});return out}
 function inTab(r){if(cohortOf(r)!==S.cohort)return false;return !S.track||trackOf(r)===S.track}
-// 참가비 라벨: 등록부 요금제. 등록부에 없는 옛 행은 plan 으로
-function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular',fee=f?feeFor(f,r.gender).fee:(plan==='regular'?7900:4900);
-  if(cohortOf(r)==='review')return '후기만 (참가 안 함)';if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=fee.toLocaleString('ko-KR')+'원';if(f&&f.invite)return '친구 초대 '+won;if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
+// 참가비는 등록부에서 확인할 수 있는 금액만 표시한다.
+function feeOf(r){if(isFest(r))return '전남대 축제 4,900원';var f=regOf(r.path);var plan=r.plan||(f&&f.plan)||'regular';
+  if(cohortOf(r)==='review')return '후기만 (참가 안 함)';if(plan==='prealert')return cohortOf(r)==='alert'?'알림 신청 (무료)':'사전알림 (무료)';if(!f)return '참가비 확인 필요';var ff=friendPaid(r);if(ff>0)return '친구 할인 '+ff.toLocaleString('ko-KR')+'원';var won=feeFor(f,r.gender).fee.toLocaleString('ko-KR')+'원';if(f&&f.invite)return '친구 초대 '+won;if(f&&f.rejoin)return '재참여 '+won;return plan==='early'?'사전알림 '+won:plan==='discount'?'할인 '+won:'일반 '+won}
 // 전화번호만 받는 재참여 폼: 같은 번호의 지난 신청을 못 찾아 성별이 빈 사람 (번호가 바뀌었거나 처음 온 사람). 연락해서 확인
 // 재참여 설문 (10/17~, 등록부 survey 폼): 답은 D1 submissions.survey (JSON, migrations/0014). 문항 글자는 REG.SURVEY (shared/rejoin-survey.mjs)
 function svOf(r){if(!r.survey)return null;try{var o=JSON.parse(r.survey);return o&&typeof o==='object'&&!Array.isArray(o)?o:null}catch(e){return null}}
@@ -527,6 +527,7 @@ function fail(e){if(e.message!=='401'){setLive(false);console.error(e)}}
 function loadApps(manual){
   // 오늘 폼 지표(analytics)는 서버가 15분 캐시로 돌려줌 → 매번 받아도 D1 은 안 읽음. 신청자 목록은 캐시 없이 항상 최신
   return Promise.all([api('applicants'),api('analytics?from='+dayStart(0)),loadCapacities()]).then(function(r){
+    if(r[0].forms)REG.FORMS=r[0].forms;
     S.today=r[1];setApps(r[0].rows,manual);S.appsAt=S.loadedAt=Date.now();renderApps();setLive(true)}).catch(fail);
 }
 function loadStats(){

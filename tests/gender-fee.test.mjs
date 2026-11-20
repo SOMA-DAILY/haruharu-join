@@ -55,6 +55,10 @@ test('관리 화면은 성별 참가비와 실제 저장된 친구 할인 금액
   const start=html.indexOf('function regOf('), end=html.indexOf('// 사전알림 →',start);
   const ctx={REG:{FORMS},S:{apps:[]},isFest:()=>false,buddyOf:()=>null,esc:s=>s};
   vm.createContext(ctx); vm.runInContext(html.slice(start,end),ctx);
+  const offer = {path:'/10/seoul/pre-offer/',gender:'여성',plan:'discount'};
+  assert.equal(ctx.feeOf(offer),'할인 5,900원');
+  assert.equal(ctx.feeOf({...offer,gender:'남성'}),'할인 8,000원');
+  assert.equal(ctx.feeOf({...offer,path:'/unknown/'}),'참가비 확인 필요');
   assert.equal(ctx.feeOf({path:'/8/seoul/',gender:'남성',friend_fee:0}),'일반 10,000원');
   assert.equal(ctx.feeOf({path:'/9/seoul/',gender:'여성',friend_fee:0}),'일반 7,900원');
   assert.equal(ctx.feeOf({path:'/8/seoul/',gender:'남성',friend_fee:8000}),'친구 할인 8,000원');
