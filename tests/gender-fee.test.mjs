@@ -60,3 +60,14 @@ test('관리 화면은 성별 참가비와 실제 저장된 친구 할인 금액
   assert.equal(ctx.feeOf({path:'/8/seoul/',gender:'남성',friend_fee:8000}),'친구 할인 8,000원');
   assert.equal(ctx.feeOf({path:'/8/seoul/',gender:'남성',friend_fee:5900}),'친구 할인 5,900원');
 });
+
+test('10기 사전알림 할인폼은 정식 폼의 소개, 신청 단계, 모든 문항과 완료 화면을 사용한다', () => {
+  const page = (path) => readFileSync(new URL('../public/10/seoul/' + path + 'index.html', import.meta.url), 'utf8');
+  const regular = page('');
+  const offer = page('pre-offer/');
+  const controls = /\bdata-(?:sec|page|name|cta)="[^"]+"/g;
+  assert.deepEqual(offer.match(controls), regular.match(controls));
+  assert.ok(offer.includes('<i data-n="400">400</i>'));
+  assert.ok(offer.includes('남성 8,000원 / 여성 5,900원'));
+  assert.ok(!offer.includes('둘 다 2,000원 할인</span>'));
+});

@@ -220,7 +220,7 @@ html[data-mode="form"] .pk{margin-top:18px}
   var no='HH-'+String(d.getFullYear()).slice(2)+p2(d.getMonth()+1)+p2(d.getDate())+'-'+(id.replace(/-/g,'').slice(-4).toUpperCase()||'0000');
   var fee=document.querySelector('.fr-fee'), ac=document.getElementById('acctCopy'), room=val('buddy_room');
   var rows={dnNo:no,dnCo:(val('cohort_pick')||(typeof COHORT==='string'?COHORT:''))+'기',dnG:val('gender'),dnBy:val('birth_year')+'년생',dnSc:val('school'),dnPh:val('phone').replace(/\D/g,''),
-   dnAc:ac?'토스뱅크 '+ac.getAttribute('data-acct'):'',dnFee:(fee?fee.textContent:'')+'원'+(room&&room!=='혼자'?' (친구 할인)':''),dnNm:val('name')};
+   dnAc:ac?'토스뱅크 '+ac.getAttribute('data-acct'):'',dnFee:(fee?fee.textContent:'')+'원'+(room&&room!=='혼자'?'__BUDDY_FEE_SUFFIX__':''),dnNm:val('name')};
   for(var k in rows){ var e=document.getElementById(k); if(e) e.textContent=rows[k]; }
   card.hidden=false; }
  if(done&&card&&window.MutationObserver) new MutationObserver(function(){ if(done.classList.contains('on')) fill(); }).observe(done,{attributes:true,attributeFilter:['class']});
@@ -377,21 +377,7 @@ def gen(path, f):
                   ('그룹 구성', '남녀 성비 맞춰 3:3 ~ 5:5')]
         next_link = '<p style="margin-top:14px"><a class="btn" href="/rejoin/seoul/men/?g=m" style="display:inline-flex">모집 중인 기수 확인하기 →</a></p>'
     t = TPL
-    if f.get('prealertDiscount'):
-        title = f'하루하루 {cohort}기 사전알림 할인 신청'
-        notice = '사전알림 신청자는 일반 참가비에서 2,000원 할인돼요. 친구와 함께 신청해도 같은 금액이에요.'
-        header = (f'<h1>{title}</h1>\n<p class="sec">{notice}</p>\n'
-                  f'<p class="note">참가비 {fee}원<br>진행 기간 {info["period"]}<br>신청 마감 {deadline_ko}</p><hr>')
-        t = re.sub(r'<!--TOP_START-->.*?<!--INFO_END-->', lambda _: header, t, count=1, flags=re.S)
-        t = t.replace('하루하루 소개팅 __COHORT__기 신청폼 💕', title)
-        t = t.replace('지금까지 300명+ 참여 🎉', notice)
-        # 정식 폼과 동일하게 선택한 성별의 금액으로 토스를 열고, 직접 입금도 제공한다.
-        account = re.search(r'입금 계좌 : 토스뱅크 ([\d-]+)', t)[1]
-        pay_open = '<a class="pay" id="pay" href="__PAY_URL__" target="_blank" rel="noopener">▶ 토스로 __FEE__원 송금하기</a>'
-        assert t.count(pay_open) == 1
-        t = t.replace(pay_open, f'<a class="pay" id="pay" href="__PAY_URL__" data-acct-raw="{account.replace("-", "")}">토스로 <span class="fr-fee">__FEE__</span>원 송금하기</a>\n'
-                      f'<button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{account}"><span>입금 계좌 복사</span></button>')
-        t = t.replace('<p class="foot">', FOLD_TAIL + PAY_V3_TAIL + '<p class="foot">', 1)
+    prealert_discount = bool(f.get('prealertDiscount'))
     if comeback and not cohort_end:
         # 마감 안내: 기수가 아니라 이 할인만 끝난 것. 기수 신청은 정가 폼에서 계속 받음. 링크 미리보기 제목도 메시지에 맞춤
         c0 = '<h2>신청이 마감됐어요</h2><p>하루하루 소개팅 __COHORT__기 신청은 __DEADLINE_KO__에 마감됐어요.<br>'
@@ -618,7 +604,7 @@ def gen(path, f):
             block = buddy.group(0).replace('친구랑 함께 신청하셨나요?', '친구랑 함께 신청하나요?')
             block = block.replace('친구도 신청서에 내 번호를 적어야 반영돼요.', '친구도 같은 기수에 별도로 신청하고 서로의 번호를 적어 주세요.')
             t = t.replace(buddy.group(0), '', 1).replace(name_open, block + name_open, 1)
-        if not f.get('buddyOnly') and (f.get('friendFee') or f.get('rejoin')):
+        if not f.get('buddyOnly') and (f.get('friendFee') or f.get('rejoin') or prealert_discount):
             # 친구 할인 (10/8): 친구 문항을 참가비 안내 위로 올리고, 제목을 할인 안내로 바꾸고, 친구 선택지를 고르면 금액과 송금 버튼이 할인 금액으로 바뀜. 친구 문항에는 공유 버튼
             won = lambda n: f'{n:,}'
             share_only = bool(f.get('rejoin')) and not f.get('friendFee')   # 재참여 폼은 고정 금액 (설문 폼만 친구 할인으로 금액이 바뀜)
@@ -626,8 +612,9 @@ def gen(path, f):
             was = f.get('wasFee') if survey else None   # 친구 할인 안내에서 줄 긋고 앞에 보여 줄 금액
             frv = {'__FR_OFF__': off, '__FULL_FEE__': won(f['fee']), '__FRIEND_FEE__': won(f.get('friendFee', f['fee'])), '__PAL_FEE__': won(pal_fee) if survey else '',
                    '__PAY__': f['pay'], '__FRIEND_PAY__': f.get('friendPay', f['pay']), '__FR_LIST__': ('<s>' + won(was) + '원</s> → ') if was else '',
-                   '__SHARE_ONLY__': 'true' if share_only else 'false', '__SHARE_PATH__': ("(window.HH_SHARE_PATH||'" + f['friendForm'] + "')" if survey else "'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': 'rejoin-friend' if survey else f'h{cohort}-friend' + ('-rejoin' if f.get('rejoin') else ''),
-                   '__SHARE_TEXT__': (f'하루하루 소개팅 같이 하자! 이 링크로 신청하고 친구 번호 칸에 내 번호를 적으면 너는 {won(pal_fee or 0)}원이야.' if survey
+                   '__SHARE_ONLY__': 'true' if share_only or prealert_discount else 'false', '__SHARE_PATH__': ("(window.HH_SHARE_PATH||'" + f['friendForm'] + "')" if survey else "'" + f['friendForm'] + "'") if f.get('friendForm') else 'location.pathname', '__SHARE_SRC__': 'rejoin-friend' if survey else f'h{cohort}-friend' + ('-rejoin' if f.get('rejoin') else ''),
+                   '__SHARE_TEXT__': ('하루하루 소개팅 같이 신청하자! 친구 번호 칸에 서로 번호를 적어줘.' if prealert_discount
+                                      else f'하루하루 소개팅 같이 하자! 이 링크로 신청하고 친구 번호 칸에 내 번호를 적으면 너는 {won(pal_fee or 0)}원이야.' if survey
                                       else f'하루하루 소개팅 해 봐! 이 링크로 신청하면 {fee}원에 할인받을 수 있어.' if f.get('friendForm')
                                       else f'하루하루 소개팅 같이 신청하자! 이 링크로 신청하면 친구도 {fee}원이야. 신청서 친구 번호 칸에 서로 번호를 적어줘.' if share_only
                                       else f'하루하루 소개팅 같이 신청하자! 신청서 친구 번호 칸에 서로 번호를 적으면 둘 다 {off}원 할인이래.')}
@@ -640,7 +627,7 @@ def gen(path, f):
             hook = REJOIN_SHARE if phone_only else REJOIN_HOOK if share_only else FR_HOOK   # 전화번호만 받는 폼은 친구 추천과 방 배정을 한 문항으로
             buddy = mb.group(0).rstrip('\n').replace(title, frfill(hook), 1)
             if survey: buddy = frfill(SV_FRIEND).rstrip('\n')   # 설문 폼은 친구 문항 전체를 [혼자 5,900원] [친구랑 같이 3,900원] 두 칸으로 (값은 같은 buddy_room 네 값)
-            if not share_only: buddy = buddy.replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
+            if not share_only and not prealert_discount: buddy = buddy.replace(note, '친구도 신청서에 내 번호를 적어야 방 배정과 할인에 반영돼요.', 1)
             t = t.replace(mb.group(0), '', 1).replace(name_open, buddy + '\n\n' + name_open, 1)
             if not share_only:
                 a0 = t.index(name_open); a1 = t.index('<p class="err">송금자 이름을 입력해 주세요</p></div>', a0)
@@ -655,7 +642,7 @@ def gen(path, f):
                 bd = mb2.group(0).rstrip('\n'); hk = frfill(FR_HOOK); sh = re.search(r'<button type="button" class="fr-share">.*?</button>', hk, flags=re.S)
                 o0 = bd.index('<div class="opts">'); o1 = bd.index('<p class="err">친구 전화번호를 확인해 주세요</p>')
                 assert sh and bd.count(hk) == 1 and o0 < o1, f'{path} 랜딩 3판 친구 문항을 못 접음'
-                mini = (f'<div class="fr-mini"><p>친구랑 같이 신청하면<br><b>둘 다 {won(f["friendFee"])}원</b></p>'
+                mini = (f'<div class="fr-mini"><p>친구랑 같이 신청하면<br><b>둘 다 {won(f.get("friendFee", f["fee"]))}원</b></p>'
                         '<button type="button" class="fr-toggle" aria-expanded="false">친구랑 신청해요</button></div>')
                 bd2 = bd[:o0].replace(hk, mini, 1) + '<div class="fr-more" hidden>\n ' + bd[o0:o1].rstrip() + '\n ' + sh.group(0) + '</div>\n ' + bd[o1:]
                 name_end = '<p class="err">송금자 이름을 입력해 주세요</p></div>'
@@ -798,7 +785,7 @@ def gen(path, f):
         amt_html = '<span class="fr-fee">' + won(f['fee']) + '</span>'
         new_blk = ('<div class="pay-card">\n<p class="t">참가비<span class="req">*</span></p>\n'
                    '<ol class="pay-steps"><li><b>1</b>토스로 송금</li><li><b>2</b>이 화면으로 돌아오기</li><li><b>3</b>이름 적고 제출</li></ol>\n'
-                   + fee_was.group(0) + fr_on.group(0) + mb.group(0).strip() + '\n</div>\n'
+                   + fee_was.group(0) + ('' if prealert_discount else fr_on.group(0)) + mb.group(0).strip() + '\n</div>\n'
                    '<div class="q pay-q" data-name="name">\n'
                    f' <a class="pay" id="pay" href="{f["pay"]}" rel="noopener" data-acct-raw="{ac.group(1).replace("-", "")}">토스로 {amt_html}원 송금하기</a>\n'
                    f' <button type="button" class="acct-copy pay-copy" id="acctCopy" data-acct="{ac.group(1)}"><span>직접 입금 계좌 복사 {ac.group(1)}</span></button>\n'
@@ -814,6 +801,8 @@ def gen(path, f):
             arm_line = re.search(r" var ARM=\(function\(\)\{.*?\}\)\(\); if\(ARM\) hidden\.arm=ARM;", t)
             assert arm_line, f'{path} ARM 줄을 못 찾음'
             t = t.replace(arm_line.group(0), " var ARM='b'; hidden.arm=ARM;   // B 팔 HTML 은 팔이 정해져 있음 (쿠키를 못 읽는 브라우저도 b 로 기록)", 1)
+    if prealert_discount:
+        t = t.replace('둘 다 2,000원 할인</span>', '사전알림 2,000원 할인</span>', 1)
     if f.get('participantCount'):
         count = f['participantCount']
         t = t.replace('<i data-n="300">300</i>', f'<i data-n="{count}">{count}</i>')
@@ -870,7 +859,7 @@ def gen(path, f):
                      '<div><dt>입금자명</dt><dd id="dnNm"></dd></div></dl>'
                      '<p class="dn-note">문의할 때 필요하니 이 화면을 캡처해 두세요.</p></div>') + t[d1:]
         foot = '<p class="foot">'; assert t.count(foot) == 1
-        t = t.replace(foot, STORY_TAIL + foot, 1)
+        t = t.replace(foot, STORY_TAIL.replace('__BUDDY_FEE_SUFFIX__', '' if prealert_discount else ' (친구 할인)') + foot, 1)
         for need in ('class="pstep"', 'autocomplete="tel"', 'class="pay-card"'):
             assert t.count(need) >= 1, f'{path} 이야기판 폼 조각이 빠짐: {need}'
         for gone in ('data-name="source"', 'data-name="device"', 'data-name="intent"'):
